@@ -201,10 +201,8 @@
   white-space: nowrap;
 }
 
-.toolbar__usuario mat-icon {
-  width: 1.1rem;
-  height: 1.1rem;
-  font-size: 1.1rem;
+.toolbar__usuario app-icono {
+  --icono-size: 1.1rem;
 }
 
 .shell__principal {

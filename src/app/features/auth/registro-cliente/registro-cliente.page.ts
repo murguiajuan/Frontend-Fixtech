@@ -16,6 +16,7 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { RegistroClienteRequest } from '../../../core/auth/auth.models';
 import { esApiError } from '../../../core/http/api-error';
+import { Icono } from '../../../shared/ui/icono';
 
 type CampoRegistro =
   | 'nombres'
@@ -38,6 +39,7 @@ type CampoRegistro =
     MatIconModule,
     MatInputModule,
     MatProgressSpinnerModule,
+    Icono,
   ],
   templateUrl: './registro-cliente.page.html',
   styleUrl: './registro-cliente.page.scss',

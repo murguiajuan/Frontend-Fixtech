@@ -82,9 +82,7 @@
           [attr.aria-label]="ocultarPassword() ? 'Mostrar contraseña' : 'Ocultar contraseña'"
           [attr.aria-pressed]="!ocultarPassword()"
         >
-          <mat-icon aria-hidden="true">{{
-            ocultarPassword() ? 'visibility' : 'visibility_off'
-          }}</mat-icon>
+          <app-icono [nombre]="ocultarPassword() ? 'visibility' : 'visibility_off'" />
         </button>
         @if (mostrarError('password')) {
           <mat-error>

@@ -1,0 +1,104 @@
+<h2 mat-dialog-title>{{ titulo }}</h2>
+
+<mat-dialog-content class="dialogo__contenido">
+  <div class="resumen">
+    <span class="resumen__avatar" aria-hidden="true">{{ inicialesUsuario }}</span>
+    <div class="resumen__datos">
+      <strong>{{ nombre }}</strong>
+      <span>{{ usuario.correo }}</span>
+      <small>{{ etiquetasRol[usuario.rol] }}</small>
+    </div>
+    <app-estado-badge
+      [texto]="etiquetasEstado[usuario.estado]"
+      [tono]="tonosEstado[usuario.estado]"
+    />
+  </div>
+
+  @if (errorServidor(); as mensaje) {
+    <div class="ft-alert ft-alert--error" role="alert">
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <div>
+        <p>{{ mensaje }}</p>
+        @if (detallesError().length > 0) {
+          <ul class="dialogo__detalles">
+            @for (detalle of detallesError(); track detalle) {
+              <li>{{ detalle }}</li>
+            }
+          </ul>
+        }
+      </div>
+    </div>
+  }
+
+  <form id="form-estado-usuario" [formGroup]="formulario" (ngSubmit)="enviar()" novalidate>
+    @if (suspendiendo) {
+      <div class="ft-alert ft-alert--warning" role="status">
+        <mat-icon aria-hidden="true">warning</mat-icon>
+        <p>
+          La cuenta quedará suspendida y no podrá iniciar sesión hasta que un administrador la
+          reactive.
+        </p>
+      </div>
+
+      @if (usuario.motivoSuspension; as motivoActual) {
+        <p class="motivo-actual"><strong>Motivo registrado:</strong> {{ motivoActual }}</p>
+      }
+
+      <mat-form-field appearance="outline">
+        <mat-label>Motivo de la suspensión</mat-label>
+        <textarea
+          matInput
+          formControlName="motivo"
+          rows="4"
+          maxlength="300"
+          [attr.aria-invalid]="mostrarErrorMotivo() ? 'true' : null"
+          [attr.aria-describedby]="
+            mostrarErrorMotivo() ? 'motivo-ayuda motivo-error' : 'motivo-ayuda'
+          "
+        ></textarea>
+        <mat-hint id="motivo-ayuda">Máximo 300 caracteres. El usuario verá este motivo.</mat-hint>
+        @if (mostrarErrorMotivo()) {
+          <mat-error id="motivo-error">
+            @if (formulario.controls.motivo.hasError('maxlength')) {
+              El motivo no puede superar los 300 caracteres.
+            } @else {
+              El motivo es obligatorio para suspender la cuenta.
+            }
+          </mat-error>
+        }
+      </mat-form-field>
+
+      <div class="confirmacion">
+        <mat-checkbox formControlName="confirmado">
+          Confirmo que deseo suspender esta cuenta.
+        </mat-checkbox>
+        @if (mostrarErrorConfirmacion()) {
+          <p class="campo-error" role="alert">Debes marcar la confirmación para continuar.</p>
+        }
+      </div>
+    } @else {
+      <div class="ft-alert ft-alert--info" role="status">
+        <mat-icon aria-hidden="true">info</mat-icon>
+        <p>La cuenta podrá iniciar sesión nuevamente y el motivo de suspensión será eliminado.</p>
+      </div>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" [disabled]="enviando()" (click)="cancelar()">Cancelar</button>
+  <button
+    mat-flat-button
+    type="submit"
+    form="form-estado-usuario"
+    [color]="suspendiendo ? 'warn' : 'primary'"
+    [disabled]="enviando()"
+  >
+    @if (enviando()) {
+      <mat-spinner diameter="18" aria-label="Guardando cambio de estado" />
+    } @else {
+      <mat-icon aria-hidden="true">{{ suspendiendo ? 'block' : 'lock_open' }}</mat-icon>
+    }
+    {{ enviando() ? 'Guardando…' : etiquetaAccion }}
+  </button>
+</mat-dialog-actions>

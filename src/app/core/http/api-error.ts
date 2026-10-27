@@ -30,6 +30,9 @@ export function normalizarError(error: unknown): ApiError {
       detalles: cuerpo.detalles,
     };
   }
+  if (error instanceof Error && error.cause !== undefined && error.cause !== error) {
+    return normalizarError(error.cause);
+  }
   return {
     estado: 0,
     mensaje: 'Ocurrió un error inesperado. Intente nuevamente.',

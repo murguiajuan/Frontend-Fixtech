@@ -1,0 +1,301 @@
+<div class="admin-tecnicos ft-page">
+  <header class="encabezado">
+    <div>
+      <p class="ft-eyebrow">Administración</p>
+      <h1>Verificación de técnicos</h1>
+      <p class="ft-muted">
+        Revisa el perfil de cada técnico, consulta su estado y registra la decisión de verificación.
+      </p>
+    </div>
+  </header>
+
+  <section class="panel-filtros ft-card" aria-labelledby="titulo-filtros">
+    <div class="panel-filtros__cabecera">
+      <div>
+        <h2 id="titulo-filtros">Filtros</h2>
+        <p class="ft-muted">Acota el listado por estado de verificación o datos del técnico.</p>
+      </div>
+      @if (hayFiltros()) {
+        <button mat-button type="button" (click)="limpiarFiltros()">
+          <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
+          Limpiar filtros
+        </button>
+      }
+    </div>
+
+    <form
+      class="panel-filtros__formulario"
+      [formGroup]="formularioFiltros"
+      (ngSubmit)="aplicarFiltros()"
+    >
+      <mat-form-field appearance="outline">
+        <mat-label>Estado de verificación</mat-label>
+        <mat-select formControlName="estadoVerificacion">
+          <mat-option value="TODOS">Todos los estados</mat-option>
+          @for (estado of estados; track estado) {
+            <mat-option [value]="estado">{{ etiquetasEstado[estado] }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Buscar técnico</mat-label>
+        <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+        <input
+          matInput
+          type="search"
+          formControlName="busqueda"
+          maxlength="120"
+          autocomplete="off"
+          placeholder="Nombre, correo, DNI o celular"
+        />
+        <mat-hint>Puedes buscar por nombre, correo, DNI o celular.</mat-hint>
+        @if (formularioFiltros.controls.busqueda.hasError('maxlength')) {
+          <mat-error>La búsqueda no puede superar los 120 caracteres.</mat-error>
+        }
+      </mat-form-field>
+
+      <button mat-flat-button type="submit">
+        <mat-icon aria-hidden="true">search</mat-icon>
+        Buscar
+      </button>
+    </form>
+  </section>
+
+  @if (error(); as fallo) {
+    <section class="estado-panel ft-card" role="alert" aria-labelledby="titulo-error-tecnicos">
+      <mat-icon aria-hidden="true">cloud_off</mat-icon>
+      <h2 id="titulo-error-tecnicos">No pudimos cargar los técnicos</h2>
+      <p class="ft-muted">{{ fallo.mensaje }}</p>
+      @if (fallo.detalles.length > 0) {
+        <ul class="estado-panel__detalles">
+          @for (detalle of fallo.detalles; track detalle) {
+            <li>{{ detalle }}</li>
+          }
+        </ul>
+      }
+      <button mat-flat-button type="button" (click)="recargar()">
+        <mat-icon aria-hidden="true">refresh</mat-icon>
+        Reintentar
+      </button>
+    </section>
+  } @else {
+    @if (tecnicosResource.value(); as tecnicos) {
+      <section aria-labelledby="titulo-listado-tecnicos">
+        <div class="listado__cabecera">
+          <div>
+            <h2 id="titulo-listado-tecnicos">Técnicos registrados</h2>
+            <p class="ft-muted" role="status">
+              {{ tecnicos.length }}
+              {{ tecnicos.length === 1 ? 'técnico' : 'técnicos' }}
+              @if (hayFiltros()) {
+                con los filtros aplicados
+              }
+            </p>
+          </div>
+          @if (tecnicosResource.isLoading()) {
+            <span class="listado__actualizando" role="status">Actualizando…</span>
+          }
+        </div>
+
+        @if (tecnicos.length === 0) {
+          <div class="estado-panel ft-card">
+            <mat-icon aria-hidden="true">engineering</mat-icon>
+            <h3>{{ hayFiltros() ? 'No encontramos técnicos' : 'Aún no hay técnicos' }}</h3>
+            <p class="ft-muted">
+              {{
+                hayFiltros()
+                  ? 'Prueba con otro estado de verificación o cambia el texto de búsqueda.'
+                  : 'Los técnicos aparecerán aquí cuando se registren en FIXTECH.'
+              }}
+            </p>
+            @if (hayFiltros()) {
+              <button mat-stroked-button type="button" (click)="limpiarFiltros()">
+                <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
+                Limpiar filtros
+              </button>
+            }
+          </div>
+        } @else {
+          <ul class="listado">
+            @for (tecnico of tecnicos; track tecnico.id) {
+              <li>
+                <article class="tecnico ft-card" [attr.aria-labelledby]="'tecnico-' + tecnico.id">
+                  <div class="tecnico__cabecera">
+                    <span class="tecnico__avatar" aria-hidden="true">
+                      {{ inicialesTecnico(tecnico) }}
+                    </span>
+                    <div class="tecnico__identidad">
+                      <h2 [id]="'tecnico-' + tecnico.id">{{ nombre(tecnico) }}</h2>
+                      <p class="ft-muted">{{ tecnico.correo }}</p>
+                    </div>
+                    <app-estado-badge
+                      [texto]="etiquetasEstado[tecnico.estadoVerificacion]"
+                      [tono]="tonosEstado[tecnico.estadoVerificacion]"
+                    />
+                  </div>
+
+                  <div class="tecnico__etiquetas">
+                    @if (tecnico.destacado) {
+                      <app-estado-badge texto="Destacado" tono="info" />
+                    }
+                    @if (tecnico.bloqueadoPorDeuda) {
+                      <app-estado-badge texto="Bloqueado por deuda" tono="error" />
+                    }
+                  </div>
+
+                  <dl class="tecnico__resumen">
+                    <div>
+                      <dt>DNI</dt>
+                      <dd>{{ tecnico.dni }}</dd>
+                    </div>
+                    <div>
+                      <dt>Celular</dt>
+                      <dd>{{ tecnico.celular }}</dd>
+                    </div>
+                    <div>
+                      <dt>Calificación</dt>
+                      <dd>{{ tecnico.calificacionPromedio | number: '1.1-2' }}</dd>
+                    </div>
+                    <div>
+                      <dt>Servicios</dt>
+                      <dd>{{ tecnico.serviciosCompletados }}</dd>
+                    </div>
+                  </dl>
+
+                  @if (esExpandido(tecnico.id)) {
+                    <section
+                      class="detalle"
+                      [id]="'detalle-' + tecnico.id"
+                      [attr.aria-labelledby]="'detalle-titulo-' + tecnico.id"
+                    >
+                      <h3 [id]="'detalle-titulo-' + tecnico.id">Detalle del perfil</h3>
+
+                      <div class="detalle__grid">
+                        <div>
+                          <h4>Contacto</h4>
+                          <dl class="detalle__lista">
+                            <div>
+                              <dt>Correo</dt>
+                              <dd>
+                                <a [href]="'mailto:' + tecnico.correo">{{ tecnico.correo }}</a>
+                              </dd>
+                            </div>
+                            <div>
+                              <dt>Celular</dt>
+                              <dd>
+                                <a [href]="'tel:' + tecnico.celular">{{ tecnico.celular }}</a>
+                              </dd>
+                            </div>
+                            <div>
+                              <dt>DNI</dt>
+                              <dd>{{ tecnico.dni }}</dd>
+                            </div>
+                            <div>
+                              <dt>Registro</dt>
+                              <dd>{{ tecnico.creadoEn | date: 'dd MMM yyyy' }}</dd>
+                            </div>
+                          </dl>
+                        </div>
+
+                        <div>
+                          <h4>Modalidades</h4>
+                          @if (tecnico.modalidades.length === 0) {
+                            <p class="ft-muted">Sin modalidades registradas.</p>
+                          } @else {
+                            <mat-chip-set aria-label="Modalidades de atención">
+                              @for (modalidad of tecnico.modalidades; track modalidad) {
+                                <mat-chip>{{ etiquetasModalidad[modalidad] }}</mat-chip>
+                              }
+                            </mat-chip-set>
+                          }
+
+                          <dl class="detalle__lista detalle__lista--compacta">
+                            <div>
+                              <dt>Reseñas</dt>
+                              <dd>{{ tecnico.totalResenas }}</dd>
+                            </div>
+                            <div>
+                              <dt>Saldo pendiente</dt>
+                              <dd>
+                                {{
+                                  tecnico.saldoComisionPendiente
+                                    | currency: 'PEN' : 'symbol-narrow' : '1.2-2'
+                                }}
+                              </dd>
+                            </div>
+                          </dl>
+                        </div>
+
+                        <div>
+                          <h4>Verificación</h4>
+                          <dl class="detalle__lista">
+                            <div>
+                              <dt>Estado actual</dt>
+                              <dd>{{ etiquetasEstado[tecnico.estadoVerificacion] }}</dd>
+                            </div>
+                            <div>
+                              <dt>Fecha de verificación</dt>
+                              <dd>
+                                @if (tecnico.fechaVerificacion) {
+                                  {{ tecnico.fechaVerificacion | date: 'dd MMM yyyy, HH:mm' }}
+                                } @else {
+                                  Sin verificar
+                                }
+                              </dd>
+                            </div>
+                            @if (tecnico.motivoVerificacion; as motivo) {
+                              <div>
+                                <dt>Motivo registrado</dt>
+                                <dd>{{ motivo }}</dd>
+                              </div>
+                            }
+                          </dl>
+                        </div>
+                      </div>
+
+                      <div class="ft-alert ft-alert--info">
+                        <mat-icon aria-hidden="true">description</mat-icon>
+                        <p>
+                          La API de administración no expone documentos de verificación. Esta ficha
+                          muestra únicamente los datos registrados en el perfil; no se inventan
+                          documentos ni campos inexistentes.
+                        </p>
+                      </div>
+                    </section>
+                  }
+
+                  <div class="tecnico__acciones">
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      [attr.aria-expanded]="esExpandido(tecnico.id)"
+                      [attr.aria-controls]="
+                        esExpandido(tecnico.id) ? 'detalle-' + tecnico.id : null
+                      "
+                      (click)="alternarDetalle(tecnico.id)"
+                    >
+                      <mat-icon aria-hidden="true">
+                        {{ esExpandido(tecnico.id) ? 'expand_less' : 'expand_more' }}
+                      </mat-icon>
+                      {{ esExpandido(tecnico.id) ? 'Ocultar detalle' : 'Ver detalle' }}
+                    </button>
+                    <button mat-flat-button type="button" (click)="abrirVerificacion(tecnico)">
+                      <mat-icon aria-hidden="true">fact_check</mat-icon>
+                      Verificar
+                    </button>
+                  </div>
+                </article>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    } @else {
+      <div class="estado-panel ft-card" role="status" aria-live="polite">
+        <mat-spinner diameter="40" aria-label="Cargando técnicos" />
+        <p class="ft-muted">Cargando técnicos…</p>
+      </div>
+    }
+  }
+</div>

@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, guestGuard } from './core/auth/auth.guards';
+import { authGuard, guestGuard, roleGuard } from './core/auth/auth.guards';
 import { AppLayout } from './core/layout/app-layout/app-layout';
 import { PublicLayout } from './core/layout/public-layout/public-layout';
 
@@ -44,6 +44,22 @@ export const routes: Routes = [
         title: 'Inicio | FIXTECH',
         loadComponent: () =>
           import('./features/dashboard/dashboard.page').then((m) => m.DashboardPage),
+      },
+      {
+        path: 'admin/tecnicos',
+        title: 'Verificación de técnicos | FIXTECH',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./features/admin/tecnicos/tecnicos.page').then((m) => m.AdminTecnicosPage),
+      },
+      {
+        path: 'admin/usuarios',
+        title: 'Usuarios y accesos | FIXTECH',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./features/admin/usuarios/usuarios.page').then((m) => m.AdminUsuariosPage),
       },
     ],
   },

@@ -3,6 +3,7 @@ import { Component, computed, inject } from '@angular/core';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import {
   ETIQUETAS_ESTADO_VERIFICACION,
@@ -12,7 +13,14 @@ import {
 
 @Component({
   selector: 'app-dashboard-page',
-  imports: [CurrencyPipe, DecimalPipe, MatChipsModule, MatIconModule, MatProgressSpinnerModule],
+  imports: [
+    CurrencyPipe,
+    DecimalPipe,
+    RouterLink,
+    MatChipsModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+  ],
   templateUrl: './dashboard.page.html',
   styleUrl: './dashboard.page.scss',
 })

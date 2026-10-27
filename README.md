@@ -6,9 +6,10 @@ FIXTECH en `http://localhost:8082/api`.
 
 ## Estado actual
 
-Fases 0 y 1 completadas: base técnica, autenticación JWT, sesión, guards, interceptores,
-layouts por rol y panel inicial. Las pantallas de negocio se incorporan en las siguientes
-fases. El plan completo y el progreso están en [`PLAN_FRONTEND.md`](./PLAN_FRONTEND.md).
+Fases 0, 1 y 2 completadas: base técnica, autenticación JWT, sesión, guards, interceptores,
+layouts por rol, panel inicial y administración de técnicos y usuarios. Las demás pantallas de
+negocio se incorporan en las siguientes fases. El plan completo y el progreso están en
+[`PLAN_FRONTEND.md`](./PLAN_FRONTEND.md).
 
 ## Stack
 
@@ -68,10 +69,13 @@ Credenciales de desarrollo del administrador: `admin@fixtech.pe` / `Admin123!`.
 El login real contra el backend local se ejecuta con:
 
 ```bash
-E2E_BACKEND=1 npm run e2e -- --project=chromium
+E2E_BACKEND=1 npm run e2e
 ```
 
-Sin `E2E_BACKEND=1` esa prueba se omite y solo corren las pruebas públicas.
+La prueba de aprobación crea un técnico único mediante `POST /api/auth/register/tecnico`, inicia
+sesión como administrador, aprueba el perfil y comprueba el estado con
+`GET /api/admin/tecnicos`. Requiere el backend y MySQL locales. Sin `E2E_BACKEND=1` esa prueba
+se omite y solo corren las pruebas públicas.
 
 ## Estructura
 
@@ -84,10 +88,11 @@ src/
 │   │   ├── layout/        # Layout público y layout privado con sidenav
 │   │   └── models/        # Etiquetas y tipos compartidos
 │   ├── features/
+│   │   ├── admin/         # Verificación de técnicos y gestión de usuarios
 │   │   ├── auth/          # Login y registro de cliente
 │   │   ├── dashboard/     # Panel inicial por rol
 │   │   └── errors/        # Páginas 403 y 404
-│   ├── shared/ui/         # Marca, notificaciones y componentes reutilizables
+│   ├── shared/ui/         # Marca, badges, iconos y notificaciones
 │   ├── app.config.ts      # Locale es-PE, router y HttpClient con interceptores
 │   └── app.routes.ts      # Rutas públicas y privadas con lazy loading
 ├── environments/          # URLs de API por entorno
@@ -98,11 +103,11 @@ e2e/                       # Pruebas Playwright y Axe
 
 ## Roles y navegación
 
-| Rol       | Acceso inicial | Navegación habilitada                                        |
-| --------- | -------------- | ------------------------------------------------------------ |
-| `CLIENTE` | `/app/inicio`  | Inicio; solicitudes y servicios aparecen como “Próximamente” |
-| `TECNICO` | `/app/inicio`  | Inicio; ofertas bloqueadas si no está aprobado o tiene deuda |
-| `ADMIN`   | `/app/inicio`  | Inicio; técnicos y usuarios aparecen como “Próximamente”     |
+| Rol       | Acceso inicial | Navegación habilitada                                                 |
+| --------- | -------------- | --------------------------------------------------------------------- |
+| `CLIENTE` | `/app/inicio`  | Inicio; solicitudes y servicios aparecen como “Próximamente”          |
+| `TECNICO` | `/app/inicio`  | Inicio; ofertas bloqueadas si no está aprobado o tiene deuda          |
+| `ADMIN`   | `/app/inicio`  | Inicio, técnicos y usuarios; reportes y catálogos como “Próximamente” |
 
 Los guards protegen las rutas privadas:
 
@@ -110,6 +115,22 @@ Los guards protegen las rutas privadas:
 - `guestGuard`: impide que un usuario autenticado vuelva al login.
 - `roleGuard`: valida los roles declarados en `data.roles`.
 - `tecnicoAprobadoGuard`: bloquea solicitudes/ofertas de técnicos no aprobados.
+
+## Panel administrativo
+
+- `/app/admin/tecnicos`: listado con filtros por estado de verificación y búsqueda. El detalle
+  expandible muestra contacto, modalidades, calificación, reseñas, servicios, saldo, bloqueo por
+  deuda y fechas. La verificación usa `PATCH /api/admin/tecnicos/{id}/verificacion`; observar o
+  rechazar exige un motivo de hasta 300 caracteres y confirmación explícita.
+- `/app/admin/usuarios`: listado con filtros por rol, estado y búsqueda. Permite suspender o
+  reactivar cuentas con `PATCH /api/admin/usuarios/{id}/estado`. Suspender exige motivo y
+  confirmación; reactivar no. Las cuentas `ADMIN` y la cuenta propia están protegidas en la
+  interfaz y el backend responde `403` si se intenta cambiar su estado.
+- Los errores `409` y `403` se muestran dentro del diálogo y el listado se recarga tras cada
+  cambio exitoso.
+
+> Brecha: la API de administración no expone documentos de verificación. El detalle lo indica
+> explícitamente y no inventa documentos ni campos.
 
 ## Autenticación
 
@@ -158,8 +179,10 @@ npm run e2e
 ```
 
 Las pruebas E2E incluyen Axe con las reglas WCAG 2.0/2.1 A y AA en escritorio y en un viewport
-móvil de 360 px. La interfaz es mobile-first, con foco visible, etiquetas explícitas y
-mensajes de error anunciados.
+móvil de 360 px. La interfaz es mobile-first, con foco visible, etiquetas explícitas y mensajes
+de error anunciados. Las pantallas y diálogos de la Fase 2 también se auditan; los iconos de los
+botones con `aria-label` se renderizan como SVG decorativos para no mezclar ligaduras de fuentes
+con el nombre accesible.
 
 ## Despliegue
 

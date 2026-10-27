@@ -1,0 +1,212 @@
+<div class="admin-usuarios ft-page">
+  <header class="encabezado">
+    <div>
+      <p class="ft-eyebrow">Administración</p>
+      <h1>Usuarios y accesos</h1>
+      <p class="ft-muted">
+        Consulta las cuentas registradas y suspende o reactiva el acceso de clientes y técnicos.
+      </p>
+    </div>
+  </header>
+
+  <section class="panel-filtros ft-card" aria-labelledby="titulo-filtros-usuarios">
+    <div class="panel-filtros__cabecera">
+      <div>
+        <h2 id="titulo-filtros-usuarios">Filtros</h2>
+        <p class="ft-muted">Acota el listado por rol, estado de la cuenta o datos de contacto.</p>
+      </div>
+      @if (hayFiltros()) {
+        <button mat-button type="button" (click)="limpiarFiltros()">
+          <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
+          Limpiar filtros
+        </button>
+      }
+    </div>
+
+    <form
+      class="panel-filtros__formulario"
+      [formGroup]="formularioFiltros"
+      (ngSubmit)="aplicarFiltros()"
+    >
+      <mat-form-field appearance="outline">
+        <mat-label>Rol</mat-label>
+        <mat-select formControlName="rol">
+          <mat-option value="TODOS">Todos los roles</mat-option>
+          @for (rol of roles; track rol) {
+            <mat-option [value]="rol">{{ etiquetasRol[rol] }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Estado</mat-label>
+        <mat-select formControlName="estado">
+          <mat-option value="TODOS">Todos los estados</mat-option>
+          @for (estado of estados; track estado) {
+            <mat-option [value]="estado">{{ etiquetasEstado[estado] }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Buscar usuario</mat-label>
+        <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+        <input
+          matInput
+          type="search"
+          formControlName="busqueda"
+          maxlength="120"
+          autocomplete="off"
+          placeholder="Nombre o correo"
+        />
+        <mat-hint>Puedes buscar por nombre o correo electrónico.</mat-hint>
+        @if (formularioFiltros.controls.busqueda.hasError('maxlength')) {
+          <mat-error>La búsqueda no puede superar los 120 caracteres.</mat-error>
+        }
+      </mat-form-field>
+
+      <button mat-flat-button type="submit">
+        <mat-icon aria-hidden="true">search</mat-icon>
+        Buscar
+      </button>
+    </form>
+  </section>
+
+  @if (error(); as fallo) {
+    <section class="estado-panel ft-card" role="alert" aria-labelledby="titulo-error-usuarios">
+      <mat-icon aria-hidden="true">cloud_off</mat-icon>
+      <h2 id="titulo-error-usuarios">No pudimos cargar los usuarios</h2>
+      <p class="ft-muted">{{ fallo.mensaje }}</p>
+      @if (fallo.detalles.length > 0) {
+        <ul class="estado-panel__detalles">
+          @for (detalle of fallo.detalles; track detalle) {
+            <li>{{ detalle }}</li>
+          }
+        </ul>
+      }
+      <button mat-flat-button type="button" (click)="recargar()">
+        <mat-icon aria-hidden="true">refresh</mat-icon>
+        Reintentar
+      </button>
+    </section>
+  } @else {
+    @if (usuariosResource.value(); as usuarios) {
+      <section aria-labelledby="titulo-listado-usuarios">
+        <div class="listado__cabecera">
+          <div>
+            <h2 id="titulo-listado-usuarios">Cuentas registradas</h2>
+            <p class="ft-muted" role="status">
+              {{ usuarios.length }}
+              {{ usuarios.length === 1 ? 'usuario' : 'usuarios' }}
+              @if (hayFiltros()) {
+                con los filtros aplicados
+              }
+            </p>
+          </div>
+          @if (usuariosResource.isLoading()) {
+            <span class="listado__actualizando" role="status">Actualizando…</span>
+          }
+        </div>
+
+        <p class="nota-protegidas">
+          <mat-icon aria-hidden="true">shield</mat-icon>
+          Las cuentas administradoras y tu propia cuenta están protegidas: su estado no puede
+          cambiarse desde esta pantalla.
+        </p>
+
+        @if (usuarios.length === 0) {
+          <div class="estado-panel ft-card">
+            <mat-icon aria-hidden="true">group_off</mat-icon>
+            <h3>{{ hayFiltros() ? 'No encontramos usuarios' : 'Aún no hay usuarios' }}</h3>
+            <p class="ft-muted">
+              {{
+                hayFiltros()
+                  ? 'Prueba con otro rol, estado o texto de búsqueda.'
+                  : 'Los usuarios aparecerán aquí cuando se registren en FIXTECH.'
+              }}
+            </p>
+            @if (hayFiltros()) {
+              <button mat-stroked-button type="button" (click)="limpiarFiltros()">
+                <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
+                Limpiar filtros
+              </button>
+            }
+          </div>
+        } @else {
+          <ul class="listado">
+            @for (usuario of usuarios; track usuario.id) {
+              <li>
+                <article class="usuario ft-card" [attr.aria-labelledby]="'usuario-' + usuario.id">
+                  <div class="usuario__cabecera">
+                    <span class="usuario__avatar" aria-hidden="true">
+                      {{ inicialesUsuario(usuario) }}
+                    </span>
+                    <div class="usuario__identidad">
+                      <h2 [id]="'usuario-' + usuario.id">{{ nombre(usuario) }}</h2>
+                      <p class="ft-muted">{{ usuario.correo }}</p>
+                    </div>
+                    <div class="usuario__etiquetas">
+                      <app-estado-badge
+                        [texto]="etiquetasRol[usuario.rol]"
+                        [tono]="usuario.rol === 'ADMIN' ? 'info' : 'neutral'"
+                      />
+                      <app-estado-badge
+                        [texto]="etiquetasEstado[usuario.estado]"
+                        [tono]="tonosEstado[usuario.estado]"
+                      />
+                    </div>
+                  </div>
+
+                  <dl class="usuario__datos">
+                    <div>
+                      <dt>Rol</dt>
+                      <dd>{{ etiquetasRol[usuario.rol] }}</dd>
+                    </div>
+                    <div>
+                      <dt>Registro</dt>
+                      <dd>{{ usuario.creadoEn | date: 'dd MMM yyyy' }}</dd>
+                    </div>
+                    @if (usuario.motivoSuspension; as motivo) {
+                      <div class="usuario__motivo">
+                        <dt>Motivo de suspensión</dt>
+                        <dd>{{ motivo }}</dd>
+                      </div>
+                    }
+                  </dl>
+
+                  <div class="usuario__acciones">
+                    @if (puedeCambiarEstado(usuario)) {
+                      <button
+                        mat-stroked-button
+                        type="button"
+                        [color]="usuario.estado === 'ACTIVO' ? 'warn' : 'primary'"
+                        (click)="abrirCambioEstado(usuario)"
+                      >
+                        <mat-icon aria-hidden="true">{{ iconoAccion(usuario) }}</mat-icon>
+                        {{ etiquetaAccion(usuario) }}
+                      </button>
+                    } @else {
+                      <span class="protegida">
+                        <mat-icon aria-hidden="true">lock</mat-icon>
+                        {{
+                          esCuentaPropia(usuario)
+                            ? 'Tu cuenta está protegida'
+                            : 'Cuenta administradora protegida'
+                        }}
+                      </span>
+                    }
+                  </div>
+                </article>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    } @else {
+      <div class="estado-panel ft-card" role="status" aria-live="polite">
+        <mat-spinner diameter="40" aria-label="Cargando usuarios" />
+        <p class="ft-muted">Cargando usuarios…</p>
+      </div>
+    }
+  }
+</div>

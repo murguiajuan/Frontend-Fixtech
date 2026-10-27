@@ -1,0 +1,115 @@
+:host {
+  display: block;
+}
+
+.dialogo__contenido {
+  display: grid;
+  gap: 1rem;
+  padding-top: 0.25rem;
+}
+
+.dialogo__detalles {
+  margin: 0.35rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.resumen {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.85rem;
+  border-radius: var(--ft-radius-md);
+  background: var(--ft-surface);
+}
+
+.resumen__avatar {
+  display: grid;
+  width: 2.6rem;
+  height: 2.6rem;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--ft-primary-100);
+  color: var(--ft-primary-900);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.resumen__datos {
+  display: grid;
+  min-width: 0;
+  line-height: 1.35;
+}
+
+.resumen__datos strong,
+.resumen__datos span,
+.resumen__datos small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resumen__datos span {
+  color: var(--ft-on-surface-muted);
+  font-size: 0.82rem;
+}
+
+.resumen__datos small {
+  margin-top: 0.15rem;
+  color: var(--ft-primary-700);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+form {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.motivo-actual {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.confirmacion {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.25rem;
+}
+
+.campo-error {
+  margin: 0;
+  color: var(--ft-danger);
+  font-size: 0.78rem;
+}
+
+mat-dialog-actions {
+  padding-bottom: 0.75rem;
+}
+
+mat-dialog-actions button {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+@media (max-width: 30rem) {
+  .resumen {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .resumen app-estado-badge {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  mat-dialog-actions {
+    flex-wrap: wrap;
+  }
+
+  mat-dialog-actions button {
+    flex: 1;
+    justify-content: center;
+  }
+}

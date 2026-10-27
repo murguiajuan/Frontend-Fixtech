@@ -50,7 +50,7 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
 | ---- | ------------------------------------------------------ | ------------- |
 | 0    | Base técnica, SSR, tooling y sistema de diseño         | ✅ Completada |
 | 1    | Autenticación, sesión, guards, interceptores y layouts | ✅ Completada |
-| 2    | Panel admin: técnicos y usuarios                       | ⏳ Pendiente  |
+| 2    | Panel admin: técnicos y usuarios                       | ✅ Completada |
 | 3    | Registro y perfil de técnico                           | ⏳ Pendiente  |
 | 4    | Cliente: solicitudes y adjuntos                        | ⏳ Pendiente  |
 | 5    | Técnico: solicitudes disponibles y ofertas             | ⏳ Pendiente  |
@@ -119,16 +119,52 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
 - [x] La vista principal se adapta desde 360 px sin desbordamiento horizontal.
 - [x] Axe no reporta violaciones en la pantalla de login.
 
-## 6. Fase 2 — Panel admin: técnicos y usuarios ⏳
+## 6. Fase 2 — Panel admin: técnicos y usuarios ✅
 
-- [ ] Listado de técnicos con filtros por estado de verificación y búsqueda.
-- [ ] Detalle del técnico con datos de contacto, modalidades, documentos y estadísticas.
-- [ ] Aprobar, observar o rechazar usando `PATCH /api/admin/tecnicos/{id}/verificacion`.
-- [ ] Motivo obligatorio para observar/rechazar y confirmación accesible.
-- [ ] Listado de usuarios y cambio de estado con `PATCH /api/admin/usuarios/{id}/estado`.
-- [ ] Manejo de `409`/`403` y refresco del listado tras cada cambio.
-- [ ] Pruebas unitarias de filtros, mapeo `usuarioId`/`id` y acciones.
-- [ ] E2E de aprobación de un técnico de prueba.
+### Endpoints usados
+
+- `GET /api/admin/tecnicos` con `estadoVerificacion` y `busqueda`.
+- `PATCH /api/admin/tecnicos/{id}/verificacion` con `{ estado, motivo }`; usa el `id` del
+  técnico y no el `usuarioId`.
+- `GET /api/admin/usuarios` con `rol`, `estado` y `busqueda`.
+- `PATCH /api/admin/usuarios/{id}/estado` con `{ estado, motivo }`.
+
+### Frontend
+
+- [x] Listado de técnicos con filtros por estado de verificación y búsqueda por nombre, correo,
+      DNI o celular.
+- [x] Detalle expandible con contacto, modalidades, calificación, reseñas, servicios, saldo,
+      bloqueo por deuda y fechas de registro/verificación.
+- [x] Aprobar, observar o rechazar usando `PATCH /api/admin/tecnicos/{id}/verificacion`.
+- [x] Motivo obligatorio para observar/rechazar (máximo 300 caracteres) y confirmación accesible
+      mediante diálogo con foco gestionado.
+- [x] Listado de usuarios con filtros por rol, estado y búsqueda.
+- [x] Cambio de estado con `PATCH /api/admin/usuarios/{id}/estado`; suspender exige motivo y
+      confirmación, reactivar no.
+- [x] Protección en interfaz de cuentas `ADMIN` y de la propia cuenta; el backend también
+      responde `403` si se intenta.
+- [x] Manejo inline de `409`/`403` sin cerrar el diálogo y refresco del listado tras cada cambio.
+- [x] Estados de carga, error con reintento y vacío en ambas pantallas.
+- [x] Rutas `/app/admin/tecnicos` y `/app/admin/usuarios` protegidas con `roleGuard` y acceso
+      habilitado desde el menú y el panel inicial.
+- [x] Componente compartido de badge de estado e iconos SVG accesibles para botones con
+      `aria-label`, evitando que Axe interprete las ligaduras de la fuente como texto visible.
+- [x] Pruebas unitarias de servicios, filtros, diálogos, validaciones, errores y protección de
+      cuentas.
+- [x] E2E real de aprobación: crea un técnico único por API, lo busca, aprueba y verifica el
+      estado con `GET /api/admin/tecnicos`.
+
+> Brecha: `TecnicoAdminResponse` no incluye documentos de verificación. El detalle muestra una
+> nota explícita y no inventa documentos ni campos. La tabla `documento_tecnico` sigue sin
+> controlador expuesto.
+
+### Criterios de cierre
+
+- [x] Build de producción, lint y formato sin errores.
+- [x] 53 pruebas unitarias en verde.
+- [x] 10 pruebas E2E en verde en Chromium y móvil de 360 px con el backend local.
+- [x] Axe sin violaciones en login, registro, listados, detalle de técnico y ambos diálogos.
+- [x] Aprobación real de un técnico verificada contra la API.
 
 ## 7. Fase 3 — Registro y perfil de técnico ⏳
 
@@ -233,19 +269,20 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
 
 ## 17. Brechas de API conocidas
 
-| Necesidad                           | Situación                              | Decisión                                              |
-| ----------------------------------- | -------------------------------------- | ----------------------------------------------------- |
-| Perfil del usuario autenticado      | Implementado `GET /api/auth/me`        | Usar en toda la sesión                                |
-| Listado de técnicos para admin      | Implementado `GET /api/admin/tecnicos` | Usar `id` para verificar y `usuarioId` para usuarios  |
-| Documentos de verificación          | Tabla sin controlador                  | No implementar carga hasta habilitar endpoints        |
-| Edición de perfil/foto              | Sin endpoints                          | Solo lectura                                          |
-| Recuperación/cambio de contraseña   | Sin endpoints                          | No mostrar enlaces                                    |
-| Búsqueda/perfil público de técnicos | Sin endpoint                           | Posponer                                              |
-| Datos de prueba E2E                 | Sin seed específico                    | Crear seed o usar backend local con datos controlados |
+| Necesidad                           | Situación                              | Decisión                                                                                            |
+| ----------------------------------- | -------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Perfil del usuario autenticado      | Implementado `GET /api/auth/me`        | Usar en toda la sesión                                                                              |
+| Listado de técnicos para admin      | Implementado `GET /api/admin/tecnicos` | Usar `id` para verificar y `usuarioId` para usuarios                                                |
+| Documentos de verificación          | Tabla sin controlador                  | No implementar carga hasta habilitar endpoints                                                      |
+| Edición de perfil/foto              | Sin endpoints                          | Solo lectura                                                                                        |
+| Recuperación/cambio de contraseña   | Sin endpoints                          | No mostrar enlaces                                                                                  |
+| Búsqueda/perfil público de técnicos | Sin endpoint                           | Posponer                                                                                            |
+| Datos de prueba E2E                 | Sin seed específico                    | La prueba de aprobación crea un técnico único vía API; requiere backend y MySQL con `E2E_BACKEND=1` |
 
 ## 18. Convenciones de implementación
 
-- Componentes standalone, `ChangeDetectionStrategy.OnPush` y signals para estado local.
+- Componentes standalone, `ChangeDetectionStrategy.OnPush` por defecto en Angular 22 (no se
+  declara explícitamente) y signals para estado local.
 - `input()`/`output()` en componentes reutilizables; evitar decoradores legacy.
 - Formularios reactivos tipados con `NonNullableFormBuilder`.
 - Control de flujo moderno (`@if`, `@for`, `@switch`) en plantillas.
@@ -258,6 +295,7 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
 
 ## 19. Registro de avances
 
-| Fecha      | Fase  | Evidencia                                                                                                                                      |
-| ---------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-10-27 | 0 y 1 | Build de producción, 21 pruebas unitarias, lint, Prettier y 8 pruebas E2E con Axe en escritorio y 360 px; login real contra backend verificado |
+| Fecha      | Fase  | Evidencia                                                                                                                                                                                                 |
+| ---------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-27 | 0 y 1 | Build de producción, 21 pruebas unitarias, lint, Prettier y 8 pruebas E2E con Axe en escritorio y 360 px; login real contra backend verificado                                                            |
+| 2026-10-27 | 2     | Build de producción, 53 pruebas unitarias, lint y Prettier; 10 pruebas E2E con Axe en escritorio y 360 px; aprobación real de un técnico creado vía API y estado verificado con `GET /api/admin/tecnicos` |

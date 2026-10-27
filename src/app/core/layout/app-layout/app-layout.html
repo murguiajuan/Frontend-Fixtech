@@ -61,7 +61,7 @@
         (click)="alternarSidenav()"
         aria-label="Abrir o cerrar menú de navegación"
       >
-        <mat-icon aria-hidden="true">menu</mat-icon>
+        <app-icono nombre="menu" />
       </button>
       <span class="toolbar__titulo">{{ tituloActual() }}</span>
       <span class="toolbar__espaciador"></span>
@@ -71,11 +71,11 @@
           type="button"
           class="toolbar__usuario"
           [matMenuTriggerFor]="menuUsuario"
-          aria-label="Abrir menú de usuario"
+          [attr.aria-label]="'Abrir menú de usuario de ' + p.nombres"
         >
-          <span class="toolbar__avatar" aria-hidden="true">{{ p.nombres.charAt(0) }}</span>
+          <span class="toolbar__avatar" aria-hidden="true"><app-icono nombre="persona" /></span>
           <span class="toolbar__nombre">{{ p.nombres }}</span>
-          <mat-icon aria-hidden="true">expand_more</mat-icon>
+          <app-icono nombre="expand_more" />
         </button>
         <mat-menu #menuUsuario="matMenu">
           <div class="menu__cabecera">

@@ -12,6 +12,7 @@ import { filter, map } from 'rxjs/operators';
 import { AuthService } from '../../auth/auth.service';
 import { ETIQUETAS_ROL } from '../../models/etiquetas';
 import { BrandLogo } from '../../../shared/ui/brand-logo';
+import { Icono } from '../../../shared/ui/icono';
 
 interface ItemNavegacion {
   readonly etiqueta: string;
@@ -33,6 +34,7 @@ interface ItemNavegacion {
     MatSidenavModule,
     MatToolbarModule,
     BrandLogo,
+    Icono,
   ],
   templateUrl: './app-layout.html',
   styleUrl: './app-layout.scss',
@@ -118,13 +120,13 @@ export class AppLayout {
           etiqueta: 'Técnicos',
           icono: 'verified_user',
           ruta: '/app/admin/tecnicos',
-          disponible: false,
+          disponible: true,
         },
         {
           etiqueta: 'Usuarios',
           icono: 'group',
           ruta: '/app/admin/usuarios',
-          disponible: false,
+          disponible: true,
         },
       );
     }

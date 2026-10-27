@@ -174,26 +174,29 @@
           <div>
             <h2 id="titulo-admin">Panel administrativo</h2>
             <p class="ft-muted">
-              La gestión operativa se habilitará en las siguientes fases del proyecto.
+              Revisa las cuentas y la verificación de técnicos desde un solo lugar.
             </p>
           </div>
           <span class="estado estado--ok">Administrador</span>
         </div>
         <div class="admin__resumen">
-          <div>
+          <a class="admin__acceso" routerLink="/app/admin/tecnicos">
             <mat-icon aria-hidden="true">verified_user</mat-icon>
             <strong>Verificación de técnicos</strong>
-            <span class="ft-muted">Revisa documentos y aprueba perfiles.</span>
-          </div>
-          <div>
+            <span class="ft-muted">Consulta perfiles y registra la decisión.</span>
+            <mat-icon class="admin__flecha" aria-hidden="true">arrow_forward</mat-icon>
+          </a>
+          <a class="admin__acceso" routerLink="/app/admin/usuarios">
             <mat-icon aria-hidden="true">group</mat-icon>
             <strong>Usuarios y accesos</strong>
             <span class="ft-muted">Suspende o reactiva cuentas.</span>
-          </div>
-          <div>
+            <mat-icon class="admin__flecha" aria-hidden="true">arrow_forward</mat-icon>
+          </a>
+          <div class="admin__acceso admin__acceso--bloqueado">
             <mat-icon aria-hidden="true">monitoring</mat-icon>
             <strong>Reportes</strong>
             <span class="ft-muted">Consulta indicadores y exporta información.</span>
+            <span class="admin__pronto">Próximamente</span>
           </div>
         </div>
       </section>
@@ -251,21 +254,21 @@
           </article>
         } @else {
           <article class="modulo ft-card">
-            <mat-icon aria-hidden="true">verified_user</mat-icon>
-            <h3>Técnicos</h3>
-            <p class="ft-muted">Aprobar, observar o rechazar perfiles.</p>
-            <span class="modulo__estado">Próximamente</span>
-          </article>
-          <article class="modulo ft-card">
-            <mat-icon aria-hidden="true">group</mat-icon>
-            <h3>Usuarios</h3>
-            <p class="ft-muted">Administrar cuentas y estados de acceso.</p>
-            <span class="modulo__estado">Próximamente</span>
-          </article>
-          <article class="modulo ft-card">
             <mat-icon aria-hidden="true">summarize</mat-icon>
             <h3>Reportes</h3>
             <p class="ft-muted">Indicadores operativos y exportación.</p>
+            <span class="modulo__estado">Próximamente</span>
+          </article>
+          <article class="modulo ft-card">
+            <mat-icon aria-hidden="true">category</mat-icon>
+            <h3>Catálogos</h3>
+            <p class="ft-muted">Gestión de especialidades, distritos y tipos de servicio.</p>
+            <span class="modulo__estado">Próximamente</span>
+          </article>
+          <article class="modulo ft-card">
+            <mat-icon aria-hidden="true">tune</mat-icon>
+            <h3>Parámetros</h3>
+            <p class="ft-muted">Configuración de comisiones, movilidad y topes.</p>
             <span class="modulo__estado">Próximamente</span>
           </article>
         }

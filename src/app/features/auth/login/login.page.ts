@@ -8,6 +8,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { esApiError } from '../../../core/http/api-error';
+import { Icono } from '../../../shared/ui/icono';
 import { NotificacionService } from '../../../shared/ui/notificacion.service';
 
 @Component({
@@ -20,6 +21,7 @@ import { NotificacionService } from '../../../shared/ui/notificacion.service';
     MatIconModule,
     MatInputModule,
     MatProgressSpinnerModule,
+    Icono,
   ],
   templateUrl: './login.page.html',
   styleUrl: './login.page.scss',
