@@ -1,0 +1,232 @@
+@if (cargando()) {
+  <div class="detalle detalle--cargando">
+    <mat-spinner diameter="36" aria-label="Cargando la solicitud" />
+    <p class="ft-muted">Cargando la solicitud…</p>
+  </div>
+} @else if (error(); as fallo) {
+  <div class="detalle ft-page">
+    <div class="ft-alert ft-alert--error" role="alert">
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <div class="detalle__error">
+        <strong>No pudimos cargar la solicitud</strong>
+        <p>{{ fallo.mensaje }}</p>
+        @if (fallo.detalles.length > 0) {
+          <ul class="detalle__detalles">
+            @for (detalle of fallo.detalles; track detalle) {
+              <li>{{ detalle }}</li>
+            }
+          </ul>
+        }
+        <div class="detalle__error-acciones">
+          <button mat-stroked-button type="button" (click)="reintentarCarga()">
+            <mat-icon aria-hidden="true">refresh</mat-icon>
+            Reintentar
+          </button>
+          <a mat-button routerLink="/app/cliente/solicitudes">Volver a mis solicitudes</a>
+        </div>
+      </div>
+    </div>
+  </div>
+} @else if (solicitud(); as s) {
+  <div class="detalle ft-page">
+    <header class="detalle__cabecera">
+      <div>
+        <a class="detalle__volver" routerLink="/app/cliente/solicitudes">
+          <mat-icon aria-hidden="true">arrow_back</mat-icon>
+          Mis solicitudes
+        </a>
+        <p class="ft-eyebrow">Solicitud #{{ s.id }}</p>
+        <h1>{{ s.tipoEquipo }} · {{ s.tipoServicio }}</h1>
+        <div class="detalle__badges">
+          <app-estado-badge [texto]="etiquetasEstado[s.estado]" [tono]="tonosEstado[s.estado]" />
+          <app-estado-badge
+            [texto]="etiquetasUrgencia[s.urgencia]"
+            [tono]="tonosUrgencia[s.urgencia]"
+          />
+        </div>
+      </div>
+      <div class="detalle__acciones">
+        @if (puedeEditar()) {
+          <a mat-stroked-button [routerLink]="['/app/cliente/solicitudes', s.id, 'editar']">
+            <mat-icon aria-hidden="true">edit</mat-icon>
+            Editar solicitud
+          </a>
+        }
+        @if (puedeCancelar()) {
+          <button mat-stroked-button type="button" [disabled]="cancelando()" (click)="cancelar()">
+            <mat-icon aria-hidden="true">cancel</mat-icon>
+            {{ cancelando() ? 'Cancelando…' : 'Cancelar solicitud' }}
+          </button>
+        }
+      </div>
+    </header>
+
+    @if (s.estado === 'CANCELADA') {
+      <div class="ft-alert ft-alert--error" role="status">
+        <mat-icon aria-hidden="true">cancel</mat-icon>
+        <div>
+          <strong>Esta solicitud fue cancelada.</strong>
+          @if (s.motivoCancelacion) {
+            <p>Motivo: {{ s.motivoCancelacion }}</p>
+          } @else {
+            <p>No se registró un motivo de cancelación.</p>
+          }
+        </div>
+      </div>
+    } @else if (!puedeEditar() && !puedeCancelar()) {
+      <div class="ft-alert ft-alert--info" role="note">
+        <mat-icon aria-hidden="true">info</mat-icon>
+        <span>
+          Esta solicitud se encuentra en estado {{ etiquetasEstado[s.estado].toLowerCase() }} y ya
+          no admite edición ni cancelación.
+        </span>
+      </div>
+    }
+
+    <div class="detalle__layout">
+      <div class="detalle__principal">
+        <section class="detalle__panel ft-card" aria-labelledby="titulo-descripcion">
+          <h2 id="titulo-descripcion">Descripción del problema</h2>
+          <p class="detalle__descripcion">{{ s.descripcion }}</p>
+        </section>
+
+        <section class="detalle__panel ft-card" aria-labelledby="titulo-equipo">
+          <h2 id="titulo-equipo">Equipo y servicio</h2>
+          <dl class="detalle__lista">
+            <div>
+              <dt>Tipo de equipo</dt>
+              <dd>{{ s.tipoEquipo }}</dd>
+            </div>
+            <div>
+              <dt>Tipo de servicio</dt>
+              <dd>{{ s.tipoServicio }}</dd>
+            </div>
+            <div>
+              <dt>Marca</dt>
+              <dd>{{ s.marca ?? 'No indicada' }}</dd>
+            </div>
+            <div>
+              <dt>Modelo</dt>
+              <dd>{{ s.modelo ?? 'No indicado' }}</dd>
+            </div>
+            <div>
+              <dt>Urgencia</dt>
+              <dd>{{ etiquetasUrgencia[s.urgencia] }}</dd>
+            </div>
+            <div>
+              <dt>Presupuesto referencial</dt>
+              <dd>
+                @if (s.presupuestoReferencial !== null) {
+                  {{ s.presupuestoReferencial | currency: 'PEN' : 'symbol-narrow' : '1.2-2' }}
+                } @else {
+                  A convenir
+                }
+              </dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="detalle__panel ft-card" aria-labelledby="titulo-ubicacion">
+          <h2 id="titulo-ubicacion">Ubicación y preferencias</h2>
+          <dl class="detalle__lista">
+            <div>
+              <dt>Modalidad</dt>
+              <dd>{{ etiquetasModalidad[s.modalidad] }}</dd>
+            </div>
+            <div>
+              <dt>Distrito</dt>
+              <dd>{{ s.distrito }}</dd>
+            </div>
+            <div>
+              <dt>Dirección</dt>
+              <dd>{{ s.direccion ?? 'No registrada' }}</dd>
+            </div>
+            <div>
+              <dt>Referencia</dt>
+              <dd>{{ s.referencia ?? 'No registrada' }}</dd>
+            </div>
+            <div>
+              <dt>Fecha preferida</dt>
+              <dd>
+                @if (s.fechaPreferida) {
+                  {{ s.fechaPreferida | date: 'dd MMM yyyy' }}
+                } @else {
+                  Sin preferencia
+                }
+              </dd>
+            </div>
+            <div>
+              <dt>Horario preferido</dt>
+              <dd>{{ s.horarioPreferido ?? 'Sin preferencia' }}</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="detalle__panel ft-card" aria-labelledby="titulo-fotos">
+          <h2 id="titulo-fotos">Fotos de la solicitud</h2>
+          @if (s.imagenes.length === 0) {
+            <p class="detalle__vacio">Esta solicitud no tiene fotos registradas.</p>
+          } @else {
+            <ul class="detalle__galeria" aria-label="Fotos de la solicitud">
+              @for (imagen of s.imagenes; track imagen.id) {
+                <li>
+                  <app-imagen-autenticada
+                    [src]="imagen.url"
+                    [alt]="'Foto ' + imagen.orden + ' de la solicitud'"
+                  />
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      </div>
+
+      <aside class="detalle__lateral">
+        <section class="detalle__panel ft-card" aria-labelledby="titulo-estado">
+          <h2 id="titulo-estado">Estado de la solicitud</h2>
+          <dl class="detalle__lista">
+            <div>
+              <dt>Estado</dt>
+              <dd>{{ etiquetasEstado[s.estado] }}</dd>
+            </div>
+            <div>
+              <dt>Publicada</dt>
+              <dd>{{ s.creadoEn | date: 'dd MMM yyyy, HH:mm' }}</dd>
+            </div>
+            <div>
+              <dt>Vigencia</dt>
+              <dd>{{ s.fechaVencimiento | date: 'dd MMM yyyy, HH:mm' }}</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="detalle__panel ft-card" aria-labelledby="titulo-acciones">
+          <h2 id="titulo-acciones">Acciones</h2>
+          <div class="detalle__acciones-lista">
+            <a mat-stroked-button routerLink="/app/cliente/solicitudes">
+              <mat-icon aria-hidden="true">list_alt</mat-icon>
+              Volver a mis solicitudes
+            </a>
+            @if (puedeEditar()) {
+              <a mat-stroked-button [routerLink]="['/app/cliente/solicitudes', s.id, 'editar']">
+                <mat-icon aria-hidden="true">edit</mat-icon>
+                Editar datos
+              </a>
+            }
+            @if (puedeCancelar()) {
+              <button
+                mat-stroked-button
+                type="button"
+                [disabled]="cancelando()"
+                (click)="cancelar()"
+              >
+                <mat-icon aria-hidden="true">cancel</mat-icon>
+                {{ cancelando() ? 'Cancelando…' : 'Cancelar solicitud' }}
+              </button>
+            }
+          </div>
+        </section>
+      </aside>
+    </div>
+  </div>
+}

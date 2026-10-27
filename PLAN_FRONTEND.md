@@ -52,7 +52,7 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
 | 1    | Autenticación, sesión, guards, interceptores y layouts | ✅ Completada |
 | 2    | Panel admin: técnicos y usuarios                       | ✅ Completada |
 | 3    | Registro y perfil de técnico                           | ✅ Completada |
-| 4    | Cliente: solicitudes y adjuntos                        | ⏳ Pendiente  |
+| 4    | Cliente: solicitudes y adjuntos                        | ✅ Completada |
 | 5    | Técnico: solicitudes disponibles y ofertas             | ⏳ Pendiente  |
 | 6    | Negociación y ejecución del servicio                   | ⏳ Pendiente  |
 | 7    | Cierre, constancias, reseñas y reclamos                | ⏳ Pendiente  |
@@ -191,21 +191,22 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
 - [x] Enlaces al registro de técnico desde el login y el registro de cliente.
 - [x] Tras el registro se redirige al login con un aviso; el técnico inicia sesión por separado.
 - [x] Pantalla `/app/tecnico/perfil` protegida con `roleGuard` para `TECNICO`, con identidad,
-      estado de verificación, motivo, modalidades, descripción, experiencia, estadísticas y
-      datos de la cuenta.
+      estado de verificación, motivo, modalidades, descripción, experiencia, estadísticas, DNI,
+      celular, especialidades, distritos y datos de la cuenta.
 - [x] Mensajes específicos para `PENDIENTE`, `APROBADO`, `OBSERVADO` y `RECHAZADO`, además del
       bloqueo por deuda.
-- [x] Perfil de solo lectura: no se ofrecen acciones de edición, foto ni documentos.
+- [x] Perfil editable con `PUT /api/perfil/tecnico` y foto con `POST /api/perfil/foto`, completado
+      junto con la Fase 4. Editar reinicia la verificación a `PENDIENTE`; cambiar la foto no.
 - [x] Acceso a “Mi perfil” desde la navegación del técnico.
 - [x] Pruebas unitarias de servicio de catálogos, registro de técnico, validaciones, estados del
       formulario y mensajes del perfil.
 - [x] E2E real: registra un técnico único desde la interfaz, inicia sesión, abre su perfil,
-      comprueba el estado “En revisión” y audita ambas pantallas con Axe en escritorio y 360 px.
+      comprueba el estado “En revisión”, la edición y la foto; audita ambas pantallas con Axe en
+      escritorio y 360 px.
 
-> Brechas: `GET /api/auth/me` no devuelve DNI, celular, especialidades, distritos ni datos del
-> taller del técnico, por lo que el perfil solo muestra los campos disponibles. Tampoco existen
-> endpoints para editar el perfil o la foto ni para subir documentos de verificación. La pantalla
-> lo indica y no promete esas funciones. El E2E crea cuentas reales y no hay endpoint de limpieza.
+> Brechas: los documentos de verificación siguen sin flujo administrativo porque
+> `documento_tecnico` no tiene controlador expuesto. No hay endpoints de cambio o recuperación de
+> contraseña. El E2E crea cuentas reales y no hay endpoint de limpieza.
 
 ### Criterios de cierre
 
@@ -215,14 +216,60 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
 - [x] Axe sin violaciones en el formulario de registro y en el perfil del técnico.
 - [x] El registro real responde `201` y el perfil muestra el estado `PENDIENTE`.
 
-## 8. Fase 4 — Cliente: solicitudes y adjuntos ⏳
+## 8. Fase 4 — Cliente: solicitudes, perfil editable y adjuntos ✅
 
-- [ ] Crear solicitud multipart con tipo de equipo, tipo de servicio, modalidad y fotos.
-- [ ] Listar “mis solicitudes” con estados, paginación visual y estados vacío/error.
-- [ ] Ver detalle, editar y cancelar solicitudes permitidas.
-- [ ] Visualizar imágenes mediante endpoints autorizados.
-- [ ] Validaciones de archivos: tamaño, cantidad y tipo.
-- [ ] Pruebas de formulario, estados y E2E de creación.
+### Endpoints usados
+
+- `POST /api/solicitudes` multipart con `datos` JSON y `fotos` (1 a 5 imágenes JPG/PNG de hasta
+  5 MB).
+- `GET /api/solicitudes/mias?estado=` para el listado del cliente autenticado.
+- `GET /api/solicitudes/{id}` para el detalle con ids de catálogo, dirección e imágenes.
+- `PUT /api/solicitudes/{id}` para actualizar solo los datos; exige estado `PUBLICADA`.
+- `DELETE /api/solicitudes/{id}?motivo=` para cancelar; aplica a `PUBLICADA` y `CON_OFERTAS`.
+- `GET /api/solicitudes/{id}/imagenes/{imagenId}` para descargar imágenes con JWT.
+- `GET /api/catalogos/tipos-equipo`, `/tipos-servicio` y `/distritos` para el formulario.
+- `PUT /api/perfil/tecnico`, `POST /api/perfil/foto` y `GET /api/tecnicos/{id}/foto` para cerrar
+  la brecha de edición y foto del perfil técnico.
+
+### Frontend
+
+- [x] Formulario de creación y edición con tipo de equipo, tipo de servicio, marca, modelo,
+      descripción, urgencia, modalidad, distrito, dirección, fecha, horario y presupuesto.
+- [x] Creación multipart con 1 a 5 fotos JPG/PNG de hasta 5 MB y vista previa local.
+- [x] Validación de archivos por tipo, tamaño y cantidad antes de enviar.
+- [x] Listado “Mis solicitudes” con filtro de estado contra el backend, paginación visual de seis
+      elementos y estados de carga, error con reintento y vacío.
+- [x] Detalle con datos, imágenes autorizadas, motivo de cancelación y acciones según el estado.
+- [x] Edición solo para `PUBLICADA`; actualiza datos y conserva las fotos existentes.
+- [x] Cancelación para `PUBLICADA` y `CON_OFERTAS` mediante diálogo accesible con motivo opcional
+      de hasta 300 caracteres.
+- [x] Imágenes descargadas como blob autenticado con `ImagenAutenticada`; nunca se usan URLs
+      públicas.
+- [x] Rutas `/app/cliente/solicitudes`, `/nueva`, `/{id}` y `/{id}/editar` con lazy loading y
+      `roleGuard` de cliente.
+- [x] Panel del cliente con CTA “Nueva solicitud” y accesos a “Mis solicitudes”; navegación del
+      cliente habilitada.
+- [x] Perfil del técnico editable con DNI, celular, especialidades, distritos, modalidades, taller
+      y garantía; la foto se muestra mediante endpoint autorizado.
+- [x] Editar el perfil reinicia la verificación a `PENDIENTE` y limpia motivo, verificador y
+      fecha; cambiar la foto no reinicia la verificación.
+- [x] Pruebas unitarias de `SolicitudesService`, formulario, listado, detalle, diálogo de
+      cancelación, `PerfilTecnicoService` e `ImagenAutenticada`.
+- [x] E2E de Axe en escritorio y 360 px para formulario, detalle, listado y diálogo.
+- [x] E2E real: crea un cliente por API, publica una solicitud con foto, la edita, la cancela y la
+      encuentra con el filtro “Cancelada”.
+
+> Brechas: `PUT /api/solicitudes/{id}` no permite reemplazar ni agregar fotos; solo se adjuntan al
+> crear. No existe un endpoint de limpieza de cuentas ni de solicitudes creadas por las pruebas.
+> Los documentos de verificación del técnico siguen sin controlador expuesto.
+
+### Criterios de cierre
+
+- [x] Build de producción, lint y formato sin errores.
+- [x] 128 pruebas unitarias en 21 archivos, todas en verde.
+- [x] 14 pruebas E2E en verde en Chromium y móvil de 360 px con el backend local.
+- [x] Axe sin violaciones en formulario, detalle, listado y diálogo de cancelación.
+- [x] Creación, edición y cancelación reales verificadas contra la API.
 
 ## 9. Fase 5 — Técnico: solicitudes y ofertas ⏳
 
@@ -283,8 +330,9 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
 - [ ] Cierre de sesión por expiración con aviso accesible.
 - [ ] Pruebas de polling/refresco y E2E.
 
-> Brecha: no hay endpoints de edición de perfil, cambio de contraseña ni recuperación de
-> contraseña. No se deben crear pantallas que prometan esas funciones.
+> Brecha: no hay endpoints de edición del perfil de usuario general (el perfil profesional del
+> técnico sí es editable en Fase 4), cambio de contraseña ni recuperación de contraseña. No se
+> deben crear pantallas que prometan esas funciones.
 
 ## 15. Fase 11 — Endurecimiento UX, rendimiento y seguridad ⏳
 
@@ -306,15 +354,16 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
 
 ## 17. Brechas de API conocidas
 
-| Necesidad                           | Situación                              | Decisión                                                                                            |
-| ----------------------------------- | -------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| Perfil del usuario autenticado      | Implementado `GET /api/auth/me`        | Usar en toda la sesión                                                                              |
-| Listado de técnicos para admin      | Implementado `GET /api/admin/tecnicos` | Usar `id` para verificar y `usuarioId` para usuarios                                                |
-| Documentos de verificación          | Tabla sin controlador                  | No implementar carga hasta habilitar endpoints                                                      |
-| Edición de perfil/foto              | Sin endpoints                          | Solo lectura                                                                                        |
-| Recuperación/cambio de contraseña   | Sin endpoints                          | No mostrar enlaces                                                                                  |
-| Búsqueda/perfil público de técnicos | Sin endpoint                           | Posponer                                                                                            |
-| Datos de prueba E2E                 | Sin seed específico                    | La prueba de aprobación crea un técnico único vía API; requiere backend y MySQL con `E2E_BACKEND=1` |
+| Necesidad                           | Situación                                                    | Decisión                                                                                  |
+| ----------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| Perfil del usuario autenticado      | Implementado `GET /api/auth/me`                              | Usar en toda la sesión                                                                    |
+| Listado de técnicos para admin      | Implementado `GET /api/admin/tecnicos`                       | Usar `id` para verificar y `usuarioId` para usuarios                                      |
+| Documentos de verificación          | Tabla sin controlador                                        | No implementar carga hasta habilitar endpoints                                            |
+| Edición de perfil/foto del técnico  | Implementado `PUT /api/perfil/tecnico` y `POST /perfil/foto` | Editar reinicia la verificación; la foto no                                               |
+| Recuperación/cambio de contraseña   | Sin endpoints                                                | No mostrar enlaces                                                                        |
+| Búsqueda/perfil público de técnicos | Sin endpoint                                                 | Posponer                                                                                  |
+| Fotos en edición de solicitud       | `PUT /api/solicitudes/{id}` solo actualiza datos             | Adjuntar fotos únicamente al crear                                                        |
+| Datos de prueba E2E                 | Sin seed específico ni limpieza                              | Los E2E crean cuentas y solicitudes únicas; requieren backend y MySQL con `E2E_BACKEND=1` |
 
 ## 18. Convenciones de implementación
 
@@ -332,8 +381,9 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
 
 ## 19. Registro de avances
 
-| Fecha      | Fase  | Evidencia                                                                                                                                                                                                 |
-| ---------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-10-27 | 0 y 1 | Build de producción, 21 pruebas unitarias, lint, Prettier y 8 pruebas E2E con Axe en escritorio y 360 px; login real contra backend verificado                                                            |
-| 2026-10-27 | 2     | Build de producción, 53 pruebas unitarias, lint y Prettier; 10 pruebas E2E con Axe en escritorio y 360 px; aprobación real de un técnico creado vía API y estado verificado con `GET /api/admin/tecnicos` |
-| 2026-10-27 | 3     | Build de producción, 73 pruebas unitarias, lint y Prettier; 12 pruebas E2E con Axe en escritorio y 360 px; registro real de un técnico, login y perfil `PENDIENTE` verificado desde la interfaz           |
+| Fecha      | Fase  | Evidencia                                                                                                                                                                                                     |
+| ---------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-27 | 0 y 1 | Build de producción, 21 pruebas unitarias, lint, Prettier y 8 pruebas E2E con Axe en escritorio y 360 px; login real contra backend verificado                                                                |
+| 2026-10-27 | 2     | Build de producción, 53 pruebas unitarias, lint y Prettier; 10 pruebas E2E con Axe en escritorio y 360 px; aprobación real de un técnico creado vía API y estado verificado con `GET /api/admin/tecnicos`     |
+| 2026-10-27 | 3     | Build de producción, 73 pruebas unitarias, lint y Prettier; 12 pruebas E2E con Axe en escritorio y 360 px; registro real de un técnico, login y perfil `PENDIENTE` verificado desde la interfaz               |
+| 2026-10-27 | 4     | Build de producción, 128 pruebas unitarias, lint y Prettier; 14 pruebas E2E con Axe en escritorio y 360 px; perfil técnico editable con foto autorizada y solicitud real con foto creada, editada y cancelada |

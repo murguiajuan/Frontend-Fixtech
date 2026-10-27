@@ -6,11 +6,11 @@ FIXTECH en `http://localhost:8082/api`.
 
 ## Estado actual
 
-Fases 0, 1, 2 y 3 completadas: base técnica, autenticación JWT, sesión, guards, interceptores,
-layouts por rol, panel inicial, administración de técnicos y usuarios, registro de técnico con
-catálogos y perfil con estado de verificación. Las demás pantallas de negocio se incorporan en
-las siguientes fases. El plan completo y el progreso están en
-[`PLAN_FRONTEND.md`](./PLAN_FRONTEND.md).
+Fases 0, 1, 2, 3 y 4 completadas: base técnica, autenticación JWT, sesión, guards, interceptores,
+layouts por rol, panel inicial, administración de técnicos y usuarios, registro y perfil editable
+del técnico con foto autorizada, y solicitudes del cliente con fotos, listado, detalle, edición y
+cancelación. Las demás pantallas de negocio se incorporan en las siguientes fases. El plan completo
+y el progreso están en [`PLAN_FRONTEND.md`](./PLAN_FRONTEND.md).
 
 ## Stack
 
@@ -76,9 +76,11 @@ E2E_BACKEND=1 npm run e2e
 La prueba de aprobación crea un técnico único mediante `POST /api/auth/register/tecnico`, inicia
 sesión como administrador, aprueba el perfil y comprueba el estado con
 `GET /api/admin/tecnicos`. La prueba de registro de técnico crea otra cuenta única desde la
-interfaz, inicia sesión y verifica el perfil en estado `PENDIENTE`. Requiere el backend y MySQL
-locales. Sin `E2E_BACKEND=1` esas pruebas se omiten y solo corren las pruebas públicas. No existe
-un endpoint para limpiar las cuentas creadas por las pruebas.
+interfaz, inicia sesión, verifica el perfil en estado `PENDIENTE` y comprueba la edición y la foto.
+La prueba de solicitudes registra un cliente único, publica una solicitud con foto, la edita, la
+cancela y la busca en “Mis solicitudes”. Requiere el backend y MySQL locales. Sin `E2E_BACKEND=1`
+esas pruebas se omiten y solo corren las pruebas públicas. No existe un endpoint para limpiar las
+cuentas y solicitudes creadas por las pruebas.
 
 ## Estructura
 
@@ -94,10 +96,11 @@ src/
 │   ├── features/
 │   │   ├── admin/         # Verificación de técnicos y gestión de usuarios
 │   │   ├── auth/          # Login, registro de cliente y registro de técnico
+│   │   ├── cliente/       # Solicitudes: creación, listado, detalle, edición y cancelación
 │   │   ├── dashboard/     # Panel inicial por rol
 │   │   ├── errors/        # Páginas 403 y 404
-│   │   └── tecnico/       # Perfil del técnico y estado de verificación
-│   ├── shared/ui/         # Marca, badges, iconos y notificaciones
+│   │   └── tecnico/       # Perfil editable del técnico, foto y estado de verificación
+│   ├── shared/ui/         # Marca, badges, iconos, notificaciones e imágenes autenticadas
 │   ├── app.config.ts      # Locale es-PE, router y HttpClient con interceptores
 │   └── app.routes.ts      # Rutas públicas y privadas con lazy loading
 ├── environments/          # URLs de API por entorno
@@ -110,7 +113,7 @@ e2e/                       # Pruebas Playwright y Axe
 
 | Rol       | Acceso inicial | Navegación habilitada                                                    |
 | --------- | -------------- | ------------------------------------------------------------------------ |
-| `CLIENTE` | `/app/inicio`  | Inicio; solicitudes y servicios aparecen como “Próximamente”             |
+| `CLIENTE` | `/app/inicio`  | Inicio, nueva solicitud y mis solicitudes; servicios como “Próximamente” |
 | `TECNICO` | `/app/inicio`  | Inicio y mi perfil; ofertas bloqueadas si no está aprobado o tiene deuda |
 | `ADMIN`   | `/app/inicio`  | Inicio, técnicos y usuarios; reportes y catálogos como “Próximamente”    |
 
@@ -151,12 +154,38 @@ Los guards protegen las rutas privadas:
   limpian cuando no aplican.
 - El registro responde `201` sin tokens; la aplicación redirige al login con un aviso para que el
   técnico inicie sesión por separado.
-- `/app/tecnico/perfil` es de solo lectura y muestra identidad, estado de verificación, motivo,
-  modalidades, descripción, experiencia, calificación, reseñas, servicios completados y bloqueo
-  por deuda. Incluye mensajes específicos para `PENDIENTE`, `APROBADO`, `OBSERVADO` y `RECHAZADO`.
-- La edición de perfil, foto y documentos no está disponible porque la API no expone esos
-  endpoints. El perfil tampoco puede mostrar DNI, celular, especialidades, distritos ni datos del
-  taller porque `GET /api/auth/me` no los devuelve.
+- `/app/tecnico/perfil` muestra identidad, estado de verificación, motivo, modalidades,
+  descripción, experiencia, calificación, reseñas, servicios completados, bloqueo por deuda, DNI,
+  celular, especialidades, distritos y datos del taller. Incluye mensajes específicos para
+  `PENDIENTE`, `APROBADO`, `OBSERVADO` y `RECHAZADO`.
+- La edición usa `PUT /api/perfil/tecnico` con datos personales y profesionales. Al guardar, el
+  backend vuelve la verificación a `PENDIENTE` y limpia motivo, verificador y fecha; la interfaz
+  avisa de ese efecto antes de confirmar.
+- La foto se sube con `POST /api/perfil/foto` (multipart, campo `foto`) y se muestra con
+  `GET /api/tecnicos/{id}/foto`, que exige JWT. Cambiar la foto no reinicia la verificación.
+- La API valida DNI de 8 dígitos, celular `9XXXXXXXX`, especialidades y distritos, al menos una
+  modalidad y los datos del taller cuando corresponde.
+
+> Brecha: los documentos de verificación siguen sin flujo administrativo porque
+> `documento_tecnico` no tiene controlador expuesto. El perfil no inventa documentos. Tampoco
+> existen endpoints de cambio o recuperación de contraseña.
+
+## Solicitudes del cliente
+
+- `/app/cliente/solicitudes` lista `GET /api/solicitudes/mias` con filtro `estado` y paginación
+  visual de seis elementos; incluye estados de carga, error con reintento y vacío.
+- `/app/cliente/solicitudes/nueva` crea con `POST /api/solicitudes` multipart: `datos` JSON y
+  `fotos` (1 a 5 imágenes JPG/PNG de hasta 5 MB). Carga tipos de equipo, tipos de servicio y
+  distritos desde `/api/catalogos/*`.
+- `/app/cliente/solicitudes/{id}` muestra el detalle, las fotos y el motivo de cancelación. Solo
+  `PUBLICADA` permite editar y solo `PUBLICADA` o `CON_OFERTAS` permite cancelar; el diálogo de
+  cancelación acepta un motivo opcional de hasta 300 caracteres.
+- `/app/cliente/solicitudes/{id}/editar` usa `PUT /api/solicitudes/{id}` y actualiza solo los
+  datos; las fotos solo se adjuntan al crear.
+- Las imágenes se descargan como blob con JWT desde
+  `GET /api/solicitudes/{id}/imagenes/{imagenId}`; nunca se enlazan como URL pública.
+- La validación de archivos rechaza tipos distintos de JPG/PNG, archivos de más de 5 MB y más de
+  cinco fotos antes de enviar.
 
 ## Autenticación
 
@@ -188,11 +217,10 @@ CSRF. Esta limitación debe revisarse antes del despliegue.
 
 ### Brechas de API
 
-No existen todavía endpoints para carga de documentos de verificación, edición de perfil o
-foto, recuperación/cambio de contraseña ni búsqueda pública de técnicos. Por eso el frontend no
-ofrece esas pantallas ni promete esas funciones. Para técnicos, `GET /api/auth/me` tampoco
-devuelve DNI, celular, especialidades, distritos ni datos del taller; el perfil solo muestra los
-campos disponibles.
+No existen todavía endpoints para carga de documentos de verificación, recuperación/cambio de
+contraseña ni búsqueda pública de técnicos. La edición de perfil y la foto del técnico ya están
+cubiertas por `PUT /api/perfil/tecnico`, `POST /api/perfil/foto` y `GET /api/tecnicos/{id}/foto`.
+Para clientes no existe un endpoint de limpieza de solicitudes creadas por pruebas.
 
 ## Calidad y accesibilidad
 
@@ -208,7 +236,7 @@ npm run e2e
 
 Las pruebas E2E incluyen Axe con las reglas WCAG 2.0/2.1 A y AA en escritorio y en un viewport
 móvil de 360 px. La interfaz es mobile-first, con foco visible, etiquetas explícitas y mensajes
-de error anunciados. Las pantallas y diálogos de las fases 2 y 3 también se auditan; los iconos
+de error anunciados. Las pantallas y diálogos de las fases 2, 3 y 4 también se auditan; los iconos
 de los botones con `aria-label` se renderizan como SVG decorativos para no mezclar ligaduras de
 fuentes con el nombre accesible.
 

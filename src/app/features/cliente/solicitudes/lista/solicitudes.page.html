@@ -1,0 +1,202 @@
+<div class="solicitudes ft-page">
+  <header class="solicitudes__cabecera">
+    <div>
+      <p class="ft-eyebrow">Cliente</p>
+      <h1>Mis solicitudes</h1>
+      <p class="ft-muted">
+        Publica lo que necesitas, revisa las ofertas que recibas y sigue el estado de cada
+        solicitud.
+      </p>
+    </div>
+    <a mat-flat-button routerLink="/app/cliente/solicitudes/nueva" class="solicitudes__nueva">
+      <mat-icon aria-hidden="true">add</mat-icon>
+      Nueva solicitud
+    </a>
+  </header>
+
+  <section class="solicitudes__filtros ft-card" aria-labelledby="titulo-filtros">
+    <div class="solicitudes__filtros-cabecera">
+      <h2 id="titulo-filtros">Filtrar por estado</h2>
+      @if (!cargando()) {
+        <span class="ft-muted" role="status">
+          {{ solicitudes().length }}
+          {{ solicitudes().length === 1 ? 'solicitud' : 'solicitudes' }}
+        </span>
+      }
+    </div>
+    <div class="solicitudes__opciones" role="group" aria-label="Filtrar por estado">
+      @for (opcion of opcionesFiltro; track opcion.valor) {
+        <button
+          mat-stroked-button
+          type="button"
+          class="solicitudes__filtro"
+          [class.solicitudes__filtro--activo]="filtro() === opcion.valor"
+          [attr.aria-pressed]="filtro() === opcion.valor"
+          (click)="filtrar(opcion.valor)"
+        >
+          {{ opcion.etiqueta }}
+        </button>
+      }
+    </div>
+  </section>
+
+  @if (error(); as fallo) {
+    <section class="estado-panel ft-card" role="alert" aria-labelledby="titulo-error-solicitudes">
+      <mat-icon aria-hidden="true">cloud_off</mat-icon>
+      <h2 id="titulo-error-solicitudes">No pudimos cargar tus solicitudes</h2>
+      <p class="ft-muted">{{ fallo.mensaje }}</p>
+      @if (fallo.detalles.length > 0) {
+        <ul class="estado-panel__detalles">
+          @for (detalle of fallo.detalles; track detalle) {
+            <li>{{ detalle }}</li>
+          }
+        </ul>
+      }
+      <button mat-flat-button type="button" (click)="cargar()">
+        <mat-icon aria-hidden="true">refresh</mat-icon>
+        Reintentar
+      </button>
+    </section>
+  } @else if (cargando()) {
+    <section class="estado-panel ft-card" role="status" aria-labelledby="titulo-cargando">
+      <mat-spinner diameter="36" aria-hidden="true" />
+      <h2 id="titulo-cargando">Cargando tus solicitudes…</h2>
+      <p class="ft-muted">Estamos consultando tus publicaciones.</p>
+    </section>
+  } @else if (solicitudes().length === 0) {
+    <section class="estado-panel ft-card" aria-labelledby="titulo-vacio">
+      <mat-icon aria-hidden="true">assignment</mat-icon>
+      <h2 id="titulo-vacio">
+        {{ hayFiltro() ? 'No hay solicitudes en este estado' : 'Aún no tienes solicitudes' }}
+      </h2>
+      <p class="ft-muted">
+        {{
+          hayFiltro()
+            ? 'Prueba con otro estado o revisa todas tus solicitudes.'
+            : 'Publica tu primera solicitud para que los técnicos de tu distrito puedan enviarte ofertas.'
+        }}
+      </p>
+      @if (hayFiltro()) {
+        <button mat-stroked-button type="button" (click)="filtrar(filtroTodas)">
+          <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
+          Ver todas
+        </button>
+      } @else {
+        <a mat-flat-button routerLink="/app/cliente/solicitudes/nueva">
+          <mat-icon aria-hidden="true">add</mat-icon>
+          Crear solicitud
+        </a>
+      }
+    </section>
+  } @else {
+    <section aria-labelledby="titulo-listado">
+      <div class="solicitudes__listado-cabecera">
+        <h2 id="titulo-listado">Tus publicaciones</h2>
+        <p class="ft-muted">
+          {{
+            hayFiltro()
+              ? 'Resultados con el filtro aplicado.'
+              : 'Ordenadas de la más reciente a la más antigua.'
+          }}
+        </p>
+      </div>
+
+      <ul class="solicitudes__lista">
+        @for (solicitud of visibles(); track solicitud.id) {
+          <li>
+            <article class="solicitud ft-card" [attr.aria-labelledby]="'solicitud-' + solicitud.id">
+              <div class="solicitud__imagen">
+                @if (solicitud.imagenPrincipalUrl) {
+                  <app-imagen-autenticada
+                    [src]="solicitud.imagenPrincipalUrl"
+                    [alt]="'Foto principal de la solicitud: ' + solicitud.tipoEquipo"
+                  />
+                } @else {
+                  <span class="solicitud__sin-imagen" role="img" aria-label="Solicitud sin foto">
+                    <mat-icon aria-hidden="true">image</mat-icon>
+                  </span>
+                }
+              </div>
+
+              <div class="solicitud__cuerpo">
+                <div class="solicitud__badges">
+                  <app-estado-badge
+                    [texto]="etiquetasEstado[solicitud.estado]"
+                    [tono]="tonosEstado[solicitud.estado]"
+                  />
+                  <app-estado-badge
+                    [texto]="etiquetasUrgencia[solicitud.urgencia]"
+                    [tono]="tonosUrgencia[solicitud.urgencia]"
+                  />
+                </div>
+
+                <h3 [id]="'solicitud-' + solicitud.id">
+                  {{ solicitud.tipoEquipo }} · {{ solicitud.tipoServicio }}
+                </h3>
+                <p class="solicitud__descripcion">{{ solicitud.descripcion }}</p>
+
+                <dl class="solicitud__meta">
+                  <div>
+                    <dt>Distrito</dt>
+                    <dd>{{ solicitud.distrito }}</dd>
+                  </div>
+                  <div>
+                    <dt>Modalidad</dt>
+                    <dd>{{ etiquetasModalidad[solicitud.modalidad] }}</dd>
+                  </div>
+                  <div>
+                    <dt>Publicada</dt>
+                    <dd>{{ solicitud.creadoEn | date: 'dd MMM yyyy' }}</dd>
+                  </div>
+                </dl>
+
+                <div class="solicitud__pie">
+                  <span class="solicitud__presupuesto">
+                    @if (solicitud.presupuestoReferencial !== null) {
+                      S/ {{ solicitud.presupuestoReferencial | number: '1.2-2' }}
+                      <small>referencial</small>
+                    } @else {
+                      A convenir
+                    }
+                  </span>
+                  <a
+                    mat-stroked-button
+                    [routerLink]="['/app/cliente/solicitudes', solicitud.id]"
+                    [attr.aria-label]="'Ver detalle de la solicitud ' + solicitud.id"
+                  >
+                    Ver detalle
+                    <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+                  </a>
+                </div>
+              </div>
+            </article>
+          </li>
+        }
+      </ul>
+
+      @if (totalPaginas() > 1) {
+        <nav class="solicitudes__paginacion" aria-label="Paginación de solicitudes">
+          <button
+            mat-stroked-button
+            type="button"
+            [disabled]="paginaActual() === 1"
+            (click)="cambiarPagina(-1)"
+          >
+            <mat-icon aria-hidden="true">chevron_left</mat-icon>
+            Anterior
+          </button>
+          <span role="status">Página {{ paginaActual() }} de {{ totalPaginas() }}</span>
+          <button
+            mat-stroked-button
+            type="button"
+            [disabled]="paginaActual() === totalPaginas()"
+            (click)="cambiarPagina(1)"
+          >
+            Siguiente
+            <mat-icon aria-hidden="true">chevron_right</mat-icon>
+          </button>
+        </nav>
+      }
+    </section>
+  }
+</div>

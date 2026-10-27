@@ -83,7 +83,7 @@ export class AppLayout {
           etiqueta: 'Mis solicitudes',
           icono: 'assignment',
           ruta: '/app/cliente/solicitudes',
-          disponible: false,
+          disponible: true,
         },
         {
           etiqueta: 'Mis servicios',

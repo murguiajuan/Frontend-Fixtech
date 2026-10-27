@@ -36,13 +36,23 @@ const PERFIL_TECNICO_PENDIENTE: PerfilUsuario = {
   fotoUrl: null,
   tecnico: {
     id: 20,
+    dni: '12345678',
+    celular: '987654321',
     estadoVerificacion: 'PENDIENTE',
     motivoVerificacion: null,
     bloqueadoPorDeuda: false,
     saldoComisionPendiente: 0,
     modalidades: ['DOMICILIO'],
+    ofreceDomicilio: true,
+    ofreceTaller: false,
+    especialidades: [],
+    distritos: [],
     descripcion: null,
     aniosExperiencia: 8,
+    direccionTaller: null,
+    referenciaTaller: null,
+    horarioTaller: null,
+    garantiaDiasDefecto: 7,
     calificacionPromedio: 4.5,
     totalResenas: 4,
     serviciosCompletados: 9,
@@ -93,6 +103,18 @@ describe('AuthService', () => {
     expect(session.accessToken()).toBe('access-token');
     expect(auth.rol()).toBe('CLIENTE');
     expect(auth.autenticado()).toBe(true);
+  });
+
+  it('actualiza el perfil en memoria después de una edición', () => {
+    session.guardar(TOKENS);
+    auth.cargarPerfil().subscribe();
+    http.expectOne(`${environment.apiUrl}/auth/me`).flush(PERFIL_CLIENTE);
+
+    const actualizado: PerfilUsuario = { ...PERFIL_CLIENTE, nombres: 'Lucía Elena' };
+    auth.actualizarPerfil(actualizado);
+
+    expect(auth.perfil()).toEqual(actualizado);
+    expect(auth.nombreCompleto()).toBe('Lucía Elena Ramos');
   });
 
   it('no carga el perfil si no hay sesión', async () => {

@@ -137,8 +137,10 @@
       <section class="panel ft-card" aria-labelledby="titulo-cliente">
         <div class="panel__cabecera">
           <div>
-            <h2 id="titulo-cliente">Tu cuenta está lista</h2>
-            <p class="ft-muted">Muy pronto podrás publicar tu primera solicitud de servicio.</p>
+            <h2 id="titulo-cliente">Publica y sigue tus solicitudes</h2>
+            <p class="ft-muted">
+              Describe lo que necesitas, adjunta fotos y recibe ofertas de técnicos verificados.
+            </p>
           </div>
           <span class="estado estado--ok">Cliente</span>
         </div>
@@ -165,6 +167,16 @@
             </div>
           </li>
         </ol>
+        <div class="cliente__acciones">
+          <a mat-flat-button routerLink="/app/cliente/solicitudes/nueva">
+            <mat-icon aria-hidden="true">add</mat-icon>
+            Nueva solicitud
+          </a>
+          <a mat-stroked-button routerLink="/app/cliente/solicitudes">
+            <mat-icon aria-hidden="true">assignment</mat-icon>
+            Mis solicitudes
+          </a>
+        </div>
       </section>
     }
 
@@ -211,18 +223,18 @@
       </div>
       <div class="modulos">
         @if (esCliente()) {
-          <article class="modulo ft-card">
+          <a class="modulo ft-card modulo--enlace" routerLink="/app/cliente/solicitudes/nueva">
             <mat-icon aria-hidden="true">add_circle</mat-icon>
             <h3>Nueva solicitud</h3>
             <p class="ft-muted">Publica una solicitud con fotos y recibe ofertas.</p>
-            <span class="modulo__estado">Próximamente</span>
-          </article>
-          <article class="modulo ft-card">
+            <span class="modulo__estado">Disponible</span>
+          </a>
+          <a class="modulo ft-card modulo--enlace" routerLink="/app/cliente/solicitudes">
             <mat-icon aria-hidden="true">assignment</mat-icon>
             <h3>Mis solicitudes</h3>
             <p class="ft-muted">Sigue el estado de tus publicaciones activas.</p>
-            <span class="modulo__estado">Próximamente</span>
-          </article>
+            <span class="modulo__estado">Disponible</span>
+          </a>
           <article class="modulo ft-card">
             <mat-icon aria-hidden="true">build_circle</mat-icon>
             <h3>Mis servicios</h3>

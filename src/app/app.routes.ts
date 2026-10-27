@@ -54,6 +54,46 @@ export const routes: Routes = [
           import('./features/dashboard/dashboard.page').then((m) => m.DashboardPage),
       },
       {
+        path: 'cliente/solicitudes',
+        title: 'Mis solicitudes | FIXTECH',
+        canActivate: [roleGuard],
+        data: { roles: ['CLIENTE'] },
+        loadComponent: () =>
+          import('./features/cliente/solicitudes/lista/solicitudes.page').then(
+            (m) => m.SolicitudesPage,
+          ),
+      },
+      {
+        path: 'cliente/solicitudes/nueva',
+        title: 'Nueva solicitud | FIXTECH',
+        canActivate: [roleGuard],
+        data: { roles: ['CLIENTE'] },
+        loadComponent: () =>
+          import('./features/cliente/solicitudes/formulario/solicitud-form.page').then(
+            (m) => m.SolicitudFormPage,
+          ),
+      },
+      {
+        path: 'cliente/solicitudes/:id/editar',
+        title: 'Editar solicitud | FIXTECH',
+        canActivate: [roleGuard],
+        data: { roles: ['CLIENTE'] },
+        loadComponent: () =>
+          import('./features/cliente/solicitudes/formulario/solicitud-form.page').then(
+            (m) => m.SolicitudFormPage,
+          ),
+      },
+      {
+        path: 'cliente/solicitudes/:id',
+        title: 'Detalle de solicitud | FIXTECH',
+        canActivate: [roleGuard],
+        data: { roles: ['CLIENTE'] },
+        loadComponent: () =>
+          import('./features/cliente/solicitudes/detalle/solicitud-detalle.page').then(
+            (m) => m.SolicitudDetallePage,
+          ),
+      },
+      {
         path: 'tecnico/perfil',
         title: 'Mi perfil | FIXTECH',
         canActivate: [roleGuard],

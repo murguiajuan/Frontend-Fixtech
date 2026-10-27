@@ -202,7 +202,7 @@
 }
 
 .registro__catalogos-estado mat-spinner {
-  --mdc-circular-progress-active-indicator-color: var(--ft-primary-600);
+  --mat-progress-spinner-active-indicator-color: var(--ft-primary-600);
 }
 
 .registro__catalogos-error {
@@ -258,7 +258,7 @@
 }
 
 .registro__submit mat-spinner {
-  --mdc-circular-progress-active-indicator-color: currentcolor;
+  --mat-progress-spinner-active-indicator-color: currentcolor;
 }
 
 .registro__alternativa {

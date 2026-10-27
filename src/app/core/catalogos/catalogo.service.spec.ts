@@ -64,4 +64,34 @@ describe('CatalogoService', () => {
 
     expect(respuesta).toEqual(distritos);
   });
+
+  it('obtiene los tipos de equipo activos', () => {
+    const tipos = [{ id: 1, nombre: 'Laptop', activo: true }];
+    let respuesta: unknown;
+
+    servicio.listarTiposEquipo().subscribe((resultado) => {
+      respuesta = resultado;
+    });
+
+    const peticion = http.expectOne(`${environment.apiUrl}/catalogos/tipos-equipo`);
+    expect(peticion.request.method).toBe('GET');
+    peticion.flush(tipos);
+
+    expect(respuesta).toEqual(tipos);
+  });
+
+  it('obtiene los tipos de servicio activos', () => {
+    const tipos = [{ id: 2, nombre: 'Mantenimiento preventivo', activo: true }];
+    let respuesta: unknown;
+
+    servicio.listarTiposServicio().subscribe((resultado) => {
+      respuesta = resultado;
+    });
+
+    const peticion = http.expectOne(`${environment.apiUrl}/catalogos/tipos-servicio`);
+    expect(peticion.request.method).toBe('GET');
+    peticion.flush(tipos);
+
+    expect(respuesta).toEqual(tipos);
+  });
 });

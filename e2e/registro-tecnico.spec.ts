@@ -80,7 +80,20 @@ test.describe('Registro y perfil de técnico', () => {
     await expect(page.getByText('Tu perfil está en revisión')).toBeVisible();
     await expect(page.getByText('En revisión').first()).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Datos de la cuenta' })).toBeVisible();
-    await expect(page.getByText('Solo lectura')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Editar perfil' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Cambiar foto' })).toBeVisible();
+    await expect(page.getByText('Solo lectura')).toBeHidden();
+
+    await page.getByRole('button', { name: 'Editar perfil' }).click();
+    await expect(
+      page.getByRole('heading', { level: 2, name: 'Editar perfil profesional' }),
+    ).toBeVisible();
+    await expect(page.getByLabel('DNI')).toHaveValue(dni);
+    await expect(page.getByLabel('Celular')).toHaveValue(celular);
+    await page.getByRole('button', { name: 'Cancelar edición' }).click();
+    await expect(
+      page.getByRole('heading', { level: 2, name: 'Editar perfil profesional' }),
+    ).toBeHidden();
 
     await esperarAnimaciones(page.locator('app-perfil-tecnico-page'));
     const accesibilidadPerfil = await new AxeBuilder({ page })

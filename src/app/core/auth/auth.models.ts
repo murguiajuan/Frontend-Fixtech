@@ -1,3 +1,5 @@
+import type { CatalogoSimple } from '../catalogos/catalogo.models';
+
 export type Rol = 'CLIENTE' | 'TECNICO' | 'ADMIN';
 export type EstadoUsuario = 'ACTIVO' | 'SUSPENDIDO' | 'INACTIVO';
 export type EstadoVerificacion = 'PENDIENTE' | 'APROBADO' | 'OBSERVADO' | 'RECHAZADO';
@@ -52,17 +54,44 @@ export interface UsuarioRegistradoResponse {
 
 export interface PerfilTecnico {
   readonly id: number;
+  readonly dni: string;
+  readonly celular: string;
   readonly estadoVerificacion: EstadoVerificacion;
   readonly motivoVerificacion: string | null;
   readonly bloqueadoPorDeuda: boolean;
   readonly saldoComisionPendiente: number;
   readonly modalidades: readonly Modalidad[];
+  readonly ofreceDomicilio: boolean;
+  readonly ofreceTaller: boolean;
+  readonly especialidades: readonly CatalogoSimple[];
+  readonly distritos: readonly CatalogoSimple[];
   readonly descripcion: string | null;
   readonly aniosExperiencia: number;
+  readonly direccionTaller: string | null;
+  readonly referenciaTaller: string | null;
+  readonly horarioTaller: string | null;
+  readonly garantiaDiasDefecto: number;
   readonly calificacionPromedio: number;
   readonly totalResenas: number;
   readonly serviciosCompletados: number;
   readonly destacado: boolean;
+}
+
+export interface PerfilTecnicoRequest {
+  readonly nombres: string;
+  readonly apellidos: string;
+  readonly dni: string;
+  readonly celular: string;
+  readonly descripcion: string | null;
+  readonly aniosExperiencia: number;
+  readonly ofreceDomicilio: boolean;
+  readonly ofreceTaller: boolean;
+  readonly direccionTaller: string | null;
+  readonly referenciaTaller: string | null;
+  readonly horarioTaller: string | null;
+  readonly garantiaDiasDefecto: number;
+  readonly especialidadIds: readonly number[];
+  readonly distritoIds: readonly number[];
 }
 
 export interface PerfilUsuario {

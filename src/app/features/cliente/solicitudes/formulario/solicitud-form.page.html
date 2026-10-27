@@ -1,0 +1,472 @@
+@if (esEdicion() && cargandoSolicitud()) {
+  <div class="solicitud-form solicitud-form--cargando">
+    <mat-spinner diameter="36" aria-label="Cargando la solicitud" />
+    <p class="ft-muted">Cargando la solicitud…</p>
+  </div>
+} @else if (errorCarga(); as mensaje) {
+  <div class="solicitud-form ft-page">
+    <div class="ft-alert ft-alert--error" role="alert">
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <div class="solicitud-form__error">
+        <strong>No pudimos cargar la solicitud</strong>
+        <p>{{ mensaje }}</p>
+        <div class="solicitud-form__error-acciones">
+          <button mat-stroked-button type="button" (click)="reintentarCarga()">
+            <mat-icon aria-hidden="true">refresh</mat-icon>
+            Reintentar
+          </button>
+          <a mat-button routerLink="/app/cliente/solicitudes">Volver a mis solicitudes</a>
+        </div>
+      </div>
+    </div>
+  </div>
+} @else if (esEdicion() && solicitud() && !puedeEditar()) {
+  <div class="solicitud-form ft-page">
+    <div class="ft-alert ft-alert--warning" role="alert">
+      <mat-icon aria-hidden="true">lock_clock</mat-icon>
+      <div>
+        <strong>Esta solicitud ya no se puede editar</strong>
+        <p>
+          Solo las solicitudes en estado <strong>Publicada</strong> admiten cambios. Esta solicitud
+          se encuentra en otro estado.
+        </p>
+        <a mat-stroked-button [routerLink]="['/app/cliente/solicitudes', id()]">
+          Ver detalle de la solicitud
+        </a>
+      </div>
+    </div>
+  </div>
+} @else {
+  <div class="solicitud-form ft-page">
+    <header class="solicitud-form__cabecera">
+      <div>
+        <a class="solicitud-form__volver" routerLink="/app/cliente/solicitudes">
+          <mat-icon aria-hidden="true">arrow_back</mat-icon>
+          Mis solicitudes
+        </a>
+        <p class="ft-eyebrow">Cliente</p>
+        <h1>{{ titulo() }}</h1>
+        <p class="ft-muted">
+          {{
+            esEdicion()
+              ? 'Actualiza los datos de tu solicitud mientras siga publicada.'
+              : 'Describe el equipo y el servicio que necesitas. Los técnicos compatibles podrán enviarte ofertas.'
+          }}
+        </p>
+      </div>
+    </header>
+
+    @if (cargandoCatalogos()) {
+      <div class="solicitud-form__cargando-catalogos" role="status">
+        <mat-spinner diameter="24" aria-hidden="true" />
+        <span>Cargando tipos de equipo, servicios y distritos…</span>
+      </div>
+    } @else if (errorCatalogos(); as mensaje) {
+      <div class="ft-alert ft-alert--error" role="alert">
+        <mat-icon aria-hidden="true">error_outline</mat-icon>
+        <div class="solicitud-form__error">
+          <p>{{ mensaje }}</p>
+          <button mat-stroked-button type="button" (click)="cargarCatalogos()">Reintentar</button>
+        </div>
+      </div>
+    }
+
+    @if (errorGuardado(); as mensaje) {
+      <div class="ft-alert ft-alert--error" role="alert">
+        <mat-icon aria-hidden="true">error_outline</mat-icon>
+        <div>
+          <p>{{ mensaje }}</p>
+          @if (detallesError().length > 0) {
+            <ul class="solicitud-form__detalles">
+              @for (detalle of detallesError(); track detalle) {
+                <li>{{ detalle }}</li>
+              }
+            </ul>
+          }
+        </div>
+      </div>
+    }
+
+    <div class="solicitud-form__layout">
+      <form
+        class="solicitud-form__formulario"
+        [formGroup]="formulario"
+        (ngSubmit)="enviar()"
+        novalidate
+      >
+        <section class="solicitud-form__panel ft-card" aria-labelledby="titulo-equipo">
+          <div class="solicitud-form__panel-cabecera">
+            <div>
+              <h2 id="titulo-equipo">Equipo y servicio</h2>
+              <p class="ft-muted">Indica qué equipo necesita atención y qué trabajo requiere.</p>
+            </div>
+          </div>
+
+          <div class="solicitud-form__grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Tipo de equipo</mat-label>
+              <mat-select
+                formControlName="tipoEquipoId"
+                [attr.aria-invalid]="mostrarError('tipoEquipoId')"
+              >
+                @for (tipo of tiposEquipo(); track tipo.id) {
+                  <mat-option [value]="tipo.id">{{ tipo.nombre }}</mat-option>
+                }
+              </mat-select>
+              @if (mostrarError('tipoEquipoId')) {
+                <mat-error>Selecciona el tipo de equipo.</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Tipo de servicio</mat-label>
+              <mat-select
+                formControlName="tipoServicioId"
+                [attr.aria-invalid]="mostrarError('tipoServicioId')"
+              >
+                @for (tipo of tiposServicio(); track tipo.id) {
+                  <mat-option [value]="tipo.id">{{ tipo.nombre }}</mat-option>
+                }
+              </mat-select>
+              @if (mostrarError('tipoServicioId')) {
+                <mat-error>Selecciona el tipo de servicio.</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Marca (opcional)</mat-label>
+              <input
+                matInput
+                formControlName="marca"
+                maxlength="60"
+                autocomplete="off"
+                [attr.aria-invalid]="mostrarError('marca')"
+              />
+              @if (mostrarError('marca')) {
+                <mat-error>La marca no puede superar los 60 caracteres.</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Modelo (opcional)</mat-label>
+              <input
+                matInput
+                formControlName="modelo"
+                maxlength="80"
+                autocomplete="off"
+                [attr.aria-invalid]="mostrarError('modelo')"
+              />
+              @if (mostrarError('modelo')) {
+                <mat-error>El modelo no puede superar los 80 caracteres.</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="campo--ancho">
+              <mat-label>Descripción del problema</mat-label>
+              <textarea
+                matInput
+                formControlName="descripcion"
+                rows="5"
+                maxlength="2000"
+                placeholder="Ejemplo: La laptop no enciende y emite un pitido al conectar el cargador."
+                [attr.aria-invalid]="mostrarError('descripcion')"
+              ></textarea>
+              <mat-hint>Máximo 2000 caracteres.</mat-hint>
+              @if (mostrarError('descripcion')) {
+                <mat-error>
+                  @if (formulario.controls.descripcion.hasError('required')) {
+                    Describe el problema o servicio que necesitas.
+                  } @else {
+                    La descripción no puede superar los 2000 caracteres.
+                  }
+                </mat-error>
+              }
+            </mat-form-field>
+          </div>
+        </section>
+
+        <section class="solicitud-form__panel ft-card" aria-labelledby="titulo-ubicacion">
+          <div class="solicitud-form__panel-cabecera">
+            <div>
+              <h2 id="titulo-ubicacion">Ubicación y modalidad</h2>
+              <p class="ft-muted">Indica cómo y dónde prefieres que se realice el servicio.</p>
+            </div>
+          </div>
+
+          <div class="solicitud-form__grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Modalidad de atención</mat-label>
+              <mat-select formControlName="modalidad">
+                <mat-option value="DOMICILIO">{{ etiquetasModalidad.DOMICILIO }}</mat-option>
+                <mat-option value="TALLER">{{ etiquetasModalidad.TALLER }}</mat-option>
+                <mat-option value="INDISTINTO">{{ etiquetasModalidad.INDISTINTO }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Distrito</mat-label>
+              <mat-select
+                formControlName="distritoId"
+                [attr.aria-invalid]="mostrarError('distritoId')"
+              >
+                @for (distrito of distritos(); track distrito.id) {
+                  <mat-option [value]="distrito.id">
+                    {{ distrito.nombre }} · {{ distrito.provincia }}
+                  </mat-option>
+                }
+              </mat-select>
+              @if (mostrarError('distritoId')) {
+                <mat-error>Selecciona el distrito de atención.</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="campo--ancho">
+              <mat-label>Dirección</mat-label>
+              <input
+                matInput
+                formControlName="direccion"
+                autocomplete="street-address"
+                maxlength="200"
+                [attr.aria-invalid]="mostrarError('direccion')"
+              />
+              <mat-hint> Obligatoria para atención a domicilio o modalidad indistinta. </mat-hint>
+              @if (mostrarError('direccion')) {
+                <mat-error>
+                  @if (mostrarErrorDireccion()) {
+                    Ingresa la dirección para la atención a domicilio.
+                  } @else {
+                    La dirección no puede superar los 200 caracteres.
+                  }
+                </mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="campo--ancho">
+              <mat-label>Referencia (opcional)</mat-label>
+              <input
+                matInput
+                formControlName="referencia"
+                maxlength="200"
+                [attr.aria-invalid]="mostrarError('referencia')"
+              />
+              <mat-hint>Un dato que ayude al técnico a ubicar el lugar.</mat-hint>
+              @if (mostrarError('referencia')) {
+                <mat-error>La referencia no puede superar los 200 caracteres.</mat-error>
+              }
+            </mat-form-field>
+          </div>
+        </section>
+
+        <section class="solicitud-form__panel ft-card" aria-labelledby="titulo-preferencias">
+          <div class="solicitud-form__panel-cabecera">
+            <div>
+              <h2 id="titulo-preferencias">Preferencias y presupuesto</h2>
+              <p class="ft-muted">
+                Estos datos ayudan a los técnicos a preparar una oferta adecuada.
+              </p>
+            </div>
+          </div>
+
+          <div class="solicitud-form__grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Urgencia</mat-label>
+              <mat-select formControlName="urgencia">
+                @for (urgencia of urgencias; track urgencia) {
+                  <mat-option [value]="urgencia">{{ etiquetasUrgencia[urgencia] }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Fecha preferida (opcional)</mat-label>
+              <input
+                matInput
+                type="date"
+                formControlName="fechaPreferida"
+                [min]="fechaMinima"
+                [attr.aria-invalid]="mostrarError('fechaPreferida')"
+              />
+              @if (mostrarError('fechaPreferida')) {
+                <mat-error>
+                  @if (formulario.controls.fechaPreferida.hasError('fechaPasada')) {
+                    La fecha preferida no puede ser anterior a hoy.
+                  } @else {
+                    Ingresa una fecha válida.
+                  }
+                </mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Horario preferido (opcional)</mat-label>
+              <input
+                matInput
+                formControlName="horarioPreferido"
+                maxlength="40"
+                placeholder="Ejemplo: Mañanas o después de las 18:00"
+                [attr.aria-invalid]="mostrarError('horarioPreferido')"
+              />
+              @if (mostrarError('horarioPreferido')) {
+                <mat-error>El horario no puede superar los 40 caracteres.</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Presupuesto referencial (opcional)</mat-label>
+              <span matTextPrefix>S/&nbsp;</span>
+              <input
+                matInput
+                type="number"
+                formControlName="presupuestoReferencial"
+                min="0.01"
+                max="99999999.99"
+                step="0.01"
+                inputmode="decimal"
+                [attr.aria-invalid]="mostrarError('presupuestoReferencial')"
+              />
+              <mat-hint>Monto referencial, no es un pago anticipado.</mat-hint>
+              @if (mostrarError('presupuestoReferencial')) {
+                <mat-error>
+                  @if (formulario.controls.presupuestoReferencial.hasError('min')) {
+                    El presupuesto debe ser mayor a cero.
+                  } @else {
+                    El presupuesto no puede superar S/ 99,999,999.99.
+                  }
+                </mat-error>
+              }
+            </mat-form-field>
+          </div>
+        </section>
+
+        @if (!esEdicion()) {
+          <section class="solicitud-form__panel ft-card" aria-labelledby="titulo-fotos">
+            <div class="solicitud-form__panel-cabecera">
+              <div>
+                <h2 id="titulo-fotos">Fotos del equipo</h2>
+                <p class="ft-muted">
+                  Adjunta entre 1 y {{ maxFotos }} imágenes JPG o PNG de hasta 5 MB cada una.
+                </p>
+              </div>
+            </div>
+
+            <input
+              #inputFotos
+              class="ft-sr-only"
+              type="file"
+              accept="image/jpeg,image/png"
+              multiple
+              aria-label="Seleccionar fotos del equipo"
+              (change)="seleccionarFotos($event)"
+            />
+            <button
+              mat-stroked-button
+              type="button"
+              [disabled]="fotos().length >= maxFotos"
+              (click)="inputFotos.click()"
+            >
+              <mat-icon aria-hidden="true">add_photo_alternate</mat-icon>
+              Agregar fotos
+            </button>
+
+            @if (errorFotos(); as mensaje) {
+              <div class="ft-alert ft-alert--error solicitud-form__error-fotos" role="alert">
+                <mat-icon aria-hidden="true">error_outline</mat-icon>
+                <span>{{ mensaje }}</span>
+              </div>
+            }
+
+            @if (fotos().length > 0) {
+              <ul class="solicitud-form__fotos" aria-label="Fotos seleccionadas">
+                @for (foto of fotos(); track foto.url; let indice = $index) {
+                  <li class="solicitud-form__foto">
+                    <img [src]="foto.url" [alt]="'Vista previa de ' + foto.nombre" />
+                    <button
+                      mat-icon-button
+                      type="button"
+                      [attr.aria-label]="'Quitar ' + foto.nombre"
+                      (click)="quitarFoto(indice)"
+                    >
+                      <mat-icon aria-hidden="true">close</mat-icon>
+                    </button>
+                    <span class="solicitud-form__foto-nombre">{{ foto.nombre }}</span>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="solicitud-form__vacio">
+                Aún no has agregado fotos. Las fotos ayudan a los técnicos a entender el estado del
+                equipo.
+              </p>
+            }
+          </section>
+        } @else if (solicitud(); as actual) {
+          <section class="solicitud-form__panel ft-card" aria-labelledby="titulo-fotos-edit">
+            <div class="solicitud-form__panel-cabecera">
+              <div>
+                <h2 id="titulo-fotos-edit">Fotos registradas</h2>
+                <p class="ft-muted">
+                  Las fotos no se pueden modificar desde la edición. Si necesitas reemplazarlas,
+                  cancela esta solicitud y publica una nueva.
+                </p>
+              </div>
+            </div>
+            @if (actual.imagenes.length === 0) {
+              <p class="solicitud-form__vacio">Esta solicitud no tiene fotos registradas.</p>
+            } @else {
+              <ul class="solicitud-form__fotos" aria-label="Fotos de la solicitud">
+                @for (imagen of actual.imagenes; track imagen.id) {
+                  <li class="solicitud-form__foto solicitud-form__foto--existente">
+                    <app-imagen-autenticada
+                      [src]="imagen.url"
+                      [alt]="'Foto ' + imagen.orden + ' de la solicitud'"
+                    />
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+        }
+
+        <div class="solicitud-form__acciones">
+          <button
+            mat-flat-button
+            type="submit"
+            [disabled]="guardando() || cargandoCatalogos() || errorCatalogos() !== null"
+          >
+            @if (guardando()) {
+              <mat-spinner diameter="20" aria-hidden="true" />
+            } @else {
+              <mat-icon aria-hidden="true">{{ esEdicion() ? 'save' : 'send' }}</mat-icon>
+            }
+            <span>
+              {{
+                guardando() ? 'Guardando…' : esEdicion() ? 'Guardar cambios' : 'Publicar solicitud'
+              }}
+            </span>
+          </button>
+          <a
+            mat-stroked-button
+            [routerLink]="
+              esEdicion() && id()
+                ? ['/app/cliente/solicitudes', id()]
+                : ['/app/cliente/solicitudes']
+            "
+          >
+            Cancelar
+          </a>
+        </div>
+      </form>
+
+      <aside class="solicitud-form__ayuda ft-card" aria-labelledby="titulo-ayuda">
+        <h2 id="titulo-ayuda">Antes de publicar</h2>
+        <ul>
+          <li>Describe la falla con el mayor detalle posible.</li>
+          <li>Adjunta fotos claras del equipo y de la zona afectada.</li>
+          <li>Indica una dirección completa si prefieres atención a domicilio.</li>
+          <li>El presupuesto referencial orienta las ofertas, pero no las limita.</li>
+          <li>Podrás editar la solicitud mientras permanezca publicada.</li>
+        </ul>
+      </aside>
+    </div>
+  </div>
+}

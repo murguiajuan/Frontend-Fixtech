@@ -369,6 +369,35 @@ a.admin__acceso:hover {
   color: var(--ft-warning);
 }
 
+.modulo--enlace {
+  color: inherit;
+  text-decoration: none;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.modulo--enlace:hover {
+  box-shadow: var(--ft-shadow-md);
+  transform: translateY(-2px);
+}
+
+.modulo--enlace:focus-visible {
+  outline: 3px solid var(--ft-primary-500);
+  outline-offset: 2px;
+}
+
+.cliente__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+.cliente__acciones > * {
+  flex: 1 1 10rem;
+}
+
 @media (min-width: 48rem) {
   .tablero {
     width: min(100% - 3rem, var(--ft-content-max));

@@ -1,0 +1,241 @@
+:host {
+  display: block;
+}
+
+.solicitud-form {
+  width: min(100% - 2rem, var(--ft-content-max));
+  margin-inline: auto;
+}
+
+.solicitud-form--cargando {
+  display: grid;
+  min-height: 50dvh;
+  place-items: center;
+  align-content: center;
+  gap: 1rem;
+  padding-block: 2rem;
+}
+
+.solicitud-form__cabecera {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.solicitud-form__cabecera h1 {
+  margin-top: 0.2rem;
+  font-size: clamp(1.7rem, 5vw, 2.4rem);
+}
+
+.solicitud-form__cabecera .ft-muted {
+  max-width: 45rem;
+  margin-top: 0.35rem;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.solicitud-form__volver {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.solicitud-form__volver mat-icon {
+  width: 1rem;
+  height: 1rem;
+  font-size: 1rem;
+}
+
+.solicitud-form__cargando-catalogos {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border-radius: var(--ft-radius-md);
+  background: var(--ft-surface-raised);
+  box-shadow: var(--ft-shadow-sm);
+  color: var(--ft-on-surface-muted);
+  font-size: 0.88rem;
+}
+
+.solicitud-form__cargando-catalogos mat-spinner {
+  --mat-progress-spinner-active-indicator-color: var(--ft-primary-600);
+}
+
+.solicitud-form__layout {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.solicitud-form__formulario {
+  display: grid;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.solicitud-form__panel {
+  padding: 1.25rem;
+}
+
+.solicitud-form__panel-cabecera {
+  margin-bottom: 1rem;
+}
+
+.solicitud-form__panel-cabecera h2 {
+  font-size: 1.12rem;
+}
+
+.solicitud-form__panel-cabecera p {
+  margin-top: 0.2rem;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.solicitud-form__grid {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.campo--ancho {
+  grid-column: 1 / -1;
+}
+
+.solicitud-form__error {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: start;
+}
+
+.solicitud-form__error-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.solicitud-form__detalles {
+  margin: 0.4rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.85rem;
+}
+
+.solicitud-form__error-fotos {
+  margin-top: 0.85rem;
+  font-size: 0.84rem;
+}
+
+.solicitud-form__fotos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.solicitud-form__foto {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--ft-border);
+  border-radius: var(--ft-radius-md);
+  background: var(--ft-surface-muted);
+}
+
+.solicitud-form__foto img,
+.solicitud-form__foto app-imagen-autenticada {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.solicitud-form__foto button {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.3rem;
+  background: rgb(3 43 56 / 72%);
+  color: #fff;
+}
+
+.solicitud-form__foto-nombre {
+  display: block;
+  padding: 0.4rem 0.55rem;
+  overflow: hidden;
+  color: var(--ft-on-surface-muted);
+  font-size: 0.7rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.solicitud-form__vacio {
+  margin-top: 0.85rem;
+  padding: 1rem;
+  border-radius: var(--ft-radius-md);
+  background: var(--ft-surface);
+  color: var(--ft-on-surface-muted);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.solicitud-form__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.solicitud-form__acciones > * {
+  flex: 1 1 12rem;
+}
+
+.solicitud-form__acciones mat-spinner {
+  --mat-progress-spinner-active-indicator-color: currentcolor;
+}
+
+.solicitud-form__ayuda {
+  align-self: start;
+  padding: 1.25rem;
+}
+
+.solicitud-form__ayuda h2 {
+  font-size: 1.05rem;
+}
+
+.solicitud-form__ayuda ul {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0.85rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--ft-on-surface-muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+@media (min-width: 48rem) {
+  .solicitud-form__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 1rem;
+  }
+
+  .solicitud-form__panel {
+    padding: 1.5rem;
+  }
+
+  .solicitud-form__fotos {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64rem) {
+  .solicitud-form__layout {
+    grid-template-columns: minmax(0, 1fr) 18rem;
+    align-items: start;
+  }
+
+  .solicitud-form__ayuda {
+    position: sticky;
+    top: 5rem;
+  }
+}

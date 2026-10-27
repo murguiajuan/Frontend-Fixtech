@@ -12,3 +12,9 @@ export interface DistritoCatalogo {
   readonly topeMovilidad: number;
   readonly activo: boolean;
 }
+
+export interface CatalogoSimple {
+  readonly id: number;
+  readonly nombre: string;
+  readonly activo: boolean;
+}

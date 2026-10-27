@@ -206,14 +206,14 @@ textarea {
 }
 
 .ft-snackbar-exito {
-  --mdc-snackbar-container-color: var(--ft-primary-900);
-  --mdc-snackbar-supporting-text-color: #fff;
+  --mat-snack-bar-container-color: var(--ft-primary-900);
+  --mat-snack-bar-supporting-text-color: #fff;
   --mat-snack-bar-button-color: #9fe3f2;
 }
 
 .ft-snackbar-error {
-  --mdc-snackbar-container-color: var(--ft-danger);
-  --mdc-snackbar-supporting-text-color: #fff;
+  --mat-snack-bar-container-color: var(--ft-danger);
+  --mat-snack-bar-supporting-text-color: #fff;
   --mat-snack-bar-button-color: #ffe0dd;
 }
 
@@ -222,8 +222,13 @@ textarea {
   width: 100%;
 }
 
+// La barra superior es sticky: deja espacio al desplazar el foco para que no quede oculto.
+main :is(input, textarea, select, button, a, mat-select) {
+  scroll-margin-top: 5rem;
+}
+
 .mat-mdc-card {
-  --mdc-elevated-card-container-shape: var(--ft-radius-lg);
+  --mat-card-elevated-container-shape: var(--ft-radius-lg);
 }
 
 @media (min-width: 48rem) {

@@ -1,7 +1,18 @@
 @if (perfil(); as p) {
   <div class="perfil ft-page">
     <header class="perfil__cabecera ft-card">
-      <span class="perfil__avatar" aria-hidden="true">{{ iniciales() }}</span>
+      <div class="perfil__avatar" [class.perfil__avatar--foto]="p.fotoUrl !== null">
+        @if (p.fotoUrl) {
+          <app-imagen-autenticada
+            [src]="p.fotoUrl"
+            [version]="fotoVersion()"
+            [alt]="'Foto de perfil de ' + p.nombres + ' ' + p.apellidos"
+          />
+        } @else {
+          <span aria-hidden="true">{{ iniciales() }}</span>
+        }
+      </div>
+
       <div class="perfil__identidad">
         <p class="ft-eyebrow">Perfil de técnico</p>
         <h1>{{ p.nombres }} {{ p.apellidos }}</h1>
@@ -17,10 +28,51 @@
           }
         </div>
       </div>
-      <a mat-stroked-button routerLink="/app/inicio" class="perfil__volver">
-        <mat-icon aria-hidden="true">arrow_back</mat-icon>
-        Volver al inicio
-      </a>
+
+      <div class="perfil__acciones">
+        @if (!editando()) {
+          <button mat-flat-button type="button" (click)="abrirEdicion()">
+            <mat-icon aria-hidden="true">edit</mat-icon>
+            Editar perfil
+          </button>
+        }
+        <a mat-stroked-button routerLink="/app/inicio" class="perfil__volver">
+          <mat-icon aria-hidden="true">arrow_back</mat-icon>
+          Volver al inicio
+        </a>
+      </div>
+
+      <div class="perfil__foto">
+        <input
+          #inputFoto
+          class="ft-sr-only"
+          type="file"
+          accept="image/jpeg,image/png"
+          aria-label="Seleccionar foto de perfil"
+          (change)="cambiarFoto($event)"
+        />
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="subiendoFoto()"
+          (click)="inputFoto.click()"
+        >
+          @if (subiendoFoto()) {
+            <mat-spinner diameter="18" aria-hidden="true" />
+          } @else {
+            <mat-icon aria-hidden="true">photo_camera</mat-icon>
+          }
+          <span>{{ subiendoFoto() ? 'Subiendo foto…' : 'Cambiar foto' }}</span>
+        </button>
+        <span class="ft-muted">JPG o PNG, máximo 5 MB.</span>
+      </div>
+
+      @if (errorFoto(); as mensaje) {
+        <div class="ft-alert ft-alert--error perfil__error-foto" role="alert">
+          <mat-icon aria-hidden="true">error_outline</mat-icon>
+          <span>{{ mensaje }}</span>
+        </div>
+      }
     </header>
 
     @if (tecnico(); as t) {
@@ -56,6 +108,403 @@
             </p>
           </div>
         </div>
+      }
+
+      @if (editando()) {
+        <section class="perfil__editor ft-card" aria-labelledby="titulo-editar-perfil">
+          <div class="perfil__panel-cabecera">
+            <div>
+              <h2 id="titulo-editar-perfil">Editar perfil profesional</h2>
+              <p class="ft-muted">
+                Actualiza tus datos personales, experiencia y cobertura de atención.
+              </p>
+            </div>
+          </div>
+
+          <div class="ft-alert ft-alert--warning perfil__aviso-edicion" role="note">
+            <mat-icon aria-hidden="true">hourglass_top</mat-icon>
+            <span>
+              Al guardar cambios, tu perfil volverá al estado <strong>En revisión</strong> y un
+              administrador deberá aprobarlo nuevamente. La foto de perfil no reinicia la
+              verificación.
+            </span>
+          </div>
+
+          @if (errorGuardado(); as mensaje) {
+            <div class="ft-alert ft-alert--error" role="alert">
+              <mat-icon aria-hidden="true">error_outline</mat-icon>
+              <div>
+                <p>{{ mensaje }}</p>
+                @if (detallesError().length > 0) {
+                  <ul class="perfil__detalles">
+                    @for (detalle of detallesError(); track detalle) {
+                      <li>{{ detalle }}</li>
+                    }
+                  </ul>
+                }
+              </div>
+            </div>
+          }
+
+          <form [formGroup]="formulario" (ngSubmit)="guardar()" novalidate>
+            <section class="perfil__seccion" aria-labelledby="titulo-datos-edicion">
+              <h3 id="titulo-datos-edicion">Datos personales</h3>
+              <div class="perfil__grid">
+                <mat-form-field appearance="outline">
+                  <mat-label>Nombres</mat-label>
+                  <input
+                    matInput
+                    formControlName="nombres"
+                    autocomplete="given-name"
+                    maxlength="80"
+                    [attr.aria-invalid]="mostrarError('nombres')"
+                  />
+                  @if (mostrarError('nombres')) {
+                    <mat-error>
+                      @if (formulario.controls.nombres.hasError('required')) {
+                        Ingresa tus nombres.
+                      } @else {
+                        Los nombres no pueden superar los 80 caracteres.
+                      }
+                    </mat-error>
+                  }
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Apellidos</mat-label>
+                  <input
+                    matInput
+                    formControlName="apellidos"
+                    autocomplete="family-name"
+                    maxlength="80"
+                    [attr.aria-invalid]="mostrarError('apellidos')"
+                  />
+                  @if (mostrarError('apellidos')) {
+                    <mat-error>
+                      @if (formulario.controls.apellidos.hasError('required')) {
+                        Ingresa tus apellidos.
+                      } @else {
+                        Los apellidos no pueden superar los 80 caracteres.
+                      }
+                    </mat-error>
+                  }
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>DNI</mat-label>
+                  <input
+                    matInput
+                    formControlName="dni"
+                    inputmode="numeric"
+                    maxlength="8"
+                    autocomplete="off"
+                    [attr.aria-invalid]="mostrarError('dni')"
+                  />
+                  <mat-icon matPrefix aria-hidden="true">badge</mat-icon>
+                  <mat-hint>8 dígitos, sin espacios.</mat-hint>
+                  @if (mostrarError('dni')) {
+                    <mat-error>
+                      @if (formulario.controls.dni.hasError('required')) {
+                        Ingresa tu DNI.
+                      } @else {
+                        El DNI debe tener 8 dígitos.
+                      }
+                    </mat-error>
+                  }
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Celular</mat-label>
+                  <input
+                    matInput
+                    type="tel"
+                    formControlName="celular"
+                    autocomplete="tel"
+                    inputmode="numeric"
+                    maxlength="9"
+                    placeholder="9XXXXXXXX"
+                    [attr.aria-invalid]="mostrarError('celular')"
+                  />
+                  <mat-icon matPrefix aria-hidden="true">phone</mat-icon>
+                  @if (mostrarError('celular')) {
+                    <mat-error>
+                      @if (formulario.controls.celular.hasError('required')) {
+                        Ingresa tu celular.
+                      } @else {
+                        El celular debe tener 9 dígitos y empezar con 9.
+                      }
+                    </mat-error>
+                  }
+                </mat-form-field>
+              </div>
+            </section>
+
+            <section class="perfil__seccion" aria-labelledby="titulo-profesional-edicion">
+              <h3 id="titulo-profesional-edicion">Perfil profesional</h3>
+              <div class="perfil__grid">
+                <mat-form-field appearance="outline" class="campo--ancho">
+                  <mat-label>Descripción profesional</mat-label>
+                  <textarea
+                    matInput
+                    formControlName="descripcion"
+                    rows="4"
+                    maxlength="1000"
+                    placeholder="Describe los servicios que realizas y tu experiencia."
+                    [attr.aria-invalid]="mostrarError('descripcion')"
+                  ></textarea>
+                  <mat-hint>Máximo 1000 caracteres.</mat-hint>
+                  @if (mostrarError('descripcion')) {
+                    <mat-error>La descripción no puede superar los 1000 caracteres.</mat-error>
+                  }
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Años de experiencia</mat-label>
+                  <input
+                    matInput
+                    type="number"
+                    formControlName="aniosExperiencia"
+                    min="0"
+                    max="60"
+                    step="1"
+                    inputmode="numeric"
+                    [attr.aria-invalid]="mostrarError('aniosExperiencia')"
+                  />
+                  <mat-hint>Entre 0 y 60 años.</mat-hint>
+                  @if (mostrarError('aniosExperiencia')) {
+                    <mat-error>
+                      @if (formulario.controls.aniosExperiencia.hasError('pattern')) {
+                        Los años de experiencia deben ser un número entero.
+                      } @else {
+                        Los años de experiencia deben estar entre 0 y 60.
+                      }
+                    </mat-error>
+                  }
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Garantía por defecto (días)</mat-label>
+                  <input
+                    matInput
+                    type="number"
+                    formControlName="garantiaDiasDefecto"
+                    min="0"
+                    max="3650"
+                    step="1"
+                    inputmode="numeric"
+                    [attr.aria-invalid]="mostrarError('garantiaDiasDefecto')"
+                  />
+                  <mat-hint>Entre 0 y 3650 días.</mat-hint>
+                  @if (mostrarError('garantiaDiasDefecto')) {
+                    <mat-error>
+                      @if (formulario.controls.garantiaDiasDefecto.hasError('pattern')) {
+                        La garantía debe ser un número entero de días.
+                      } @else {
+                        La garantía debe estar entre 0 y 3650 días.
+                      }
+                    </mat-error>
+                  }
+                </mat-form-field>
+              </div>
+            </section>
+
+            <section class="perfil__seccion" aria-labelledby="titulo-modalidades-edicion">
+              <h3 id="titulo-modalidades-edicion">Modalidades de atención</h3>
+              <fieldset
+                class="perfil__grupo"
+                [attr.aria-describedby]="
+                  mostrarErrorModalidad() ? 'error-modalidades-edicion' : null
+                "
+              >
+                <legend class="ft-sr-only">Modalidades de atención</legend>
+                <div class="perfil__modalidades-edicion">
+                  <mat-checkbox formControlName="ofreceDomicilio">
+                    Atención a domicilio
+                  </mat-checkbox>
+                  <mat-checkbox
+                    formControlName="ofreceTaller"
+                    (change)="cambiarTaller($event.checked)"
+                  >
+                    Atención en taller
+                  </mat-checkbox>
+                </div>
+                @if (mostrarErrorModalidad()) {
+                  <p id="error-modalidades-edicion" class="perfil__error-grupo" role="alert">
+                    Selecciona al menos una modalidad de atención.
+                  </p>
+                }
+              </fieldset>
+
+              @if (formulario.controls.ofreceTaller.value) {
+                <div class="perfil__taller">
+                  <p class="perfil__subleyenda">Datos del taller</p>
+                  <div class="perfil__grid">
+                    <mat-form-field appearance="outline" class="campo--ancho">
+                      <mat-label>Dirección del taller</mat-label>
+                      <input
+                        matInput
+                        formControlName="direccionTaller"
+                        autocomplete="street-address"
+                        maxlength="200"
+                        [attr.aria-invalid]="mostrarError('direccionTaller')"
+                      />
+                      <mat-hint>Obligatoria cuando ofreces atención en taller.</mat-hint>
+                      @if (mostrarError('direccionTaller')) {
+                        <mat-error>
+                          @if (formulario.controls.direccionTaller.hasError('required')) {
+                            Ingresa la dirección del taller.
+                          } @else {
+                            La dirección no puede superar los 200 caracteres.
+                          }
+                        </mat-error>
+                      }
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                      <mat-label>Referencia del taller (opcional)</mat-label>
+                      <input
+                        matInput
+                        formControlName="referenciaTaller"
+                        maxlength="200"
+                        [attr.aria-invalid]="mostrarError('referenciaTaller')"
+                      />
+                      <mat-icon matPrefix aria-hidden="true">place</mat-icon>
+                      @if (mostrarError('referenciaTaller')) {
+                        <mat-error> La referencia no puede superar los 200 caracteres. </mat-error>
+                      }
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                      <mat-label>Horario del taller (opcional)</mat-label>
+                      <input
+                        matInput
+                        formControlName="horarioTaller"
+                        maxlength="120"
+                        placeholder="Ejemplo: Lunes a sábado, 9:00 a 18:00"
+                        [attr.aria-invalid]="mostrarError('horarioTaller')"
+                      />
+                      <mat-icon matPrefix aria-hidden="true">schedule</mat-icon>
+                      @if (mostrarError('horarioTaller')) {
+                        <mat-error>El horario no puede superar los 120 caracteres.</mat-error>
+                      }
+                    </mat-form-field>
+                  </div>
+                </div>
+              }
+            </section>
+
+            @if (cargandoCatalogos()) {
+              <div class="perfil__catalogos-estado" role="status">
+                <mat-spinner diameter="24" aria-hidden="true" />
+                <span>Cargando especialidades y distritos…</span>
+              </div>
+            } @else if (errorCatalogos(); as mensaje) {
+              <div class="ft-alert ft-alert--error" role="alert">
+                <mat-icon aria-hidden="true">error_outline</mat-icon>
+                <div class="perfil__catalogos-error">
+                  <p>{{ mensaje }}</p>
+                  <button mat-stroked-button type="button" (click)="cargarCatalogos()">
+                    Reintentar
+                  </button>
+                </div>
+              </div>
+            } @else {
+              <section class="perfil__seccion" aria-labelledby="titulo-especialidades-edicion">
+                <h3 id="titulo-especialidades-edicion">Especialidades</h3>
+                <fieldset
+                  class="perfil__grupo"
+                  [attr.aria-describedby]="
+                    mostrarErrorSeleccion('especialidadIds') ? 'error-especialidades-edicion' : null
+                  "
+                >
+                  <legend class="ft-sr-only">Especialidades</legend>
+                  @if (especialidades().length === 0) {
+                    <p class="perfil__vacio">No hay especialidades disponibles por el momento.</p>
+                  } @else {
+                    <div class="perfil__opciones">
+                      @for (especialidad of especialidades(); track especialidad.id) {
+                        <mat-checkbox
+                          class="perfil__opcion"
+                          [id]="'perfil-especialidad-' + especialidad.id"
+                          [checked]="estaSeleccionada('especialidadIds', especialidad.id)"
+                          (change)="
+                            alternarSeleccion('especialidadIds', especialidad.id, $event.checked)
+                          "
+                        >
+                          <span class="perfil__opcion-titulo">{{ especialidad.nombre }}</span>
+                          @if (especialidad.descripcion) {
+                            <small>{{ especialidad.descripcion }}</small>
+                          }
+                        </mat-checkbox>
+                      }
+                    </div>
+                  }
+                </fieldset>
+                @if (mostrarErrorSeleccion('especialidadIds')) {
+                  <p id="error-especialidades-edicion" class="perfil__error-grupo" role="alert">
+                    Selecciona al menos una especialidad.
+                  </p>
+                }
+              </section>
+
+              <section class="perfil__seccion" aria-labelledby="titulo-distritos-edicion">
+                <h3 id="titulo-distritos-edicion">Distritos de cobertura</h3>
+                <fieldset
+                  class="perfil__grupo"
+                  [attr.aria-describedby]="
+                    mostrarErrorSeleccion('distritoIds') ? 'error-distritos-edicion' : null
+                  "
+                >
+                  <legend class="ft-sr-only">Distritos de cobertura</legend>
+                  @if (distritos().length === 0) {
+                    <p class="perfil__vacio">No hay distritos disponibles por el momento.</p>
+                  } @else {
+                    <div class="perfil__opciones">
+                      @for (distrito of distritos(); track distrito.id) {
+                        <mat-checkbox
+                          class="perfil__opcion"
+                          [id]="'perfil-distrito-' + distrito.id"
+                          [checked]="estaSeleccionada('distritoIds', distrito.id)"
+                          (change)="alternarSeleccion('distritoIds', distrito.id, $event.checked)"
+                        >
+                          <span class="perfil__opcion-titulo">{{ distrito.nombre }}</span>
+                          <small>
+                            {{ distrito.provincia }} · Movilidad hasta S/
+                            {{ distrito.topeMovilidad | number: '1.2-2' }}
+                          </small>
+                        </mat-checkbox>
+                      }
+                    </div>
+                  }
+                </fieldset>
+                @if (mostrarErrorSeleccion('distritoIds')) {
+                  <p id="error-distritos-edicion" class="perfil__error-grupo" role="alert">
+                    Selecciona al menos un distrito de cobertura.
+                  </p>
+                }
+              </section>
+            }
+
+            <div class="perfil__acciones-formulario">
+              <button mat-flat-button type="submit" [disabled]="guardando()">
+                @if (guardando()) {
+                  <mat-spinner diameter="20" aria-hidden="true" />
+                } @else {
+                  <mat-icon aria-hidden="true">save</mat-icon>
+                }
+                <span>{{ guardando() ? 'Guardando…' : 'Guardar cambios' }}</span>
+              </button>
+              <button
+                mat-stroked-button
+                type="button"
+                [disabled]="guardando()"
+                (click)="cerrarEdicion()"
+              >
+                Cancelar edición
+              </button>
+            </div>
+          </form>
+        </section>
       }
 
       <section class="perfil__metricas" aria-label="Resumen de tu actividad">
@@ -115,12 +564,24 @@
           </div>
           <dl class="perfil__detalle">
             <div>
+              <dt>DNI</dt>
+              <dd>{{ t.dni }}</dd>
+            </div>
+            <div>
+              <dt>Celular</dt>
+              <dd>{{ t.celular }}</dd>
+            </div>
+            <div>
               <dt>Descripción</dt>
               <dd>{{ t.descripcion ?? 'Aún no has agregado una descripción.' }}</dd>
             </div>
             <div>
               <dt>Experiencia</dt>
               <dd>{{ t.aniosExperiencia }} años</dd>
+            </div>
+            <div>
+              <dt>Garantía por defecto</dt>
+              <dd>{{ t.garantiaDiasDefecto }} días</dd>
             </div>
             <div>
               <dt>Modalidades de atención</dt>
@@ -136,6 +597,48 @@
                 }
               </dd>
             </div>
+            <div>
+              <dt>Especialidades</dt>
+              <dd class="perfil__modalidades">
+                @if (t.especialidades.length === 0) {
+                  <span class="ft-muted">Sin especialidades configuradas</span>
+                } @else {
+                  <mat-chip-set aria-label="Especialidades registradas">
+                    @for (especialidad of t.especialidades; track especialidad.id) {
+                      <mat-chip>{{ especialidad.nombre }}</mat-chip>
+                    }
+                  </mat-chip-set>
+                }
+              </dd>
+            </div>
+            <div>
+              <dt>Distritos de cobertura</dt>
+              <dd class="perfil__modalidades">
+                @if (t.distritos.length === 0) {
+                  <span class="ft-muted">Sin distritos configurados</span>
+                } @else {
+                  <mat-chip-set aria-label="Distritos de cobertura">
+                    @for (distrito of t.distritos; track distrito.id) {
+                      <mat-chip>{{ distrito.nombre }}</mat-chip>
+                    }
+                  </mat-chip-set>
+                }
+              </dd>
+            </div>
+            @if (t.ofreceTaller) {
+              <div>
+                <dt>Taller</dt>
+                <dd>
+                  {{ t.direccionTaller ?? 'Dirección no registrada' }}
+                  @if (t.referenciaTaller) {
+                    <br /><span class="ft-muted">{{ t.referenciaTaller }}</span>
+                  }
+                  @if (t.horarioTaller) {
+                    <br /><span class="ft-muted">{{ t.horarioTaller }}</span>
+                  }
+                </dd>
+              </div>
+            }
           </dl>
         </section>
       </div>
@@ -152,7 +655,6 @@
     <section class="perfil__panel ft-card" aria-labelledby="titulo-cuenta">
       <div class="perfil__panel-cabecera">
         <h2 id="titulo-cuenta">Datos de la cuenta</h2>
-        <span class="perfil__solo-lectura">Solo lectura</span>
       </div>
       <dl class="perfil__detalle perfil__detalle--cuenta">
         <div>
@@ -177,10 +679,11 @@
         </div>
       </dl>
       <div class="ft-alert ft-alert--info perfil__nota" role="note">
-        <mat-icon aria-hidden="true">lock_outline</mat-icon>
+        <mat-icon aria-hidden="true">info</mat-icon>
         <span>
-          La edición de datos, foto y documentos de verificación no está disponible en esta versión.
-          Si necesitas corregir información, contacta al equipo de FIXTECH.
+          El correo electrónico, el rol y el estado de la cuenta se gestionan con el equipo de
+          FIXTECH. Puedes actualizar tus datos personales y profesionales con el botón “Editar
+          perfil”.
         </span>
       </div>
     </section>

@@ -83,6 +83,10 @@ export class AuthService {
     return this.cargaEnCurso$;
   }
 
+  actualizarPerfil(perfil: PerfilUsuario): void {
+    this.perfilState.set(perfil);
+  }
+
   asegurarSesion(): Observable<boolean> {
     if (!this.session.tieneSesion()) {
       this.perfilState.set(null);
