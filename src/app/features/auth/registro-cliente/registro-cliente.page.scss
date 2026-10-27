@@ -152,6 +152,10 @@
   text-align: center;
 }
 
+.registro__nota a {
+  font-weight: 600;
+}
+
 @media (min-width: 56rem) {
   .registro {
     grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);

@@ -51,7 +51,7 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
 | 0    | Base técnica, SSR, tooling y sistema de diseño         | ✅ Completada |
 | 1    | Autenticación, sesión, guards, interceptores y layouts | ✅ Completada |
 | 2    | Panel admin: técnicos y usuarios                       | ✅ Completada |
-| 3    | Registro y perfil de técnico                           | ⏳ Pendiente  |
+| 3    | Registro y perfil de técnico                           | ✅ Completada |
 | 4    | Cliente: solicitudes y adjuntos                        | ⏳ Pendiente  |
 | 5    | Técnico: solicitudes disponibles y ofertas             | ⏳ Pendiente  |
 | 6    | Negociación y ejecución del servicio                   | ⏳ Pendiente  |
@@ -166,17 +166,54 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
 - [x] Axe sin violaciones en login, registro, listados, detalle de técnico y ambos diálogos.
 - [x] Aprobación real de un técnico verificada contra la API.
 
-## 7. Fase 3 — Registro y perfil de técnico ⏳
+## 7. Fase 3 — Registro y perfil de técnico ✅
 
-- [ ] Formulario de registro de técnico con datos personales, modalidades y especialidades.
-- [ ] Catálogos públicos: especialidades y distritos.
-- [ ] Validación de al menos una modalidad y dirección de taller cuando aplique.
-- [ ] Pantalla de perfil técnico y estado de verificación.
-- [ ] Mensajes claros para `PENDIENTE`, `OBSERVADO` y `RECHAZADO`.
-- [ ] Pruebas de formulario y E2E de registro.
+### Endpoints usados
 
-> Brecha: no existen endpoints para subir documentos de verificación ni editar el perfil o la
-> foto. La tabla `documento_tecnico` existe, pero no hay controlador expuesto.
+- `POST /api/auth/register/tecnico` con datos personales, modalidades, taller, especialidades y
+  distritos. Responde `201` con `{ id, correo, rol }`; no devuelve tokens.
+- `GET /api/catalogos/especialidades`: catálogo público de especialidades activas.
+- `GET /api/catalogos/distritos`: catálogo público de distritos con `topeMovilidad`.
+- `GET /api/auth/me`: perfil del técnico con estado de verificación, motivo, modalidades,
+  descripción, experiencia, calificación, reseñas, servicios y bloqueo por deuda.
+
+### Frontend
+
+- [x] Formulario `/registro-tecnico` con datos personales, perfil profesional, modalidades,
+      especialidades y distritos.
+- [x] Catálogos públicos cargados con estados de carga, error con reintento y vacío.
+- [x] Validaciones espejo del backend: correo, celular, DNI, contraseña, años de experiencia
+      entero entre 0 y 60, descripción y límites de taller.
+- [x] Al menos una modalidad obligatoria y dirección de taller obligatoria cuando se ofrece
+      atención en taller.
+- [x] Al menos una especialidad y un distrito; los campos de taller se ocultan y limpian cuando
+      no aplican.
+- [x] Enlaces al registro de técnico desde el login y el registro de cliente.
+- [x] Tras el registro se redirige al login con un aviso; el técnico inicia sesión por separado.
+- [x] Pantalla `/app/tecnico/perfil` protegida con `roleGuard` para `TECNICO`, con identidad,
+      estado de verificación, motivo, modalidades, descripción, experiencia, estadísticas y
+      datos de la cuenta.
+- [x] Mensajes específicos para `PENDIENTE`, `APROBADO`, `OBSERVADO` y `RECHAZADO`, además del
+      bloqueo por deuda.
+- [x] Perfil de solo lectura: no se ofrecen acciones de edición, foto ni documentos.
+- [x] Acceso a “Mi perfil” desde la navegación del técnico.
+- [x] Pruebas unitarias de servicio de catálogos, registro de técnico, validaciones, estados del
+      formulario y mensajes del perfil.
+- [x] E2E real: registra un técnico único desde la interfaz, inicia sesión, abre su perfil,
+      comprueba el estado “En revisión” y audita ambas pantallas con Axe en escritorio y 360 px.
+
+> Brechas: `GET /api/auth/me` no devuelve DNI, celular, especialidades, distritos ni datos del
+> taller del técnico, por lo que el perfil solo muestra los campos disponibles. Tampoco existen
+> endpoints para editar el perfil o la foto ni para subir documentos de verificación. La pantalla
+> lo indica y no promete esas funciones. El E2E crea cuentas reales y no hay endpoint de limpieza.
+
+### Criterios de cierre
+
+- [x] Build de producción, lint y formato sin errores.
+- [x] 73 pruebas unitarias en verde.
+- [x] E2E de registro y perfil en verde en Chromium y móvil de 360 px con el backend local.
+- [x] Axe sin violaciones en el formulario de registro y en el perfil del técnico.
+- [x] El registro real responde `201` y el perfil muestra el estado `PENDIENTE`.
 
 ## 8. Fase 4 — Cliente: solicitudes y adjuntos ⏳
 
@@ -299,3 +336,4 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
 | ---------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 2026-10-27 | 0 y 1 | Build de producción, 21 pruebas unitarias, lint, Prettier y 8 pruebas E2E con Axe en escritorio y 360 px; login real contra backend verificado                                                            |
 | 2026-10-27 | 2     | Build de producción, 53 pruebas unitarias, lint y Prettier; 10 pruebas E2E con Axe en escritorio y 360 px; aprobación real de un técnico creado vía API y estado verificado con `GET /api/admin/tecnicos` |
+| 2026-10-27 | 3     | Build de producción, 73 pruebas unitarias, lint y Prettier; 12 pruebas E2E con Axe en escritorio y 360 px; registro real de un técnico, login y perfil `PENDIENTE` verificado desde la interfaz           |

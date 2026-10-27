@@ -5,7 +5,7 @@ import { provideRouter } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AuthService } from './auth.service';
-import { PerfilUsuario } from './auth.models';
+import { PerfilUsuario, RegistroTecnicoRequest } from './auth.models';
 import { SessionStore } from './session-store.service';
 
 const TOKENS = {
@@ -143,5 +143,38 @@ describe('AuthService', () => {
     expect(auth.rol()).toBeNull();
     expect(auth.autenticado()).toBe(false);
     expect(await firstValueFrom(auth.asegurarSesion())).toBe(false);
+  });
+
+  it('registra un técnico con el contrato del backend', () => {
+    const request: RegistroTecnicoRequest = {
+      nombres: 'Carlos',
+      apellidos: 'Mena',
+      correo: 'carlos.mena@fixtech.pe',
+      celular: '987654321',
+      dni: '12345678',
+      password: 'Password123',
+      aceptoTerminos: true,
+      descripcion: 'Reparo laptops y computadoras.',
+      aniosExperiencia: 8,
+      ofreceDomicilio: true,
+      ofreceTaller: true,
+      direccionTaller: 'Av. Grau 123',
+      referenciaTaller: 'Frente al mercado',
+      horarioTaller: 'Lunes a sábado, 9:00 a 18:00',
+      especialidadIds: [1, 3],
+      distritoIds: [1],
+    };
+    let respuesta: unknown;
+
+    auth.registrarTecnico(request).subscribe((resultado) => {
+      respuesta = resultado;
+    });
+
+    const peticion = http.expectOne(`${environment.apiUrl}/auth/register/tecnico`);
+    expect(peticion.request.method).toBe('POST');
+    expect(peticion.request.body).toEqual(request);
+    peticion.flush({ id: 30, correo: request.correo, rol: 'TECNICO' });
+
+    expect(respuesta).toEqual({ id: 30, correo: request.correo, rol: 'TECNICO' });
   });
 });

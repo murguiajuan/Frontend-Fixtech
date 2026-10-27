@@ -96,6 +96,12 @@ export class AppLayout {
       const habilitado = this.auth.puedeOfertar();
       items.push(
         {
+          etiqueta: 'Mi perfil',
+          icono: 'badge',
+          ruta: '/app/tecnico/perfil',
+          disponible: true,
+        },
+        {
           etiqueta: 'Solicitudes disponibles',
           icono: 'work_outline',
           ruta: '/app/tecnico/solicitudes',

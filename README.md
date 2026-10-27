@@ -6,9 +6,10 @@ FIXTECH en `http://localhost:8082/api`.
 
 ## Estado actual
 
-Fases 0, 1 y 2 completadas: base técnica, autenticación JWT, sesión, guards, interceptores,
-layouts por rol, panel inicial y administración de técnicos y usuarios. Las demás pantallas de
-negocio se incorporan en las siguientes fases. El plan completo y el progreso están en
+Fases 0, 1, 2 y 3 completadas: base técnica, autenticación JWT, sesión, guards, interceptores,
+layouts por rol, panel inicial, administración de técnicos y usuarios, registro de técnico con
+catálogos y perfil con estado de verificación. Las demás pantallas de negocio se incorporan en
+las siguientes fases. El plan completo y el progreso están en
 [`PLAN_FRONTEND.md`](./PLAN_FRONTEND.md).
 
 ## Stack
@@ -74,8 +75,10 @@ E2E_BACKEND=1 npm run e2e
 
 La prueba de aprobación crea un técnico único mediante `POST /api/auth/register/tecnico`, inicia
 sesión como administrador, aprueba el perfil y comprueba el estado con
-`GET /api/admin/tecnicos`. Requiere el backend y MySQL locales. Sin `E2E_BACKEND=1` esa prueba
-se omite y solo corren las pruebas públicas.
+`GET /api/admin/tecnicos`. La prueba de registro de técnico crea otra cuenta única desde la
+interfaz, inicia sesión y verifica el perfil en estado `PENDIENTE`. Requiere el backend y MySQL
+locales. Sin `E2E_BACKEND=1` esas pruebas se omiten y solo corren las pruebas públicas. No existe
+un endpoint para limpiar las cuentas creadas por las pruebas.
 
 ## Estructura
 
@@ -84,14 +87,16 @@ src/
 ├── app/
 │   ├── core/
 │   │   ├── auth/          # Sesión, AuthService, refresh, interceptores y guards
+│   │   ├── catalogos/     # Catálogos públicos de especialidades y distritos
 │   │   ├── http/          # Normalización de errores de API
 │   │   ├── layout/        # Layout público y layout privado con sidenav
 │   │   └── models/        # Etiquetas y tipos compartidos
 │   ├── features/
 │   │   ├── admin/         # Verificación de técnicos y gestión de usuarios
-│   │   ├── auth/          # Login y registro de cliente
+│   │   ├── auth/          # Login, registro de cliente y registro de técnico
 │   │   ├── dashboard/     # Panel inicial por rol
-│   │   └── errors/        # Páginas 403 y 404
+│   │   ├── errors/        # Páginas 403 y 404
+│   │   └── tecnico/       # Perfil del técnico y estado de verificación
 │   ├── shared/ui/         # Marca, badges, iconos y notificaciones
 │   ├── app.config.ts      # Locale es-PE, router y HttpClient con interceptores
 │   └── app.routes.ts      # Rutas públicas y privadas con lazy loading
@@ -103,11 +108,11 @@ e2e/                       # Pruebas Playwright y Axe
 
 ## Roles y navegación
 
-| Rol       | Acceso inicial | Navegación habilitada                                                 |
-| --------- | -------------- | --------------------------------------------------------------------- |
-| `CLIENTE` | `/app/inicio`  | Inicio; solicitudes y servicios aparecen como “Próximamente”          |
-| `TECNICO` | `/app/inicio`  | Inicio; ofertas bloqueadas si no está aprobado o tiene deuda          |
-| `ADMIN`   | `/app/inicio`  | Inicio, técnicos y usuarios; reportes y catálogos como “Próximamente” |
+| Rol       | Acceso inicial | Navegación habilitada                                                    |
+| --------- | -------------- | ------------------------------------------------------------------------ |
+| `CLIENTE` | `/app/inicio`  | Inicio; solicitudes y servicios aparecen como “Próximamente”             |
+| `TECNICO` | `/app/inicio`  | Inicio y mi perfil; ofertas bloqueadas si no está aprobado o tiene deuda |
+| `ADMIN`   | `/app/inicio`  | Inicio, técnicos y usuarios; reportes y catálogos como “Próximamente”    |
 
 Los guards protegen las rutas privadas:
 
@@ -131,6 +136,27 @@ Los guards protegen las rutas privadas:
 
 > Brecha: la API de administración no expone documentos de verificación. El detalle lo indica
 > explícitamente y no inventa documentos ni campos.
+
+## Registro y perfil de técnico
+
+- `/registro-tecnico` es público y crea la cuenta con `POST /api/auth/register/tecnico`. Carga
+  `GET /api/catalogos/especialidades` y `GET /api/catalogos/distritos` con estados de carga,
+  error con reintento y vacío.
+- El formulario valida los mismos límites del backend: nombres y apellidos de hasta 80
+  caracteres, correo de hasta 120, celular `9XXXXXXXX`, DNI de 8 dígitos, contraseña de 8 a 72,
+  descripción de hasta 1000, experiencia entera de 0 a 60, dirección y referencia de taller de
+  hasta 200 y horario de hasta 120.
+- Exige al menos una modalidad y una dirección de taller cuando se ofrece atención en taller.
+  También exige al menos una especialidad y un distrito. Los campos de taller se ocultan y se
+  limpian cuando no aplican.
+- El registro responde `201` sin tokens; la aplicación redirige al login con un aviso para que el
+  técnico inicie sesión por separado.
+- `/app/tecnico/perfil` es de solo lectura y muestra identidad, estado de verificación, motivo,
+  modalidades, descripción, experiencia, calificación, reseñas, servicios completados y bloqueo
+  por deuda. Incluye mensajes específicos para `PENDIENTE`, `APROBADO`, `OBSERVADO` y `RECHAZADO`.
+- La edición de perfil, foto y documentos no está disponible porque la API no expone esos
+  endpoints. El perfil tampoco puede mostrar DNI, celular, especialidades, distritos ni datos del
+  taller porque `GET /api/auth/me` no los devuelve.
 
 ## Autenticación
 
@@ -164,7 +190,9 @@ CSRF. Esta limitación debe revisarse antes del despliegue.
 
 No existen todavía endpoints para carga de documentos de verificación, edición de perfil o
 foto, recuperación/cambio de contraseña ni búsqueda pública de técnicos. Por eso el frontend no
-ofrece esas pantallas ni promete esas funciones.
+ofrece esas pantallas ni promete esas funciones. Para técnicos, `GET /api/auth/me` tampoco
+devuelve DNI, celular, especialidades, distritos ni datos del taller; el perfil solo muestra los
+campos disponibles.
 
 ## Calidad y accesibilidad
 
@@ -180,9 +208,9 @@ npm run e2e
 
 Las pruebas E2E incluyen Axe con las reglas WCAG 2.0/2.1 A y AA en escritorio y en un viewport
 móvil de 360 px. La interfaz es mobile-first, con foco visible, etiquetas explícitas y mensajes
-de error anunciados. Las pantallas y diálogos de la Fase 2 también se auditan; los iconos de los
-botones con `aria-label` se renderizan como SVG decorativos para no mezclar ligaduras de fuentes
-con el nombre accesible.
+de error anunciados. Las pantallas y diálogos de las fases 2 y 3 también se auditan; los iconos
+de los botones con `aria-label` se renderizan como SVG decorativos para no mezclar ligaduras de
+fuentes con el nombre accesible.
 
 ## Despliegue
 

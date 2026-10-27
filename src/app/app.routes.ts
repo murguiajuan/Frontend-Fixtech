@@ -27,6 +27,14 @@ export const routes: Routes = [
             (m) => m.RegistroClientePage,
           ),
       },
+      {
+        path: 'registro-tecnico',
+        title: 'Registro de técnico | FIXTECH',
+        loadComponent: () =>
+          import('./features/auth/registro-tecnico/registro-tecnico.page').then(
+            (m) => m.RegistroTecnicoPage,
+          ),
+      },
     ],
   },
   {
@@ -44,6 +52,14 @@ export const routes: Routes = [
         title: 'Inicio | FIXTECH',
         loadComponent: () =>
           import('./features/dashboard/dashboard.page').then((m) => m.DashboardPage),
+      },
+      {
+        path: 'tecnico/perfil',
+        title: 'Mi perfil | FIXTECH',
+        canActivate: [roleGuard],
+        data: { roles: ['TECNICO'] },
+        loadComponent: () =>
+          import('./features/tecnico/perfil/perfil.page').then((m) => m.PerfilTecnicoPage),
       },
       {
         path: 'admin/tecnicos',

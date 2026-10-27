@@ -44,8 +44,13 @@ export class LoginPage {
   protected readonly ocultarPassword = signal(true);
 
   constructor() {
-    if (this.route.snapshot.queryParamMap.get('registrado') === '1') {
+    const registrado = this.route.snapshot.queryParamMap.get('registrado');
+    if (registrado === '1') {
       this.notificaciones.exito('Cuenta creada. Ya puedes iniciar sesión.');
+    } else if (registrado === 'tecnico') {
+      this.notificaciones.exito(
+        'Cuenta de técnico creada. Tu perfil quedó en revisión; ya puedes iniciar sesión.',
+      );
     }
   }
 

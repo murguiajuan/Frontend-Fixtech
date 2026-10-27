@@ -128,6 +128,17 @@
   font-weight: 700;
 }
 
+.acceso__tecnico {
+  margin-top: 0.75rem;
+  color: var(--ft-on-surface-muted);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.acceso__tecnico a {
+  font-weight: 700;
+}
+
 @media (min-width: 56rem) {
   .acceso {
     grid-template-columns: minmax(0, 1.1fr) minmax(20rem, 0.9fr);

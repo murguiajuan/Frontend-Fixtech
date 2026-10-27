@@ -8,6 +8,7 @@ import {
   LoginRequest,
   PerfilUsuario,
   RegistroClienteRequest,
+  RegistroTecnicoRequest,
   TokenResponse,
   UsuarioRegistradoResponse,
 } from './auth.models';
@@ -51,6 +52,13 @@ export class AuthService {
   registrarCliente(request: RegistroClienteRequest): Observable<UsuarioRegistradoResponse> {
     return this.http.post<UsuarioRegistradoResponse>(
       `${environment.apiUrl}/auth/register/cliente`,
+      request,
+    );
+  }
+
+  registrarTecnico(request: RegistroTecnicoRequest): Observable<UsuarioRegistradoResponse> {
+    return this.http.post<UsuarioRegistradoResponse>(
+      `${environment.apiUrl}/auth/register/tecnico`,
       request,
     );
   }

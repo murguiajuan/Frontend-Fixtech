@@ -25,6 +25,25 @@ export interface RegistroClienteRequest {
   readonly aceptoTerminos: boolean;
 }
 
+export interface RegistroTecnicoRequest {
+  readonly nombres: string;
+  readonly apellidos: string;
+  readonly correo: string;
+  readonly celular: string;
+  readonly dni: string;
+  readonly password: string;
+  readonly aceptoTerminos: boolean;
+  readonly descripcion: string | null;
+  readonly aniosExperiencia: number;
+  readonly ofreceDomicilio: boolean;
+  readonly ofreceTaller: boolean;
+  readonly direccionTaller: string | null;
+  readonly referenciaTaller: string | null;
+  readonly horarioTaller: string | null;
+  readonly especialidadIds: readonly number[];
+  readonly distritoIds: readonly number[];
+}
+
 export interface UsuarioRegistradoResponse {
   readonly id: number;
   readonly correo: string;
