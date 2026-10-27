@@ -1,0 +1,280 @@
+@if (perfil(); as p) {
+  <div class="tablero ft-page">
+    <header class="hero ft-card">
+      <div class="hero__texto">
+        <p class="ft-eyebrow">{{ etiquetasRol[p.rol] }}</p>
+        <h1>{{ saludo() }}</h1>
+        <p class="hero__descripcion">{{ descripcionRol() }}</p>
+      </div>
+      <div class="hero__cuenta">
+        <span class="hero__estado">
+          <mat-icon aria-hidden="true">check_circle</mat-icon>
+          Cuenta activa
+        </span>
+        <span class="hero__correo">{{ p.correo }}</span>
+      </div>
+    </header>
+
+    @if (esTecnico()) {
+      @if (estadoVerificacion() === 'APROBADO') {
+        <div class="ft-alert ft-alert--success" role="status">
+          <mat-icon aria-hidden="true">verified</mat-icon>
+          <div>
+            <strong>Tu perfil está aprobado.</strong>
+            Ya puedes recibir y enviar ofertas a solicitudes compatibles.
+          </div>
+        </div>
+      } @else {
+        <div
+          class="ft-alert"
+          [class.ft-alert--warning]="estadoVerificacion() === 'PENDIENTE'"
+          [class.ft-alert--error]="estadoVerificacion() !== 'PENDIENTE'"
+          role="status"
+        >
+          <mat-icon aria-hidden="true">
+            {{ estadoVerificacion() === 'PENDIENTE' ? 'hourglass_top' : 'report_problem' }}
+          </mat-icon>
+          <div>
+            <strong>
+              @switch (estadoVerificacion()) {
+                @case ('PENDIENTE') {
+                  Tu verificación está en revisión.
+                }
+                @case ('OBSERVADO') {
+                  Tu verificación requiere correcciones.
+                }
+                @case ('RECHAZADO') {
+                  Tu verificación fue rechazada.
+                }
+                @default {
+                  Completa tu perfil para enviar ofertas.
+                }
+              }
+            </strong>
+            @if (motivoVerificacion(); as motivo) {
+              <p>Motivo: {{ motivo }}</p>
+            } @else {
+              <p>Un administrador revisará tu información antes de habilitar las ofertas.</p>
+            }
+          </div>
+        </div>
+      }
+
+      @if (bloqueado()) {
+        <div class="ft-alert ft-alert--warning" role="alert">
+          <mat-icon aria-hidden="true">account_balance_wallet</mat-icon>
+          <div>
+            <strong>Tienes un bloqueo temporal por deuda de comisiones.</strong>
+            <p>
+              Saldo pendiente:
+              {{ saldoPendiente() | currency: 'PEN' : 'symbol-narrow' : '1.2-2' }}. Regulariza el
+              pago para volver a ofertar.
+            </p>
+          </div>
+        </div>
+      }
+
+      <section class="metricas" aria-label="Resumen de tu actividad">
+        <article class="metrica ft-card">
+          <mat-icon aria-hidden="true">star</mat-icon>
+          <strong>{{ tecnico()?.calificacionPromedio ?? 0 | number: '1.1-2' }}</strong>
+          <span>Calificación promedio</span>
+        </article>
+        <article class="metrica ft-card">
+          <mat-icon aria-hidden="true">reviews</mat-icon>
+          <strong>{{ tecnico()?.totalResenas ?? 0 }}</strong>
+          <span>Reseñas recibidas</span>
+        </article>
+        <article class="metrica ft-card">
+          <mat-icon aria-hidden="true">task_alt</mat-icon>
+          <strong>{{ tecnico()?.serviciosCompletados ?? 0 }}</strong>
+          <span>Servicios completados</span>
+        </article>
+      </section>
+
+      <section class="panel ft-card" aria-labelledby="titulo-perfil-tecnico">
+        <div class="panel__cabecera">
+          <div>
+            <h2 id="titulo-perfil-tecnico">Perfil profesional</h2>
+            <p class="ft-muted">Así te verán los clientes cuando estés aprobado.</p>
+          </div>
+          <span
+            class="estado"
+            [class.estado--ok]="estadoVerificacion() === 'APROBADO'"
+            [class.estado--alerta]="estadoVerificacion() !== 'APROBADO'"
+          >
+            {{ etiquetasVerificacion[estadoVerificacion() ?? 'PENDIENTE'] }}
+          </span>
+        </div>
+
+        <dl class="detalle">
+          <div>
+            <dt>Experiencia</dt>
+            <dd>{{ tecnico()?.aniosExperiencia ?? 0 }} años</dd>
+          </div>
+          <div>
+            <dt>Modalidades</dt>
+            <dd class="detalle__modalidades">
+              @if (modalidades().length === 0) {
+                <span class="ft-muted">Sin modalidades configuradas</span>
+              }
+              <mat-chip-set aria-label="Modalidades de atención">
+                @for (modalidad of modalidades(); track modalidad) {
+                  <mat-chip>{{ etiquetasModalidad[modalidad] }}</mat-chip>
+                }
+              </mat-chip-set>
+            </dd>
+          </div>
+          <div>
+            <dt>Descripción</dt>
+            <dd>{{ tecnico()?.descripcion ?? 'Aún no has agregado una descripción.' }}</dd>
+          </div>
+        </dl>
+      </section>
+    }
+
+    @if (esCliente()) {
+      <section class="panel ft-card" aria-labelledby="titulo-cliente">
+        <div class="panel__cabecera">
+          <div>
+            <h2 id="titulo-cliente">Tu cuenta está lista</h2>
+            <p class="ft-muted">Muy pronto podrás publicar tu primera solicitud de servicio.</p>
+          </div>
+          <span class="estado estado--ok">Cliente</span>
+        </div>
+        <ol class="pasos">
+          <li>
+            <span class="pasos__numero">1</span>
+            <div>
+              <strong>Describe el problema</strong>
+              <p class="ft-muted">Indica el tipo de equipo, la falla y la modalidad de atención.</p>
+            </div>
+          </li>
+          <li>
+            <span class="pasos__numero">2</span>
+            <div>
+              <strong>Compara ofertas</strong>
+              <p class="ft-muted">Revisa precio, tiempo estimado y garantía de cada técnico.</p>
+            </div>
+          </li>
+          <li>
+            <span class="pasos__numero">3</span>
+            <div>
+              <strong>Confirma el servicio</strong>
+              <p class="ft-muted">Coordina, revisa los avances y descarga tu constancia.</p>
+            </div>
+          </li>
+        </ol>
+      </section>
+    }
+
+    @if (esAdmin()) {
+      <section class="panel ft-card" aria-labelledby="titulo-admin">
+        <div class="panel__cabecera">
+          <div>
+            <h2 id="titulo-admin">Panel administrativo</h2>
+            <p class="ft-muted">
+              La gestión operativa se habilitará en las siguientes fases del proyecto.
+            </p>
+          </div>
+          <span class="estado estado--ok">Administrador</span>
+        </div>
+        <div class="admin__resumen">
+          <div>
+            <mat-icon aria-hidden="true">verified_user</mat-icon>
+            <strong>Verificación de técnicos</strong>
+            <span class="ft-muted">Revisa documentos y aprueba perfiles.</span>
+          </div>
+          <div>
+            <mat-icon aria-hidden="true">group</mat-icon>
+            <strong>Usuarios y accesos</strong>
+            <span class="ft-muted">Suspende o reactiva cuentas.</span>
+          </div>
+          <div>
+            <mat-icon aria-hidden="true">monitoring</mat-icon>
+            <strong>Reportes</strong>
+            <span class="ft-muted">Consulta indicadores y exporta información.</span>
+          </div>
+        </div>
+      </section>
+    }
+
+    <section aria-labelledby="titulo-modulos">
+      <div class="seccion__cabecera">
+        <div>
+          <p class="ft-eyebrow">Hoja de ruta</p>
+          <h2 id="titulo-modulos">Próximos módulos</h2>
+        </div>
+      </div>
+      <div class="modulos">
+        @if (esCliente()) {
+          <article class="modulo ft-card">
+            <mat-icon aria-hidden="true">add_circle</mat-icon>
+            <h3>Nueva solicitud</h3>
+            <p class="ft-muted">Publica una solicitud con fotos y recibe ofertas.</p>
+            <span class="modulo__estado">Próximamente</span>
+          </article>
+          <article class="modulo ft-card">
+            <mat-icon aria-hidden="true">assignment</mat-icon>
+            <h3>Mis solicitudes</h3>
+            <p class="ft-muted">Sigue el estado de tus publicaciones activas.</p>
+            <span class="modulo__estado">Próximamente</span>
+          </article>
+          <article class="modulo ft-card">
+            <mat-icon aria-hidden="true">build_circle</mat-icon>
+            <h3>Mis servicios</h3>
+            <p class="ft-muted">Consulta avances, mensajes y constancias.</p>
+            <span class="modulo__estado">Próximamente</span>
+          </article>
+        } @else if (esTecnico()) {
+          <article class="modulo ft-card" [class.modulo--bloqueado]="!aprobado() || bloqueado()">
+            <mat-icon aria-hidden="true">work_outline</mat-icon>
+            <h3>Solicitudes disponibles</h3>
+            <p class="ft-muted">Encuentra trabajos compatibles con tu especialidad.</p>
+            <span class="modulo__estado">
+              {{ aprobado() && !bloqueado() ? 'Próximamente' : 'Requiere perfil aprobado' }}
+            </span>
+          </article>
+          <article class="modulo ft-card" [class.modulo--bloqueado]="!aprobado() || bloqueado()">
+            <mat-icon aria-hidden="true">request_quote</mat-icon>
+            <h3>Mis ofertas</h3>
+            <p class="ft-muted">Revisa el estado de las propuestas enviadas.</p>
+            <span class="modulo__estado">
+              {{ aprobado() && !bloqueado() ? 'Próximamente' : 'Requiere perfil aprobado' }}
+            </span>
+          </article>
+          <article class="modulo ft-card">
+            <mat-icon aria-hidden="true">payments</mat-icon>
+            <h3>Comisiones</h3>
+            <p class="ft-muted">Consulta tu saldo y registra pagos.</p>
+            <span class="modulo__estado">Próximamente</span>
+          </article>
+        } @else {
+          <article class="modulo ft-card">
+            <mat-icon aria-hidden="true">verified_user</mat-icon>
+            <h3>Técnicos</h3>
+            <p class="ft-muted">Aprobar, observar o rechazar perfiles.</p>
+            <span class="modulo__estado">Próximamente</span>
+          </article>
+          <article class="modulo ft-card">
+            <mat-icon aria-hidden="true">group</mat-icon>
+            <h3>Usuarios</h3>
+            <p class="ft-muted">Administrar cuentas y estados de acceso.</p>
+            <span class="modulo__estado">Próximamente</span>
+          </article>
+          <article class="modulo ft-card">
+            <mat-icon aria-hidden="true">summarize</mat-icon>
+            <h3>Reportes</h3>
+            <p class="ft-muted">Indicadores operativos y exportación.</p>
+            <span class="modulo__estado">Próximamente</span>
+          </article>
+        }
+      </div>
+    </section>
+  </div>
+} @else {
+  <div class="tablero tablero--cargando">
+    <mat-spinner diameter="36" aria-label="Cargando tu perfil" />
+    <p class="ft-muted">Cargando tu perfil…</p>
+  </div>
+}

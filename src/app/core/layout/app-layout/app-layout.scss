@@ -1,0 +1,258 @@
+:host {
+  display: block;
+  height: 100dvh;
+}
+
+.saltar-contenido {
+  position: absolute;
+  z-index: 100;
+  top: 0.5rem;
+  left: 0.5rem;
+  padding: 0.6rem 1rem;
+  transform: translateY(-200%);
+  border-radius: 0.5rem;
+  background: var(--ft-primary-900);
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.saltar-contenido:focus {
+  transform: none;
+}
+
+.shell {
+  height: 100dvh;
+  background: transparent;
+}
+
+.shell__sidenav {
+  width: min(85vw, 18rem);
+  border-right: 1px solid var(--ft-border);
+  background: var(--ft-surface-raised);
+}
+
+.sidenav__marca {
+  display: flex;
+  align-items: center;
+  min-height: 4.5rem;
+  padding-inline: 1.25rem;
+  border-bottom: 1px solid var(--ft-border);
+}
+
+.sidenav__nav {
+  display: grid;
+  gap: 0.25rem;
+  padding: 1rem 0.75rem;
+}
+
+.nav__enlace {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 2.85rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 0.75rem;
+  color: var(--ft-on-surface-muted);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.nav__enlace mat-icon {
+  flex: 0 0 auto;
+  color: var(--ft-primary-600);
+}
+
+.nav__enlace:hover {
+  background: var(--ft-primary-50);
+  color: var(--ft-primary-900);
+}
+
+.nav__enlace--activo {
+  background: var(--ft-primary-100);
+  color: var(--ft-primary-900);
+  font-weight: 700;
+}
+
+.nav__enlace--bloqueado {
+  cursor: not-allowed;
+  opacity: 0.56;
+}
+
+.nav__pronto {
+  margin-left: auto;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: var(--ft-surface-muted);
+  color: var(--ft-on-surface-muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sidenav__pie {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding: 1rem 1.25rem 1.5rem;
+  border-top: 1px solid var(--ft-border);
+}
+
+.sidenav__usuario {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.sidenav__avatar,
+.toolbar__avatar {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--ft-primary-100);
+  color: var(--ft-primary-900);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.sidenav__avatar {
+  width: 2.25rem;
+  height: 2.25rem;
+  font-size: 0.8rem;
+}
+
+.sidenav__datos {
+  display: grid;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.sidenav__datos strong {
+  overflow: hidden;
+  font-size: 0.84rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidenav__datos small {
+  color: var(--ft-on-surface-muted);
+  font-size: 0.75rem;
+}
+
+.sidenav__salir {
+  justify-content: flex-start;
+  width: 100%;
+  color: var(--ft-danger);
+}
+
+.shell__contenido {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: transparent;
+}
+
+.toolbar {
+  position: sticky;
+  z-index: 5;
+  top: 0;
+  border-bottom: 1px solid rgb(215 227 232 / 80%);
+  background: rgb(255 255 255 / 90%);
+  color: var(--ft-primary-950);
+  backdrop-filter: blur(14px);
+}
+
+.toolbar__titulo {
+  margin-left: 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.toolbar__espaciador {
+  flex: 1;
+}
+
+.toolbar__usuario {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.toolbar__avatar {
+  width: 2rem;
+  height: 2rem;
+  font-size: 0.78rem;
+}
+
+.toolbar__nombre {
+  max-width: 9rem;
+  overflow: hidden;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toolbar__usuario mat-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  font-size: 1.1rem;
+}
+
+.shell__principal {
+  flex: 1;
+  outline: none;
+}
+
+.menu__cabecera {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 14rem;
+  padding: 0.85rem 1rem;
+}
+
+.menu__cabecera strong {
+  font-size: 0.9rem;
+}
+
+.menu__cabecera small {
+  color: var(--ft-on-surface-muted);
+  font-size: 0.78rem;
+}
+
+.menu__rol {
+  width: fit-content;
+  margin-top: 0.25rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: var(--ft-primary-50);
+  color: var(--ft-primary-700);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 47.99rem) {
+  .toolbar__nombre {
+    display: none;
+  }
+
+  .toolbar__titulo {
+    font-size: 0.95rem;
+  }
+}
+
+@media (min-width: 90rem) {
+  .shell__sidenav {
+    width: 19rem;
+  }
+}

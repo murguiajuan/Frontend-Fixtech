@@ -1,0 +1,148 @@
+:host {
+  display: block;
+}
+
+.acceso {
+  display: grid;
+  gap: 2rem;
+  width: min(100% - 2rem, 68rem);
+  margin-inline: auto;
+  padding-block: 2rem 3rem;
+}
+
+.acceso__presentacion {
+  display: none;
+}
+
+.acceso__descripcion {
+  max-width: 34rem;
+  margin-top: 1rem;
+  color: var(--ft-on-surface-muted);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.acceso__beneficios {
+  display: grid;
+  gap: 0.9rem;
+  margin: 2rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.acceso__beneficios li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  color: var(--ft-on-surface-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.acceso__beneficios mat-icon {
+  flex: 0 0 auto;
+  margin-top: 0.1rem;
+  color: var(--ft-primary-600);
+}
+
+.acceso__beneficios strong {
+  color: var(--ft-on-surface);
+}
+
+.acceso__panel {
+  width: 100%;
+  max-width: 30rem;
+  margin-inline: auto;
+  padding: 1.5rem;
+  box-shadow: var(--ft-shadow-md);
+}
+
+.acceso__encabezado {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 1.5rem;
+}
+
+.acceso__icono {
+  display: grid;
+  flex: 0 0 auto;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  border-radius: 0.9rem;
+  background: var(--ft-primary-50);
+  color: var(--ft-primary-700);
+}
+
+.acceso__encabezado h1 {
+  font-size: 1.45rem;
+}
+
+.acceso__claim {
+  max-width: 38rem;
+  margin-top: 0.75rem;
+  color: var(--ft-primary-950);
+  font-size: clamp(2.2rem, 4vw, 3.4rem);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.acceso__encabezado p {
+  margin-top: 0.2rem;
+  font-size: 0.875rem;
+}
+
+.acceso__panel form {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 1.25rem;
+}
+
+.acceso__submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 3rem;
+  margin-top: 0.75rem;
+  font-weight: 700;
+}
+
+.acceso__submit mat-spinner {
+  --mdc-circular-progress-active-indicator-color: currentcolor;
+}
+
+.acceso__alternativa {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--ft-border);
+  color: var(--ft-on-surface-muted);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.acceso__alternativa a {
+  font-weight: 700;
+}
+
+@media (min-width: 56rem) {
+  .acceso {
+    grid-template-columns: minmax(0, 1.1fr) minmax(20rem, 0.9fr);
+    align-items: center;
+    gap: 4rem;
+    min-height: calc(100dvh - 14rem);
+    padding-block: 3.5rem 4.5rem;
+  }
+
+  .acceso__presentacion {
+    display: block;
+  }
+
+  .acceso__panel {
+    margin: 0;
+    padding: 2rem;
+  }
+}

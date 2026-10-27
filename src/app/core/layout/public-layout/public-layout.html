@@ -1,0 +1,24 @@
+<div class="publico">
+  <header class="publico__cabecera">
+    <div class="ft-container publico__barra">
+      <a class="publico__marca" routerLink="/login">
+        <app-brand />
+      </a>
+      <nav class="publico__acciones" aria-label="Acceso a la cuenta">
+        <a mat-button routerLink="/login">Iniciar sesión</a>
+        <a mat-flat-button routerLink="/registro">Crear cuenta</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="contenido" class="publico__contenido" tabindex="-1">
+    <router-outlet />
+  </main>
+
+  <footer class="publico__pie">
+    <div class="ft-container publico__pie-contenido">
+      <span>© 2026 FIXTECH. Servicios técnicos en Piura, Perú.</span>
+      <span class="publico__pie-nota">Técnicos verificados · Atención a domicilio y taller</span>
+    </div>
+  </footer>
+</div>

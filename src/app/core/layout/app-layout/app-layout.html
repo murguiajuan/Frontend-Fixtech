@@ -1,0 +1,99 @@
+<a class="saltar-contenido" href="#contenido">Saltar al contenido</a>
+
+<mat-sidenav-container class="shell" [hasBackdrop]="esMovil()">
+  <mat-sidenav
+    class="shell__sidenav"
+    [mode]="esMovil() ? 'over' : 'side'"
+    [opened]="sidenavAbierto()"
+    (openedChange)="sidenavAbierto.set($event)"
+    [fixedInViewport]="esMovil()"
+  >
+    <div class="sidenav__marca">
+      <app-brand />
+    </div>
+
+    <nav class="sidenav__nav" aria-label="Navegación principal">
+      @for (item of navegacion(); track item.ruta) {
+        @if (item.disponible) {
+          <a
+            class="nav__enlace"
+            [routerLink]="item.ruta"
+            routerLinkActive="nav__enlace--activo"
+            (click)="cerrarEnMovil()"
+          >
+            <mat-icon aria-hidden="true">{{ item.icono }}</mat-icon>
+            <span>{{ item.etiqueta }}</span>
+          </a>
+        } @else {
+          <span class="nav__enlace nav__enlace--bloqueado" aria-disabled="true">
+            <mat-icon aria-hidden="true">{{ item.icono }}</mat-icon>
+            <span>{{ item.etiqueta }}</span>
+            <span class="nav__pronto">Pronto</span>
+          </span>
+        }
+      }
+    </nav>
+
+    <div class="sidenav__pie">
+      @if (perfil(); as p) {
+        <div class="sidenav__usuario">
+          <span class="sidenav__avatar" aria-hidden="true">
+            {{ p.nombres.charAt(0) }}{{ p.apellidos.charAt(0) }}
+          </span>
+          <div class="sidenav__datos">
+            <strong>{{ p.nombres }} {{ p.apellidos }}</strong>
+            <small>{{ etiquetasRol[p.rol] }}</small>
+          </div>
+        </div>
+      }
+      <button mat-button class="sidenav__salir" type="button" (click)="cerrarSesion()">
+        <mat-icon>logout</mat-icon>
+        Cerrar sesión
+      </button>
+    </div>
+  </mat-sidenav>
+
+  <mat-sidenav-content class="shell__contenido">
+    <mat-toolbar class="toolbar">
+      <button
+        mat-icon-button
+        type="button"
+        (click)="alternarSidenav()"
+        aria-label="Abrir o cerrar menú de navegación"
+      >
+        <mat-icon aria-hidden="true">menu</mat-icon>
+      </button>
+      <span class="toolbar__titulo">{{ tituloActual() }}</span>
+      <span class="toolbar__espaciador"></span>
+      @if (perfil(); as p) {
+        <button
+          mat-button
+          type="button"
+          class="toolbar__usuario"
+          [matMenuTriggerFor]="menuUsuario"
+          aria-label="Abrir menú de usuario"
+        >
+          <span class="toolbar__avatar" aria-hidden="true">{{ p.nombres.charAt(0) }}</span>
+          <span class="toolbar__nombre">{{ p.nombres }}</span>
+          <mat-icon aria-hidden="true">expand_more</mat-icon>
+        </button>
+        <mat-menu #menuUsuario="matMenu">
+          <div class="menu__cabecera">
+            <strong>{{ p.nombres }} {{ p.apellidos }}</strong>
+            <small>{{ p.correo }}</small>
+            <span class="menu__rol">{{ etiquetasRol[p.rol] }}</span>
+          </div>
+          <mat-divider />
+          <button mat-menu-item type="button" (click)="cerrarSesion()">
+            <mat-icon>logout</mat-icon>
+            <span>Cerrar sesión</span>
+          </button>
+        </mat-menu>
+      }
+    </mat-toolbar>
+
+    <main id="contenido" class="shell__principal" tabindex="-1">
+      <router-outlet />
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>

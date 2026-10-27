@@ -1,1 +1,249 @@
-/* You can add global styles to this file, and also import other style files */
+@use '@angular/material' as mat;
+
+// =====================================================================
+// Tema y tokens de FIXTECH
+// =====================================================================
+html {
+  height: 100%;
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$cyan-palette,
+        tertiary: mat.$orange-palette,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
+}
+
+:root {
+  --ft-primary-950: #032b38;
+  --ft-primary-900: #063746;
+  --ft-primary-800: #08485b;
+  --ft-primary-700: #0a5b73;
+  --ft-primary-600: #0d718d;
+  --ft-primary-500: #1089a8;
+  --ft-primary-100: #d8eef4;
+  --ft-primary-50: #eef8fa;
+
+  --ft-accent-600: #d97706;
+  --ft-accent-500: #f59e0b;
+  --ft-accent-100: #fef3c7;
+
+  --ft-surface: #f4f8fa;
+  --ft-surface-raised: #ffffff;
+  --ft-surface-muted: #e8f0f4;
+  --ft-on-surface: #102a33;
+  --ft-on-surface-muted: #526a74;
+  --ft-border: #d7e3e8;
+
+  --ft-success: #177245;
+  --ft-success-bg: #e6f4ec;
+  --ft-warning: #9a5b00;
+  --ft-warning-bg: #fff4dc;
+  --ft-danger: #a3261e;
+  --ft-danger-bg: #fdecea;
+
+  --ft-radius-sm: 0.5rem;
+  --ft-radius-md: 0.875rem;
+  --ft-radius-lg: 1.25rem;
+  --ft-shadow-sm: 0 1px 2px rgb(3 43 56 / 8%);
+  --ft-shadow-md: 0 12px 32px rgb(3 43 56 / 10%);
+  --ft-shadow-lg: 0 24px 64px rgb(3 43 56 / 16%);
+  --ft-header-height: 4rem;
+  --ft-content-max: 75rem;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(circle at 100% 0%, rgb(216 238 244 / 65%), transparent 26rem), var(--ft-surface);
+  color: var(--ft-on-surface);
+  font: var(--mat-sys-body-medium);
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
+  text-rendering: optimizelegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4,
+p {
+  margin-block: 0;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  color: var(--ft-primary-950);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+a {
+  color: var(--ft-primary-700);
+  text-underline-offset: 0.18em;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid rgb(16 137 168 / 55%);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: var(--ft-primary-100);
+  color: var(--ft-primary-950);
+}
+
+// =====================================================================
+// Utilidades compartidas
+// =====================================================================
+.ft-container {
+  width: min(100% - 2rem, var(--ft-content-max));
+  margin-inline: auto;
+}
+
+.ft-page {
+  display: grid;
+  gap: 1.5rem;
+  padding-block: 1.5rem 3rem;
+}
+
+.ft-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.ft-eyebrow {
+  color: var(--ft-primary-600);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.ft-muted {
+  color: var(--ft-on-surface-muted);
+}
+
+.ft-card {
+  border: 1px solid var(--ft-border);
+  border-radius: var(--ft-radius-lg);
+  background: var(--ft-surface-raised);
+  box-shadow: var(--ft-shadow-sm);
+}
+
+.ft-alert {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.875rem 1rem;
+  border: 1px solid transparent;
+  border-radius: var(--ft-radius-md);
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
+
+.ft-alert--error {
+  border-color: rgb(163 38 30 / 22%);
+  background: var(--ft-danger-bg);
+  color: var(--ft-danger);
+}
+
+.ft-alert--warning {
+  border-color: rgb(154 91 0 / 24%);
+  background: var(--ft-warning-bg);
+  color: var(--ft-warning);
+}
+
+.ft-alert--success {
+  border-color: rgb(23 114 69 / 22%);
+  background: var(--ft-success-bg);
+  color: var(--ft-success);
+}
+
+.ft-alert--info {
+  border-color: rgb(13 113 141 / 22%);
+  background: var(--ft-primary-50);
+  color: var(--ft-primary-800);
+}
+
+.ft-alert mat-icon {
+  flex: 0 0 auto;
+}
+
+.ft-snackbar-exito {
+  --mdc-snackbar-container-color: var(--ft-primary-900);
+  --mdc-snackbar-supporting-text-color: #fff;
+  --mat-snack-bar-button-color: #9fe3f2;
+}
+
+.ft-snackbar-error {
+  --mdc-snackbar-container-color: var(--ft-danger);
+  --mdc-snackbar-supporting-text-color: #fff;
+  --mat-snack-bar-button-color: #ffe0dd;
+}
+
+// Los formularios de Material deben ocupar todo el ancho disponible.
+.mat-mdc-form-field {
+  width: 100%;
+}
+
+.mat-mdc-card {
+  --mdc-elevated-card-container-shape: var(--ft-radius-lg);
+}
+
+@media (min-width: 48rem) {
+  .ft-container {
+    width: min(100% - 3rem, var(--ft-content-max));
+  }
+
+  .ft-page {
+    gap: 2rem;
+    padding-block: 2.5rem 4rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

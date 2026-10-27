@@ -1,0 +1,244 @@
+<section class="registro" aria-labelledby="titulo-registro">
+  <div class="registro__presentacion">
+    <p class="ft-eyebrow">Crea tu cuenta</p>
+    <p class="registro__claim">Encuentra al técnico indicado, sin complicaciones.</p>
+    <p class="registro__descripcion">
+      Regístrate como cliente para publicar solicitudes, recibir ofertas y coordinar el servicio con
+      técnicos verificados de Piura.
+    </p>
+    <ul class="registro__beneficios">
+      <li>
+        <mat-icon aria-hidden="true">edit_note</mat-icon>
+        <span>Describe el problema y adjunta fotos del equipo.</span>
+      </li>
+      <li>
+        <mat-icon aria-hidden="true">compare_arrows</mat-icon>
+        <span>Compara ofertas por precio, tiempo y garantía.</span>
+      </li>
+      <li>
+        <mat-icon aria-hidden="true">task_alt</mat-icon>
+        <span>Confirma la conformidad y conserva tu constancia.</span>
+      </li>
+    </ul>
+  </div>
+
+  <div class="registro__panel ft-card">
+    <div class="registro__encabezado">
+      <span class="registro__icono" aria-hidden="true"><mat-icon>person_add</mat-icon></span>
+      <div>
+        <h1 id="titulo-registro">Registro de cliente</h1>
+        <p class="ft-muted">Completa tus datos personales y de contacto.</p>
+      </div>
+    </div>
+
+    @if (errorServidor(); as mensaje) {
+      <div class="ft-alert ft-alert--error" role="alert">
+        <mat-icon aria-hidden="true">error_outline</mat-icon>
+        <div>
+          <p>{{ mensaje }}</p>
+          @if (detallesError().length > 0) {
+            <ul class="registro__detalles">
+              @for (detalle of detallesError(); track detalle) {
+                <li>{{ detalle }}</li>
+              }
+            </ul>
+          }
+        </div>
+      </div>
+    }
+
+    <form [formGroup]="formulario" (ngSubmit)="enviar()" novalidate>
+      <div class="registro__grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Nombres</mat-label>
+          <input
+            matInput
+            formControlName="nombres"
+            autocomplete="given-name"
+            maxlength="80"
+            [attr.aria-invalid]="mostrarError('nombres')"
+          />
+          @if (mostrarError('nombres')) {
+            <mat-error>
+              @if (formulario.controls.nombres.hasError('required')) {
+                Ingresa tus nombres.
+              } @else {
+                Los nombres no pueden superar los 80 caracteres.
+              }
+            </mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Apellidos</mat-label>
+          <input
+            matInput
+            formControlName="apellidos"
+            autocomplete="family-name"
+            maxlength="80"
+            [attr.aria-invalid]="mostrarError('apellidos')"
+          />
+          @if (mostrarError('apellidos')) {
+            <mat-error>
+              @if (formulario.controls.apellidos.hasError('required')) {
+                Ingresa tus apellidos.
+              } @else {
+                Los apellidos no pueden superar los 80 caracteres.
+              }
+            </mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="campo--ancho">
+          <mat-label>Correo electrónico</mat-label>
+          <input
+            matInput
+            type="email"
+            formControlName="correo"
+            autocomplete="email"
+            inputmode="email"
+            maxlength="120"
+            [attr.aria-invalid]="mostrarError('correo')"
+          />
+          <mat-icon matPrefix aria-hidden="true">mail_outline</mat-icon>
+          @if (mostrarError('correo')) {
+            <mat-error>
+              @if (formulario.controls.correo.hasError('required')) {
+                Ingresa tu correo electrónico.
+              } @else if (formulario.controls.correo.hasError('email')) {
+                Ingresa un correo válido.
+              } @else {
+                El correo no puede superar los 120 caracteres.
+              }
+            </mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Celular</mat-label>
+          <input
+            matInput
+            type="tel"
+            formControlName="celular"
+            autocomplete="tel"
+            inputmode="numeric"
+            maxlength="9"
+            placeholder="9XXXXXXXX"
+            [attr.aria-invalid]="mostrarError('celular')"
+          />
+          <mat-icon matPrefix aria-hidden="true">phone</mat-icon>
+          @if (mostrarError('celular')) {
+            <mat-error>
+              @if (formulario.controls.celular.hasError('required')) {
+                Ingresa tu celular.
+              } @else {
+                El celular debe tener 9 dígitos y empezar con 9.
+              }
+            </mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>DNI (opcional)</mat-label>
+          <input
+            matInput
+            formControlName="dni"
+            inputmode="numeric"
+            maxlength="8"
+            [attr.aria-invalid]="mostrarError('dni')"
+          />
+          <mat-icon matPrefix aria-hidden="true">badge</mat-icon>
+          <mat-hint>8 dígitos, sin espacios.</mat-hint>
+          @if (mostrarError('dni')) {
+            <mat-error>El DNI debe tener 8 dígitos.</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Contraseña</mat-label>
+          <input
+            matInput
+            [type]="ocultarPassword() ? 'password' : 'text'"
+            formControlName="password"
+            autocomplete="new-password"
+            maxlength="72"
+            [attr.aria-invalid]="mostrarError('password')"
+          />
+          <mat-icon matPrefix aria-hidden="true">lock_outline</mat-icon>
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            (click)="alternarPassword()"
+            [attr.aria-label]="ocultarPassword() ? 'Mostrar contraseña' : 'Ocultar contraseña'"
+            [attr.aria-pressed]="!ocultarPassword()"
+          >
+            <mat-icon aria-hidden="true">{{
+              ocultarPassword() ? 'visibility' : 'visibility_off'
+            }}</mat-icon>
+          </button>
+          <mat-hint>Entre 8 y 72 caracteres.</mat-hint>
+          @if (mostrarError('password')) {
+            <mat-error>
+              @if (formulario.controls.password.hasError('required')) {
+                Crea una contraseña.
+              } @else if (formulario.controls.password.hasError('minlength')) {
+                La contraseña debe tener al menos 8 caracteres.
+              } @else {
+                La contraseña no puede superar los 72 caracteres.
+              }
+            </mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Confirmar contraseña</mat-label>
+          <input
+            matInput
+            [type]="ocultarPassword() ? 'password' : 'text'"
+            formControlName="confirmarPassword"
+            autocomplete="new-password"
+            maxlength="72"
+            [attr.aria-invalid]="mostrarErrorConfirmacion()"
+          />
+          <mat-icon matPrefix aria-hidden="true">lock_reset</mat-icon>
+          @if (mostrarError('confirmarPassword') || mostrarErrorConfirmacion()) {
+            <mat-error>
+              @if (formulario.controls.confirmarPassword.hasError('required')) {
+                Confirma tu contraseña.
+              } @else {
+                Las contraseñas no coinciden.
+              }
+            </mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <mat-checkbox formControlName="aceptoTerminos" class="registro__terminos">
+        Acepto los términos y condiciones y la política de privacidad de FIXTECH.
+      </mat-checkbox>
+      @if (mostrarError('aceptoTerminos')) {
+        <p class="registro__error-terminos" role="alert">
+          Debes aceptar los términos y condiciones para continuar.
+        </p>
+      }
+
+      <button mat-flat-button class="registro__submit" type="submit" [disabled]="registrando()">
+        @if (registrando()) {
+          <mat-spinner diameter="20" aria-hidden="true" />
+          <span>Creando cuenta…</span>
+        } @else {
+          <span>Crear cuenta</span>
+        }
+      </button>
+    </form>
+
+    <p class="registro__alternativa">
+      ¿Ya tienes cuenta?
+      <a routerLink="/login">Inicia sesión</a>
+    </p>
+    <p class="registro__nota">
+      ¿Eres técnico? El registro de técnicos estará disponible en una próxima fase.
+    </p>
+  </div>
+</section>
