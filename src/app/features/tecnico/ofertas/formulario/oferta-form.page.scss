@@ -1,0 +1,245 @@
+:host {
+  display: block;
+}
+
+.oferta-form {
+  width: min(100% - 2rem, var(--ft-content-max));
+  margin-inline: auto;
+}
+
+.oferta-form--cargando {
+  display: grid;
+  min-height: 50dvh;
+  place-items: center;
+  align-content: center;
+  gap: 1rem;
+  padding-block: 2rem;
+}
+
+.oferta-form__cabecera {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.oferta-form__cabecera h1 {
+  margin-top: 0.2rem;
+  font-size: clamp(1.7rem, 5vw, 2.4rem);
+}
+
+.oferta-form__cabecera .ft-muted {
+  max-width: 45rem;
+  margin-top: 0.35rem;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.oferta-form__volver {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.oferta-form__volver mat-icon {
+  width: 1rem;
+  height: 1rem;
+  font-size: 1rem;
+}
+
+.oferta-form__layout {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.oferta-form__formulario {
+  display: grid;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.oferta-form__panel {
+  padding: 1.25rem;
+}
+
+.oferta-form__panel-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.oferta-form__panel-cabecera h2 {
+  font-size: 1.12rem;
+}
+
+.oferta-form__panel-cabecera p {
+  margin-top: 0.2rem;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.oferta-form__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.oferta-form__descripcion {
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.oferta-form__datos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+}
+
+.oferta-form__datos dt {
+  color: var(--ft-on-surface-muted);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.oferta-form__datos dd {
+  margin: 0.15rem 0 0;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.oferta-form__grid {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.oferta-form__campo-ancho {
+  grid-column: 1 / -1;
+}
+
+.oferta-form__total {
+  display: grid;
+  gap: 0.15rem;
+  margin-top: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--ft-border);
+  border-radius: var(--ft-radius-md);
+  background: var(--ft-primary-50);
+}
+
+.oferta-form__total span {
+  color: var(--ft-primary-800);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.oferta-form__total strong {
+  color: var(--ft-primary-950);
+  font-size: 1.5rem;
+}
+
+.oferta-form__total small {
+  color: var(--ft-on-surface-muted);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.oferta-form__error {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: start;
+}
+
+.oferta-form__error-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.oferta-form__detalles {
+  margin: 0.4rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.85rem;
+}
+
+.oferta-form__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.oferta-form__acciones > * {
+  flex: 1 1 12rem;
+}
+
+.oferta-form__acciones mat-spinner {
+  --mat-progress-spinner-active-indicator-color: currentcolor;
+}
+
+.oferta-form__ayuda {
+  align-self: start;
+  padding: 1.25rem;
+}
+
+.oferta-form__ayuda h2 {
+  font-size: 1.05rem;
+}
+
+.oferta-form__ayuda ul {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0.85rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--ft-on-surface-muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.oferta-form__estado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--ft-border);
+  color: var(--ft-on-surface-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+@media (min-width: 48rem) {
+  .oferta-form__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 1rem;
+  }
+
+  .oferta-form__panel {
+    padding: 1.5rem;
+  }
+}
+
+@media (min-width: 64rem) {
+  .oferta-form__layout {
+    grid-template-columns: minmax(0, 1fr) 18rem;
+    align-items: start;
+  }
+
+  .oferta-form__ayuda {
+    position: sticky;
+    top: 5rem;
+  }
+}

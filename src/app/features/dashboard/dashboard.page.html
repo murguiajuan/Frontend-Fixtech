@@ -242,22 +242,37 @@
             <span class="modulo__estado">Próximamente</span>
           </article>
         } @else if (esTecnico()) {
-          <article class="modulo ft-card" [class.modulo--bloqueado]="!aprobado() || bloqueado()">
-            <mat-icon aria-hidden="true">work_outline</mat-icon>
-            <h3>Solicitudes disponibles</h3>
-            <p class="ft-muted">Encuentra trabajos compatibles con tu especialidad.</p>
-            <span class="modulo__estado">
-              {{ aprobado() && !bloqueado() ? 'Próximamente' : 'Requiere perfil aprobado' }}
-            </span>
-          </article>
-          <article class="modulo ft-card" [class.modulo--bloqueado]="!aprobado() || bloqueado()">
-            <mat-icon aria-hidden="true">request_quote</mat-icon>
-            <h3>Mis ofertas</h3>
-            <p class="ft-muted">Revisa el estado de las propuestas enviadas.</p>
-            <span class="modulo__estado">
-              {{ aprobado() && !bloqueado() ? 'Próximamente' : 'Requiere perfil aprobado' }}
-            </span>
-          </article>
+          @if (aprobado() && !bloqueado()) {
+            <a class="modulo ft-card modulo--enlace" routerLink="/app/tecnico/solicitudes">
+              <mat-icon aria-hidden="true">work_outline</mat-icon>
+              <h3>Solicitudes disponibles</h3>
+              <p class="ft-muted">Encuentra trabajos compatibles con tu especialidad.</p>
+              <span class="modulo__estado">Disponible</span>
+            </a>
+            <a class="modulo ft-card modulo--enlace" routerLink="/app/tecnico/ofertas">
+              <mat-icon aria-hidden="true">request_quote</mat-icon>
+              <h3>Mis ofertas</h3>
+              <p class="ft-muted">Revisa el estado de las propuestas enviadas.</p>
+              <span class="modulo__estado">Disponible</span>
+            </a>
+          } @else {
+            <article class="modulo ft-card modulo--bloqueado">
+              <mat-icon aria-hidden="true">work_outline</mat-icon>
+              <h3>Solicitudes disponibles</h3>
+              <p class="ft-muted">Encuentra trabajos compatibles con tu especialidad.</p>
+              <span class="modulo__estado">
+                {{ bloqueado() ? 'Requiere regularizar comisiones' : 'Requiere perfil aprobado' }}
+              </span>
+            </article>
+            <article class="modulo ft-card modulo--bloqueado">
+              <mat-icon aria-hidden="true">request_quote</mat-icon>
+              <h3>Mis ofertas</h3>
+              <p class="ft-muted">Revisa el estado de las propuestas enviadas.</p>
+              <span class="modulo__estado">
+                {{ bloqueado() ? 'Requiere regularizar comisiones' : 'Requiere perfil aprobado' }}
+              </span>
+            </article>
+          }
           <article class="modulo ft-card">
             <mat-icon aria-hidden="true">payments</mat-icon>
             <h3>Comisiones</h3>

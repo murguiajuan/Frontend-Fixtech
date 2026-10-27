@@ -1,0 +1,234 @@
+<div class="disponibles ft-page">
+  <header class="disponibles__cabecera">
+    <div>
+      <p class="ft-eyebrow">Técnico</p>
+      <h1>Solicitudes disponibles</h1>
+      <p class="ft-muted">
+        Trabajos compatibles con tus distritos y modalidades. Revisa el detalle y envía una oferta
+        con precio, tiempo y garantía.
+      </p>
+    </div>
+    <button mat-stroked-button type="button" [disabled]="cargando()" (click)="cargar()">
+      <mat-icon aria-hidden="true">refresh</mat-icon>
+      Actualizar
+    </button>
+  </header>
+
+  <section class="disponibles__filtros ft-card" aria-labelledby="titulo-buscar">
+    <div class="disponibles__filtros-cabecera">
+      <h2 id="titulo-buscar">Buscar en tus solicitudes compatibles</h2>
+      @if (!cargando()) {
+        <span class="ft-muted" role="status">
+          {{ solicitudes().length }}
+          {{ solicitudes().length === 1 ? 'solicitud' : 'solicitudes' }}
+          @if (conOferta() > 0) {
+            · {{ conOferta() }} con oferta
+          }
+        </span>
+      }
+    </div>
+    <mat-form-field appearance="outline" class="disponibles__buscador">
+      <mat-label>Buscar por equipo, servicio o distrito</mat-label>
+      <input
+        matInput
+        type="search"
+        [value]="busqueda()"
+        autocomplete="off"
+        placeholder="Ejemplo: laptop, Piura"
+        (input)="actualizarBusqueda($event)"
+      />
+      <mat-icon matSuffix aria-hidden="true">search</mat-icon>
+    </mat-form-field>
+    @if (hayBusqueda()) {
+      <button mat-button type="button" (click)="limpiarBusqueda()">
+        <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
+        Limpiar búsqueda
+      </button>
+    }
+  </section>
+
+  @if (error(); as fallo) {
+    <section class="estado-panel ft-card" role="alert" aria-labelledby="titulo-error">
+      <mat-icon aria-hidden="true">cloud_off</mat-icon>
+      <h2 id="titulo-error">No pudimos cargar las solicitudes disponibles</h2>
+      <p class="ft-muted">{{ fallo.mensaje }}</p>
+      @if (fallo.detalles.length > 0) {
+        <ul class="estado-panel__detalles">
+          @for (detalle of fallo.detalles; track detalle) {
+            <li>{{ detalle }}</li>
+          }
+        </ul>
+      }
+      <button mat-flat-button type="button" (click)="cargar()">
+        <mat-icon aria-hidden="true">refresh</mat-icon>
+        Reintentar
+      </button>
+    </section>
+  } @else if (cargando()) {
+    <section class="estado-panel ft-card" role="status" aria-labelledby="titulo-cargando">
+      <mat-spinner diameter="36" aria-hidden="true" />
+      <h2 id="titulo-cargando">Buscando trabajos compatibles…</h2>
+      <p class="ft-muted">Revisando las solicitudes vigentes de tus distritos.</p>
+    </section>
+  } @else if (filtradas().length === 0) {
+    <section class="estado-panel ft-card" aria-labelledby="titulo-vacio">
+      <mat-icon aria-hidden="true">work_off</mat-icon>
+      <h2 id="titulo-vacio">
+        @if (hayBusqueda()) {
+          No encontramos coincidencias
+        } @else {
+          No hay solicitudes compatibles por ahora
+        }
+      </h2>
+      <p class="ft-muted">
+        @if (hayBusqueda()) {
+          Prueba con otro equipo, servicio o distrito.
+        } @else {
+          Cuando un cliente publique un trabajo en tus distritos y modalidades, aparecerá aquí.
+          Mantén tu perfil actualizado y revisa más tarde.
+        }
+      </p>
+      @if (hayBusqueda()) {
+        <button mat-stroked-button type="button" (click)="limpiarBusqueda()">
+          <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
+          Ver todas
+        </button>
+      } @else {
+        <a mat-stroked-button routerLink="/app/tecnico/perfil">
+          <mat-icon aria-hidden="true">badge</mat-icon>
+          Revisar mi perfil
+        </a>
+      }
+    </section>
+  } @else {
+    <section aria-labelledby="titulo-listado">
+      <div class="disponibles__listado-cabecera">
+        <div>
+          <h2 id="titulo-listado">Trabajos para ti</h2>
+          <p class="ft-muted">
+            Solo se muestran solicitudes de tus distritos y modalidades que siguen vigentes.
+          </p>
+        </div>
+        <span class="ft-muted">
+          {{ filtradas().length }}
+          {{ filtradas().length === 1 ? 'resultado' : 'resultados' }}
+        </span>
+      </div>
+
+      <ul class="disponibles__lista">
+        @for (solicitud of visibles(); track solicitud.id) {
+          <li>
+            <article
+              class="disponible ft-card"
+              [attr.aria-labelledby]="'disponible-' + solicitud.id"
+            >
+              <div class="disponible__imagen">
+                @if (imagenPrincipal(solicitud); as imagen) {
+                  <app-imagen-autenticada
+                    [src]="imagen"
+                    [alt]="'Foto de la solicitud: ' + solicitud.tipoEquipo"
+                  />
+                } @else {
+                  <span class="disponible__sin-imagen" role="img" aria-label="Solicitud sin foto">
+                    <mat-icon aria-hidden="true">image</mat-icon>
+                  </span>
+                }
+              </div>
+
+              <div class="disponible__cuerpo">
+                <div class="disponible__badges">
+                  <app-estado-badge
+                    [texto]="etiquetasUrgencia[solicitud.urgencia]"
+                    [tono]="tonosUrgencia[solicitud.urgencia]"
+                  />
+                  <app-estado-badge
+                    [texto]="etiquetasModalidad[solicitud.modalidad]"
+                    [tono]="'info'"
+                  />
+                  @if (ofertaDe(solicitud.id); as oferta) {
+                    <app-estado-badge
+                      [texto]="etiquetaOferta(oferta)"
+                      [tono]="tonosEstadoOferta[oferta.estado]"
+                    />
+                  }
+                </div>
+
+                <h3 [id]="'disponible-' + solicitud.id">
+                  {{ solicitud.tipoEquipo }} · {{ solicitud.tipoServicio }}
+                </h3>
+                <p class="disponible__descripcion">{{ solicitud.descripcion }}</p>
+
+                <dl class="disponible__meta">
+                  <div>
+                    <dt>Distrito</dt>
+                    <dd>{{ solicitud.distrito }}</dd>
+                  </div>
+                  <div>
+                    <dt>Publicada</dt>
+                    <dd>{{ solicitud.creadoEn | date: 'dd MMM yyyy' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Vence</dt>
+                    <dd>{{ solicitud.fechaVencimiento | date: 'dd MMM yyyy, HH:mm' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Presupuesto</dt>
+                    <dd>
+                      @if (solicitud.presupuestoReferencial !== null) {
+                        S/ {{ solicitud.presupuestoReferencial | number: '1.2-2' }}
+                      } @else {
+                        A convenir
+                      }
+                    </dd>
+                  </div>
+                </dl>
+
+                <div class="disponible__pie">
+                  <span class="disponible__preferencia">
+                    @if (solicitud.fechaPreferida) {
+                      Prefiere {{ solicitud.fechaPreferida | date: 'dd MMM' }}
+                    } @else {
+                      Sin fecha preferida
+                    }
+                  </span>
+                  <a
+                    mat-stroked-button
+                    [routerLink]="['/app/tecnico/solicitudes', solicitud.id]"
+                    [attr.aria-label]="'Ver detalle y ofertar en la solicitud ' + solicitud.id"
+                  >
+                    Ver detalle
+                    <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+                  </a>
+                </div>
+              </div>
+            </article>
+          </li>
+        }
+      </ul>
+
+      @if (totalPaginas() > 1) {
+        <nav class="disponibles__paginacion" aria-label="Paginación de solicitudes disponibles">
+          <button
+            mat-stroked-button
+            type="button"
+            [disabled]="paginaActual() === 1"
+            (click)="cambiarPagina(-1)"
+          >
+            <mat-icon aria-hidden="true">chevron_left</mat-icon>
+            Anterior
+          </button>
+          <span role="status">Página {{ paginaActual() }} de {{ totalPaginas() }}</span>
+          <button
+            mat-stroked-button
+            type="button"
+            [disabled]="paginaActual() === totalPaginas()"
+            (click)="cambiarPagina(1)"
+          >
+            Siguiente
+            <mat-icon aria-hidden="true">chevron_right</mat-icon>
+          </button>
+        </nav>
+      }
+    </section>
+  }
+</div>

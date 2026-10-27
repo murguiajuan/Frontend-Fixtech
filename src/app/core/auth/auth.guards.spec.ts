@@ -16,6 +16,8 @@ class AuthStub {
   readonly asegurarSesion = vi.fn();
   readonly rol = vi.fn();
   readonly esTecnicoAprobado = vi.fn();
+  readonly puedeOfertar = vi.fn();
+  readonly bloqueadoPorDeuda = vi.fn();
 }
 
 describe('Auth guards', () => {
@@ -26,6 +28,8 @@ describe('Auth guards', () => {
     auth.asegurarSesion.mockReturnValue(of(true));
     auth.rol.mockReturnValue('CLIENTE' satisfies Rol);
     auth.esTecnicoAprobado.mockReturnValue(true);
+    auth.puedeOfertar.mockReturnValue(true);
+    auth.bloqueadoPorDeuda.mockReturnValue(false);
     TestBed.configureTestingModule({
       providers: [provideRouter([]), { provide: AuthService, useValue: auth }],
     });
@@ -68,17 +72,30 @@ describe('Auth guards', () => {
 
   it('bloquea las rutas de ofertas de un técnico pendiente', async () => {
     auth.rol.mockReturnValue('TECNICO');
-    auth.esTecnicoAprobado.mockReturnValue(false);
+    auth.puedeOfertar.mockReturnValue(false);
 
     const resultado = await ejecutarGuard(tecnicoAprobadoGuard);
 
     expect(resultado).toBeInstanceOf(UrlTree);
     expect((resultado as UrlTree).toString()).toContain('/app/inicio');
+    expect((resultado as UrlTree).toString()).toContain('verificacion=pendiente');
   });
 
-  it('permite las rutas de ofertas de un técnico aprobado', async () => {
+  it('bloquea las rutas de ofertas de un técnico con deuda pendiente', async () => {
     auth.rol.mockReturnValue('TECNICO');
-    auth.esTecnicoAprobado.mockReturnValue(true);
+    auth.puedeOfertar.mockReturnValue(false);
+    auth.bloqueadoPorDeuda.mockReturnValue(true);
+
+    const resultado = await ejecutarGuard(tecnicoAprobadoGuard);
+
+    expect(resultado).toBeInstanceOf(UrlTree);
+    expect((resultado as UrlTree).toString()).toContain('/app/inicio');
+    expect((resultado as UrlTree).toString()).toContain('deuda=pendiente');
+  });
+
+  it('permite las rutas de ofertas de un técnico aprobado y sin deuda', async () => {
+    auth.rol.mockReturnValue('TECNICO');
+    auth.puedeOfertar.mockReturnValue(true);
 
     const resultado = await ejecutarGuard(tecnicoAprobadoGuard);
 

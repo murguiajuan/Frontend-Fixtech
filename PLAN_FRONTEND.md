@@ -271,18 +271,58 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
 - [x] Axe sin violaciones en formulario, detalle, listado y diálogo de cancelación.
 - [x] Creación, edición y cancelación reales verificadas contra la API.
 
-## 9. Fase 5 — Técnico: solicitudes y ofertas ⏳
+## 9. Fase 5 — Técnico: solicitudes y ofertas ✅
 
-- [ ] Listar solicitudes disponibles solo para técnicos aprobados y no bloqueados.
-- [ ] Ver detalle de solicitud y enviar oferta con precio, movilidad, diagnóstico, tiempo y
-      garantía.
-- [ ] Editar o retirar ofertas propias.
-- [ ] Comparar ofertas y responder contraofertas.
-- [ ] Gating real con `tecnicoAprobadoGuard` y mensajes de deuda.
-- [ ] Pruebas de permisos y E2E de oferta.
+### Endpoints usados
+
+- `GET /api/solicitudes/disponibles` y `GET /api/solicitudes/disponibles/{id}` para el listado y
+  el detalle de solicitudes compatibles.
+- `POST /api/solicitudes/{id}/ofertas`, `PUT /api/ofertas/{id}` y `DELETE /api/ofertas/{id}` para
+  crear, editar y retirar ofertas.
+- `GET /api/ofertas/mias` para “Mis ofertas” y para detectar la oferta propia de una solicitud.
+- `GET /api/solicitudes/{id}/ofertas?orden=` y `GET /api/solicitudes/{id}/ofertas/comparar?ids=`
+  para las ofertas recibidas y la comparación del cliente.
+- `POST /api/ofertas/{id}/contraoferta` con `accion` `CONTRAOFERTA`, `ACEPTAR` o `RECHAZAR` para
+  la negociación en ambos sentidos.
+
+### Frontend
+
+- [x] Listado “Solicitudes disponibles” con búsqueda local por equipo, servicio o distrito,
+      paginación visual y marca de las solicitudes que ya tienen oferta propia.
+- [x] Detalle de solicitud compatible con fotos autorizadas, datos de contacto, oferta propia,
+      historial de negociación y acciones según el estado.
+- [x] Formulario de oferta con modalidad, precio del servicio, movilidad, diagnóstico, tiempo,
+      garantía y mensaje; valida el tope de movilidad del distrito y la modalidad en taller.
+- [x] Edición solo para ofertas `ENVIADA` o `CONTRAOFERTADA`; retiro con diálogo de confirmación.
+- [x] “Mis ofertas” con filtros por estado, métricas, paginación y respuesta a contraofertas.
+- [x] Ofertas recibidas en el detalle del cliente, orden por precio, calificación o tiempo,
+      selección de hasta tres y diálogo comparativo.
+- [x] Negociación cliente/técnico con contraofertas, aceptación y rechazo; aceptar la contraoferta
+      del técnico desde el cliente crea el servicio y cierra el resto de ofertas.
+- [x] Gating con `tecnicoAprobadoGuard` sobre `auth.puedeOfertar()`: aprobación y ausencia de deuda.
+- [x] Rutas `/app/tecnico/solicitudes`, `/{solicitudId}`, `/{solicitudId}/ofertar`,
+      `/app/tecnico/ofertas` y `/{ofertaId}/editar` con lazy loading y `roleGuard` de técnico.
+- [x] Navegación del técnico y panel con accesos a solicitudes disponibles y mis ofertas.
+- [x] Pruebas unitarias de servicios, etiquetas, listados, detalle, formulario, diálogos de
+      comparación/retiro/contraoferta, ofertas recibidas y guards.
+- [x] E2E real: registra y aprueba un técnico por API, publica una solicitud con foto, envía una
+      oferta, negocia en dos rondas y el cliente acepta la contraoferta hasta crear el servicio.
 
 > Importante: `OfertaResponse.precioTotal` y `Servicio.montoTotal` ya excluyen
 > `costoDiagnostico`. El frontend no debe volver a sumarlo.
+
+> Brechas: `OfertaResponse` solo incluye `solicitudId`; el detalle disponible responde `403` cuando
+> la solicitud deja de ser compatible; no hay consulta directa de la oferta propia por solicitud y
+> el listado de disponibles no valida aprobación ni deuda (lo hace el guard del frontend). La
+> aceptación directa de una oferta normal queda para la Fase 6.
+
+### Criterios de cierre
+
+- [x] Build de producción, lint y formato sin errores.
+- [x] 192 pruebas unitarias en 31 archivos, todas en verde.
+- [x] 16 pruebas E2E en verde en Chromium y móvil de 360 px con el backend local.
+- [x] Axe sin violaciones en listado, detalle, formulario y diálogos de la fase.
+- [x] Flujo real de oferta, contraoferta y creación del servicio verificado contra la API.
 
 ## 10. Fase 6 — Negociación y ejecución ⏳
 
@@ -354,16 +394,19 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
 
 ## 17. Brechas de API conocidas
 
-| Necesidad                           | Situación                                                    | Decisión                                                                                  |
-| ----------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| Perfil del usuario autenticado      | Implementado `GET /api/auth/me`                              | Usar en toda la sesión                                                                    |
-| Listado de técnicos para admin      | Implementado `GET /api/admin/tecnicos`                       | Usar `id` para verificar y `usuarioId` para usuarios                                      |
-| Documentos de verificación          | Tabla sin controlador                                        | No implementar carga hasta habilitar endpoints                                            |
-| Edición de perfil/foto del técnico  | Implementado `PUT /api/perfil/tecnico` y `POST /perfil/foto` | Editar reinicia la verificación; la foto no                                               |
-| Recuperación/cambio de contraseña   | Sin endpoints                                                | No mostrar enlaces                                                                        |
-| Búsqueda/perfil público de técnicos | Sin endpoint                                                 | Posponer                                                                                  |
-| Fotos en edición de solicitud       | `PUT /api/solicitudes/{id}` solo actualiza datos             | Adjuntar fotos únicamente al crear                                                        |
-| Datos de prueba E2E                 | Sin seed específico ni limpieza                              | Los E2E crean cuentas y solicitudes únicas; requieren backend y MySQL con `E2E_BACKEND=1` |
+El registro completo, con impacto y decisión provisional, está en
+[`BRECHAS_PENDIENTES.md`](./BRECHAS_PENDIENTES.md). Se resolverán al final del proyecto. Entre las
+principales están los documentos de verificación sin controlador, la recuperación/cambio de
+contraseña, la búsqueda pública de técnicos, las fotos no reemplazables en la edición de
+solicitudes, la edición del perfil de usuario general y la ausencia de seed/limpieza para E2E.
+
+| Necesidad                          | Situación                                                    | Decisión                                                                                  |
+| ---------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| Perfil del usuario autenticado     | Implementado `GET /api/auth/me`                              | Usar en toda la sesión                                                                    |
+| Listado de técnicos para admin     | Implementado `GET /api/admin/tecnicos`                       | Usar `id` para verificar y `usuarioId` para usuarios                                      |
+| Edición de perfil/foto del técnico | Implementado `PUT /api/perfil/tecnico` y `POST /perfil/foto` | Editar reinicia la verificación; la foto no                                               |
+| Fotos en edición de solicitud      | `PUT /api/solicitudes/{id}` solo actualiza datos             | Adjuntar fotos únicamente al crear                                                        |
+| Datos de prueba E2E                | Sin seed específico ni limpieza                              | Los E2E crean cuentas y solicitudes únicas; requieren backend y MySQL con `E2E_BACKEND=1` |
 
 ## 18. Convenciones de implementación
 

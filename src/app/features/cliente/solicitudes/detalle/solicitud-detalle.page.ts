@@ -10,6 +10,7 @@ import { ETIQUETAS_MODALIDAD } from '../../../../core/models/etiquetas';
 import { EstadoBadge } from '../../../../shared/ui/estado-badge';
 import { ImagenAutenticada } from '../../../../shared/ui/imagen-autenticada';
 import { NotificacionService } from '../../../../shared/ui/notificacion.service';
+import { OfertasRecibidas } from '../../../ofertas/recibidas/ofertas-recibidas';
 import { SolicitudesService } from '../../services/solicitudes.service';
 import {
   ETIQUETAS_ESTADO_SOLICITUD,
@@ -33,6 +34,7 @@ import { CancelarSolicitudData, CancelarSolicitudDialog } from './cancelar-solic
     MatProgressSpinnerModule,
     EstadoBadge,
     ImagenAutenticada,
+    OfertasRecibidas,
   ],
   templateUrl: './solicitud-detalle.page.html',
   styleUrl: './solicitud-detalle.page.scss',
@@ -82,6 +84,13 @@ export class SolicitudDetallePage implements OnInit {
     const id = this.id();
     if (id !== undefined) {
       this.cargar(Number(id));
+    }
+  }
+
+  protected actualizarTrasServicio(): void {
+    const solicitud = this.solicitud();
+    if (solicitud !== null) {
+      this.cargar(solicitud.id);
     }
   }
 

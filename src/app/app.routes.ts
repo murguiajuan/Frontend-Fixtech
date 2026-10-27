@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, guestGuard, roleGuard } from './core/auth/auth.guards';
+import { authGuard, guestGuard, roleGuard, tecnicoAprobadoGuard } from './core/auth/auth.guards';
 import { AppLayout } from './core/layout/app-layout/app-layout';
 import { PublicLayout } from './core/layout/public-layout/public-layout';
 
@@ -100,6 +100,54 @@ export const routes: Routes = [
         data: { roles: ['TECNICO'] },
         loadComponent: () =>
           import('./features/tecnico/perfil/perfil.page').then((m) => m.PerfilTecnicoPage),
+      },
+      {
+        path: 'tecnico/solicitudes',
+        title: 'Solicitudes disponibles | FIXTECH',
+        canActivate: [roleGuard, tecnicoAprobadoGuard],
+        data: { roles: ['TECNICO'] },
+        loadComponent: () =>
+          import('./features/tecnico/solicitudes/lista/solicitudes-disponibles.page').then(
+            (m) => m.SolicitudesDisponiblesPage,
+          ),
+      },
+      {
+        path: 'tecnico/solicitudes/:solicitudId/ofertar',
+        title: 'Enviar oferta | FIXTECH',
+        canActivate: [roleGuard, tecnicoAprobadoGuard],
+        data: { roles: ['TECNICO'] },
+        loadComponent: () =>
+          import('./features/tecnico/ofertas/formulario/oferta-form.page').then(
+            (m) => m.OfertaFormPage,
+          ),
+      },
+      {
+        path: 'tecnico/solicitudes/:id',
+        title: 'Detalle de solicitud disponible | FIXTECH',
+        canActivate: [roleGuard, tecnicoAprobadoGuard],
+        data: { roles: ['TECNICO'] },
+        loadComponent: () =>
+          import('./features/tecnico/solicitudes/detalle/solicitud-disponible.page').then(
+            (m) => m.SolicitudDisponiblePage,
+          ),
+      },
+      {
+        path: 'tecnico/ofertas',
+        title: 'Mis ofertas | FIXTECH',
+        canActivate: [roleGuard, tecnicoAprobadoGuard],
+        data: { roles: ['TECNICO'] },
+        loadComponent: () =>
+          import('./features/tecnico/ofertas/lista/mis-ofertas.page').then((m) => m.MisOfertasPage),
+      },
+      {
+        path: 'tecnico/ofertas/:ofertaId/editar',
+        title: 'Editar oferta | FIXTECH',
+        canActivate: [roleGuard, tecnicoAprobadoGuard],
+        data: { roles: ['TECNICO'] },
+        loadComponent: () =>
+          import('./features/tecnico/ofertas/formulario/oferta-form.page').then(
+            (m) => m.OfertaFormPage,
+          ),
       },
       {
         path: 'admin/tecnicos',

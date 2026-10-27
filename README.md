@@ -111,18 +111,19 @@ e2e/                       # Pruebas Playwright y Axe
 
 ## Roles y navegación
 
-| Rol       | Acceso inicial | Navegación habilitada                                                    |
-| --------- | -------------- | ------------------------------------------------------------------------ |
-| `CLIENTE` | `/app/inicio`  | Inicio, nueva solicitud y mis solicitudes; servicios como “Próximamente” |
-| `TECNICO` | `/app/inicio`  | Inicio y mi perfil; ofertas bloqueadas si no está aprobado o tiene deuda |
-| `ADMIN`   | `/app/inicio`  | Inicio, técnicos y usuarios; reportes y catálogos como “Próximamente”    |
+| Rol       | Acceso inicial | Navegación habilitada                                                                                 |
+| --------- | -------------- | ----------------------------------------------------------------------------------------------------- |
+| `CLIENTE` | `/app/inicio`  | Inicio, nueva solicitud y mis solicitudes; ofertas y negociación en el detalle                        |
+| `TECNICO` | `/app/inicio`  | Inicio, mi perfil, solicitudes disponibles y mis ofertas; bloqueado si no está aprobado o tiene deuda |
+| `ADMIN`   | `/app/inicio`  | Inicio, técnicos y usuarios; reportes y catálogos como “Próximamente”                                 |
 
 Los guards protegen las rutas privadas:
 
 - `authGuard`: exige sesión y restaura el perfil desde `GET /api/auth/me`.
 - `guestGuard`: impide que un usuario autenticado vuelva al login.
 - `roleGuard`: valida los roles declarados en `data.roles`.
-- `tecnicoAprobadoGuard`: bloquea solicitudes/ofertas de técnicos no aprobados.
+- `tecnicoAprobadoGuard`: bloquea solicitudes y ofertas de técnicos no aprobados o con deuda
+  pendiente; usa `auth.puedeOfertar()` sobre el perfil cargado desde `GET /api/auth/me`.
 
 ## Panel administrativo
 
@@ -187,6 +188,33 @@ Los guards protegen las rutas privadas:
 - La validación de archivos rechaza tipos distintos de JPG/PNG, archivos de más de 5 MB y más de
   cinco fotos antes de enviar.
 
+## Solicitudes y ofertas del técnico
+
+- `/app/tecnico/solicitudes` lista `GET /api/solicitudes/disponibles` con búsqueda local por
+  equipo, servicio o distrito y paginación visual de seis elementos. Marca las solicitudes que ya
+  tienen una oferta propia consultando `GET /api/ofertas/mias`.
+- `/app/tecnico/solicitudes/{id}` muestra el detalle de una solicitud compatible, la oferta propia,
+  su historial de negociación y las acciones de editar o retirar. El detalle deja de estar
+  disponible cuando `GET /api/solicitudes/disponibles/{id}` responde `403`.
+- `/app/tecnico/solicitudes/{id}/ofertar` crea una oferta con `POST /api/solicitudes/{id}/ofertas`:
+  modalidad, precio del servicio, movilidad, diagnóstico, tiempo estimado, garantía y mensaje. La
+  movilidad debe ser `0` en taller y no superar el tope del distrito en domicilio.
+- `/app/tecnico/ofertas/{id}/editar` actualiza con `PUT /api/ofertas/{id}` solo ofertas `ENVIADA` o
+  `CONTRAOFERTADA`; retirar usa `DELETE /api/ofertas/{id}` y exige confirmación.
+- `/app/tecnico/ofertas` lista `GET /api/ofertas/mias` con filtros por estado, métricas, paginación
+  y respuesta a contraofertas. Las ofertas activas muestran edición y retiro; las cerradas, su
+  resultado.
+- El cliente ve las ofertas en el detalle de su solicitud: `GET /api/solicitudes/{id}/ofertas`
+  permite ordenar por precio, calificación o tiempo; `GET .../ofertas/comparar?ids=` compara hasta
+  tres; y `POST /api/ofertas/{id}/contraoferta` registra contraofertas, aceptaciones o rechazos.
+- Aceptar una contraoferta del técnico desde el cliente crea el servicio y cierra el resto de
+  ofertas. La aceptación directa de una oferta normal (`POST /api/ofertas/{id}/aceptar`) queda para
+  la Fase 6.
+- `precioTotal` y `montoTotal` ya excluyen `costoDiagnostico`; la interfaz muestra el diagnóstico
+  por separado y nunca lo suma al total.
+- Todas las rutas del técnico usan `roleGuard` y `tecnicoAprobadoGuard`, con estados de carga,
+  error con reintento y vacío.
+
 ## Autenticación
 
 1. `POST /api/auth/login` devuelve `accessToken`, `refreshToken` y `expiraEnSegundos`.
@@ -220,7 +248,13 @@ CSRF. Esta limitación debe revisarse antes del despliegue.
 No existen todavía endpoints para carga de documentos de verificación, recuperación/cambio de
 contraseña ni búsqueda pública de técnicos. La edición de perfil y la foto del técnico ya están
 cubiertas por `PUT /api/perfil/tecnico`, `POST /api/perfil/foto` y `GET /api/tecnicos/{id}/foto`.
-Para clientes no existe un endpoint de limpieza de solicitudes creadas por pruebas.
+Para clientes no existe un endpoint de limpieza de solicitudes creadas por pruebas. El contrato de
+ofertas tampoco incluye el resumen de la solicitud en `OfertaResponse` ni una consulta directa de
+la oferta propia por solicitud, y el detalle disponible deja de responder cuando la solicitud deja
+de ser compatible.
+
+El registro completo, el impacto y la decisión provisional de cada brecha están en
+[`BRECHAS_PENDIENTES.md`](./BRECHAS_PENDIENTES.md). Se resolverán al final del proyecto.
 
 ## Calidad y accesibilidad
 
@@ -236,7 +270,7 @@ npm run e2e
 
 Las pruebas E2E incluyen Axe con las reglas WCAG 2.0/2.1 A y AA en escritorio y en un viewport
 móvil de 360 px. La interfaz es mobile-first, con foco visible, etiquetas explícitas y mensajes
-de error anunciados. Las pantallas y diálogos de las fases 2, 3 y 4 también se auditan; los iconos
+de error anunciados. Las pantallas y diálogos de las fases 2 a 5 también se auditan; los iconos
 de los botones con `aria-label` se renderizan como SVG decorativos para no mezclar ligaduras de
 fuentes con el nombre accesible.
 

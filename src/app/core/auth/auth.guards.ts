@@ -55,11 +55,13 @@ export const tecnicoAprobadoGuard: CanActivateFn = () => {
       if (!sesionValida) {
         return router.createUrlTree(['/login']);
       }
-      if (auth.rol() !== 'TECNICO' || auth.esTecnicoAprobado()) {
+      if (auth.rol() !== 'TECNICO' || auth.puedeOfertar()) {
         return true;
       }
       return router.createUrlTree(['/app/inicio'], {
-        queryParams: { verificacion: 'pendiente' },
+        queryParams: auth.bloqueadoPorDeuda()
+          ? { deuda: 'pendiente' }
+          : { verificacion: 'pendiente' },
       });
     }),
   );

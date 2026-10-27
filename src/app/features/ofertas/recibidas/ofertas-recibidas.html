@@ -1,0 +1,318 @@
+<section class="recibidas" aria-labelledby="titulo-ofertas-recibidas">
+  <header class="recibidas__cabecera">
+    <div>
+      <p class="ft-eyebrow">Propuestas</p>
+      <h2 id="titulo-ofertas-recibidas">Ofertas recibidas</h2>
+      <p class="ft-muted">
+        Compara precio, tiempo, garantía y calificación. Si una propuesta no te convence, puedes
+        iniciar una contraoferta.
+      </p>
+    </div>
+    @if (!cargando() && error() === null) {
+      <span class="ft-muted" role="status">
+        {{ ofertas().length }} {{ ofertas().length === 1 ? 'oferta' : 'ofertas' }}
+      </span>
+    }
+  </header>
+
+  @if (error(); as fallo) {
+    <div class="ft-alert ft-alert--error" role="alert">
+      <mat-icon aria-hidden="true">cloud_off</mat-icon>
+      <div class="recibidas__error">
+        <p>{{ fallo.mensaje }}</p>
+        @if (fallo.detalles.length > 0) {
+          <ul>
+            @for (detalle of fallo.detalles; track detalle) {
+              <li>{{ detalle }}</li>
+            }
+          </ul>
+        }
+        <button mat-stroked-button type="button" (click)="cargar()">
+          <mat-icon aria-hidden="true">refresh</mat-icon>
+          Reintentar
+        </button>
+      </div>
+    </div>
+  } @else if (cargando()) {
+    <div class="recibidas__estado ft-card" role="status">
+      <mat-spinner diameter="32" aria-hidden="true" />
+      <p class="ft-muted">Cargando las ofertas de los técnicos…</p>
+    </div>
+  } @else if (ofertas().length === 0) {
+    <div class="recibidas__estado ft-card">
+      <mat-icon aria-hidden="true">request_quote</mat-icon>
+      <h3>Aún no has recibido ofertas</h3>
+      <p class="ft-muted">
+        Los técnicos compatibles con tu distrito y modalidad verán la solicitud. Cuando envíen una
+        propuesta, aparecerá aquí para que la compares.
+      </p>
+      <button mat-stroked-button type="button" (click)="cargar()">
+        <mat-icon aria-hidden="true">refresh</mat-icon>
+        Actualizar
+      </button>
+    </div>
+  } @else {
+    @if (servicioConfirmado(); as ofertaConfirmada) {
+      <div class="ft-alert ft-alert--success" role="status">
+        <mat-icon aria-hidden="true">check_circle</mat-icon>
+        <div>
+          <strong>El servicio ya fue confirmado.</strong>
+          <p>
+            Aceptaste la propuesta del técnico. La oferta #{{ ofertaConfirmada.id }} quedó cerrada y
+            el resto de ofertas fue rechazada.
+          </p>
+        </div>
+      </div>
+    } @else if (!puedeNegociar()) {
+      <div class="ft-alert ft-alert--info" role="note">
+        <mat-icon aria-hidden="true">info</mat-icon>
+        <span>
+          La solicitud ya no admite negociación porque está
+          {{ estadoSolicitud() === 'CANCELADA' ? 'cancelada' : 'cerrada' }}. Las ofertas se muestran
+          solo como referencia.
+        </span>
+      </div>
+    }
+
+    <div class="recibidas__herramientas ft-card">
+      <div class="recibidas__orden">
+        <span class="recibidas__etiqueta" id="etiqueta-orden">Ordenar por</span>
+        <div class="recibidas__orden-opciones" role="group" aria-labelledby="etiqueta-orden">
+          @for (opcion of opcionesOrden; track opcion) {
+            <button
+              mat-stroked-button
+              type="button"
+              class="recibidas__orden-boton"
+              [class.recibidas__orden-boton--activo]="orden() === opcion"
+              [attr.aria-pressed]="orden() === opcion"
+              (click)="cambiarOrden(opcion)"
+            >
+              {{ etiquetasOrden[opcion] }}
+            </button>
+          }
+        </div>
+      </div>
+
+      @if (ofertasActivas().length >= 2) {
+        <div class="recibidas__comparar">
+          <div>
+            <strong>Comparar ofertas</strong>
+            <p class="ft-muted" role="status">
+              {{ seleccionadas().length }} de 3 seleccionadas. Elige al menos 2 ofertas activas.
+            </p>
+          </div>
+          <button
+            mat-flat-button
+            type="button"
+            [disabled]="!puedeComparar() || comparando()"
+            (click)="comparar()"
+          >
+            <mat-icon aria-hidden="true">compare_arrows</mat-icon>
+            {{ comparando() ? 'Comparando…' : 'Comparar seleccionadas' }}
+          </button>
+        </div>
+      }
+    </div>
+
+    <ul class="recibidas__lista">
+      @for (oferta of ofertas(); track oferta.id) {
+        <li>
+          <article
+            class="oferta-recibida ft-card"
+            [attr.aria-labelledby]="'oferta-recibida-' + oferta.id"
+          >
+            <div class="oferta-recibida__cabecera">
+              <div class="oferta-recibida__tecnico">
+                <span class="oferta-recibida__foto" aria-hidden="true">
+                  @if (oferta.tecnico.fotoUrl) {
+                    <app-imagen-autenticada
+                      [src]="oferta.tecnico.fotoUrl"
+                      [alt]="'Foto de ' + oferta.tecnico.nombres + ' ' + oferta.tecnico.apellidos"
+                    />
+                  } @else {
+                    <span class="oferta-recibida__iniciales">
+                      {{ oferta.tecnico.nombres.charAt(0) }}{{ oferta.tecnico.apellidos.charAt(0) }}
+                    </span>
+                  }
+                </span>
+                <div>
+                  <h3 [id]="'oferta-recibida-' + oferta.id">
+                    {{ oferta.tecnico.nombres }} {{ oferta.tecnico.apellidos }}
+                    @if (oferta.tecnico.destacado) {
+                      <span class="oferta-recibida__destacado">Destacado</span>
+                    }
+                  </h3>
+                  <p class="oferta-recibida__reputacion">
+                    <mat-icon aria-hidden="true">star</mat-icon>
+                    {{ oferta.tecnico.calificacionPromedio ?? 0 | number: '1.1-2' }}
+                    <span>({{ oferta.tecnico.totalResenas }} reseñas)</span>
+                    <span>· {{ oferta.tecnico.aniosExperiencia }} años de experiencia</span>
+                    <span>· {{ oferta.tecnico.serviciosCompletados }} servicios</span>
+                  </p>
+                </div>
+              </div>
+
+              <div class="oferta-recibida__marcadores">
+                <app-estado-badge
+                  [texto]="etiquetasEstado[oferta.estado]"
+                  [tono]="tonosEstado[oferta.estado]"
+                />
+                @if (esActiva(oferta.estado)) {
+                  <mat-checkbox
+                    [checked]="estaSeleccionada(oferta)"
+                    [disabled]="!puedeSeleccionar(oferta)"
+                    (change)="alternarSeleccion(oferta)"
+                  >
+                    Comparar
+                  </mat-checkbox>
+                }
+              </div>
+            </div>
+
+            <p class="oferta-recibida__descripcion">
+              {{
+                oferta.tecnico.descripcion ?? 'El técnico no agregó una descripción profesional.'
+              }}
+            </p>
+
+            <dl class="oferta-recibida__datos">
+              <div class="oferta-recibida__total">
+                <dt>Total de la oferta</dt>
+                <dd>S/ {{ oferta.precioTotal | number: '1.2-2' }}</dd>
+              </div>
+              <div>
+                <dt>Precio del servicio</dt>
+                <dd>S/ {{ oferta.precioServicio | number: '1.2-2' }}</dd>
+              </div>
+              <div>
+                <dt>Movilidad</dt>
+                <dd>S/ {{ oferta.costoMovilidad | number: '1.2-2' }}</dd>
+              </div>
+              <div>
+                <dt>Diagnóstico</dt>
+                <dd>S/ {{ oferta.costoDiagnostico | number: '1.2-2' }}</dd>
+              </div>
+              <div>
+                <dt>Tiempo estimado</dt>
+                <dd>{{ oferta.tiempoEstimadoHoras }} h</dd>
+              </div>
+              <div>
+                <dt>Garantía</dt>
+                <dd>{{ oferta.garantiaDias }} días</dd>
+              </div>
+              <div>
+                <dt>Modalidad</dt>
+                <dd>{{ etiquetasModalidad[oferta.modalidad] }}</dd>
+              </div>
+              <div>
+                <dt>Recibida</dt>
+                <dd>{{ oferta.creadoEn | date: 'dd MMM yyyy, HH:mm' }}</dd>
+              </div>
+            </dl>
+
+            <p class="oferta-recibida__nota">
+              El total suma el precio del servicio y la movilidad. El costo de diagnóstico se
+              muestra aparte y no forma parte del total.
+            </p>
+
+            @if (oferta.mensaje) {
+              <blockquote class="oferta-recibida__mensaje">
+                <mat-icon aria-hidden="true">format_quote</mat-icon>
+                <p>{{ oferta.mensaje }}</p>
+              </blockquote>
+            }
+
+            @if (puedeResponder(oferta)) {
+              @if (pendiente(oferta); as contraoferta) {
+                <div class="ft-alert ft-alert--warning oferta-recibida__negociacion" role="alert">
+                  <mat-icon aria-hidden="true">swap_horiz</mat-icon>
+                  <div class="oferta-recibida__negociacion-contenido">
+                    <div>
+                      <strong>Contraoferta del técnico · ronda {{ contraoferta.ronda }}</strong>
+                      <p>
+                        Propone S/ {{ contraoferta.montoPropuesto | number: '1.2-2' }} por el
+                        servicio.
+                      </p>
+                      @if (contraoferta.mensaje) {
+                        <p class="oferta-recibida__negociacion-mensaje">
+                          “{{ contraoferta.mensaje }}”
+                        </p>
+                      }
+                    </div>
+                    <button
+                      mat-flat-button
+                      type="button"
+                      [disabled]="respondiendoId() === oferta.id"
+                      (click)="negociar(oferta)"
+                    >
+                      <mat-icon aria-hidden="true">reply</mat-icon>
+                      {{ respondiendoId() === oferta.id ? 'Registrando…' : 'Responder' }}
+                    </button>
+                  </div>
+                </div>
+              }
+            } @else if (esperaRespuesta(oferta)) {
+              <div class="ft-alert ft-alert--info oferta-recibida__negociacion" role="status">
+                <mat-icon aria-hidden="true">hourglass_top</mat-icon>
+                <span>
+                  Tu contraoferta está pendiente de respuesta del técnico. Podrás continuar cuando
+                  responda.
+                </span>
+              </div>
+            } @else if (oferta.estado === 'ACEPTADA') {
+              <div class="ft-alert ft-alert--success oferta-recibida__negociacion" role="status">
+                <mat-icon aria-hidden="true">check_circle</mat-icon>
+                <span>
+                  Servicio confirmado con este técnico.
+                  @if (oferta.servicioId !== null) {
+                    Referencia del servicio: #{{ oferta.servicioId }}.
+                  }
+                </span>
+              </div>
+            } @else if (oferta.estado === 'RECHAZADA') {
+              <div class="ft-alert ft-alert--error oferta-recibida__negociacion" role="status">
+                <mat-icon aria-hidden="true">cancel</mat-icon>
+                <span>Esta oferta fue rechazada o cerrada por la negociación.</span>
+              </div>
+            } @else if (!puedeNegociar()) {
+              <div class="ft-alert oferta-recibida__negociacion" role="status">
+                <mat-icon aria-hidden="true">info</mat-icon>
+                <span>La solicitud ya no admite negociación.</span>
+              </div>
+            }
+
+            <details class="oferta-recibida__historial">
+              <summary>
+                Historial de negociación
+                <span class="oferta-recibida__historial-conteo">{{
+                  oferta.contraofertas.length
+                }}</span>
+              </summary>
+              <app-negociacion-historial [contraofertas]="oferta.contraofertas" />
+            </details>
+
+            <div class="oferta-recibida__acciones">
+              @if (puedeIniciar(oferta)) {
+                <button mat-flat-button type="button" (click)="negociar(oferta)">
+                  <mat-icon aria-hidden="true">swap_horiz</mat-icon>
+                  Hacer contraoferta
+                </button>
+              }
+              @if (puedeResponder(oferta)) {
+                <button
+                  mat-flat-button
+                  type="button"
+                  [disabled]="respondiendoId() === oferta.id"
+                  (click)="negociar(oferta)"
+                >
+                  <mat-icon aria-hidden="true">reply</mat-icon>
+                  {{ respondiendoId() === oferta.id ? 'Registrando…' : 'Responder contraoferta' }}
+                </button>
+              }
+            </div>
+          </article>
+        </li>
+      }
+    </ul>
+  }
+</section>

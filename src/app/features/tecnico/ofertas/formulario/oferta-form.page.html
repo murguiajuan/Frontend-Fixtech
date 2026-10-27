@@ -1,0 +1,408 @@
+@if (cargando()) {
+  <div class="oferta-form oferta-form--cargando">
+    <mat-spinner diameter="36" aria-label="Cargando la solicitud" />
+    <p class="ft-muted">Cargando la solicitud y tu oferta…</p>
+  </div>
+} @else if (errorCarga(); as fallo) {
+  <div class="oferta-form ft-page">
+    <div class="ft-alert ft-alert--error" role="alert">
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <div class="oferta-form__error">
+        <strong>No pudimos preparar la oferta</strong>
+        <p>{{ fallo.mensaje }}</p>
+        @if (fallo.detalles.length > 0) {
+          <ul class="oferta-form__detalles">
+            @for (detalle of fallo.detalles; track detalle) {
+              <li>{{ detalle }}</li>
+            }
+          </ul>
+        }
+        <div class="oferta-form__error-acciones">
+          <button mat-stroked-button type="button" (click)="reintentarCarga()">
+            <mat-icon aria-hidden="true">refresh</mat-icon>
+            Reintentar
+          </button>
+          <a mat-button routerLink="/app/tecnico/solicitudes">Volver a solicitudes disponibles</a>
+        </div>
+      </div>
+    </div>
+  </div>
+} @else if (bloqueada()) {
+  <div class="oferta-form ft-page">
+    <div class="ft-alert ft-alert--warning" role="alert">
+      <mat-icon aria-hidden="true">lock_clock</mat-icon>
+      <div class="oferta-form__error">
+        @if (esEdicion()) {
+          <strong>Esta oferta ya no se puede editar</strong>
+          <p>
+            Solo las ofertas activas admiten cambios. Revisa el estado de la oferta y las
+            contraofertas desde “Mis ofertas”.
+          </p>
+          <a mat-stroked-button routerLink="/app/tecnico/ofertas">Ver mis ofertas</a>
+        } @else {
+          <strong>Ya tienes una oferta para esta solicitud</strong>
+          <p>
+            @if (ofertaExistente()?.estado === 'ACEPTADA') {
+              La oferta ya fue aceptada. Puedes revisar el detalle desde “Mis ofertas”.
+            } @else {
+              Tienes una oferta activa. Edítala o retírala desde “Mis ofertas” antes de enviar otra.
+            }
+          </p>
+          <div class="oferta-form__error-acciones">
+            @if (ofertaExistente(); as existente) {
+              <a mat-stroked-button [routerLink]="['/app/tecnico/ofertas', existente.id, 'editar']">
+                <mat-icon aria-hidden="true">edit</mat-icon>
+                Editar oferta
+              </a>
+            }
+            <a mat-button routerLink="/app/tecnico/ofertas">Ver mis ofertas</a>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+} @else if (solicitud(); as s) {
+  <div class="oferta-form ft-page">
+    <header class="oferta-form__cabecera">
+      <div>
+        <a
+          class="oferta-form__volver"
+          [routerLink]="esEdicion() ? ['/app/tecnico/ofertas'] : ['/app/tecnico/solicitudes', s.id]"
+        >
+          <mat-icon aria-hidden="true">arrow_back</mat-icon>
+          {{ esEdicion() ? 'Mis ofertas' : 'Detalle de la solicitud' }}
+        </a>
+        <p class="ft-eyebrow">Técnico</p>
+        <h1>{{ titulo() }}</h1>
+        <p class="ft-muted">
+          {{
+            esEdicion()
+              ? 'Ajusta tu propuesta mientras la oferta siga activa. Al guardar, el cliente verá los cambios.'
+              : 'Revisa la solicitud y presenta una propuesta clara. Solo puedes mantener una oferta activa por solicitud.'
+          }}
+        </p>
+      </div>
+    </header>
+
+    @if (errorGuardado(); as mensaje) {
+      <div class="ft-alert ft-alert--error" role="alert">
+        <mat-icon aria-hidden="true">error_outline</mat-icon>
+        <div>
+          <p>{{ mensaje }}</p>
+          @if (detallesError().length > 0) {
+            <ul class="oferta-form__detalles">
+              @for (detalle of detallesError(); track detalle) {
+                <li>{{ detalle }}</li>
+              }
+            </ul>
+          }
+        </div>
+      </div>
+    }
+
+    <div class="oferta-form__layout">
+      <form
+        class="oferta-form__formulario"
+        [formGroup]="formulario"
+        (ngSubmit)="enviar()"
+        novalidate
+      >
+        <section class="oferta-form__panel ft-card" aria-labelledby="titulo-solicitud">
+          <div class="oferta-form__panel-cabecera">
+            <div>
+              <p class="ft-eyebrow">Solicitud #{{ s.id }}</p>
+              <h2 id="titulo-solicitud">{{ s.tipoEquipo }} · {{ s.tipoServicio }}</h2>
+            </div>
+            <div class="oferta-form__badges">
+              <app-estado-badge
+                [texto]="etiquetasUrgencia[s.urgencia]"
+                [tono]="tonosUrgencia[s.urgencia]"
+              />
+              <app-estado-badge [texto]="etiquetasModalidad[s.modalidad]" [tono]="'info'" />
+            </div>
+          </div>
+
+          <p class="oferta-form__descripcion">{{ s.descripcion }}</p>
+
+          <dl class="oferta-form__datos">
+            <div>
+              <dt>Distrito</dt>
+              <dd>{{ s.distrito }}</dd>
+            </div>
+            <div>
+              <dt>Presupuesto referencial</dt>
+              <dd>
+                @if (s.presupuestoReferencial !== null) {
+                  S/ {{ s.presupuestoReferencial | number: '1.2-2' }}
+                } @else {
+                  A convenir
+                }
+              </dd>
+            </div>
+            <div>
+              <dt>Vigencia</dt>
+              <dd>{{ s.fechaVencimiento | date: 'dd MMM yyyy, HH:mm' }}</dd>
+            </div>
+            <div>
+              <dt>Preferencia</dt>
+              <dd>
+                @if (s.fechaPreferida) {
+                  {{ s.fechaPreferida | date: 'dd MMM yyyy' }}
+                } @else {
+                  Sin fecha preferida
+                }
+                @if (s.horarioPreferido) {
+                  · {{ s.horarioPreferido }}
+                }
+              </dd>
+            </div>
+          </dl>
+
+          <a mat-button [routerLink]="['/app/tecnico/solicitudes', s.id]">
+            Ver detalle completo de la solicitud
+            <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+          </a>
+        </section>
+
+        <section class="oferta-form__panel ft-card" aria-labelledby="titulo-propuesta">
+          <div class="oferta-form__panel-cabecera">
+            <div>
+              <h2 id="titulo-propuesta">Tu propuesta</h2>
+              <p class="ft-muted">
+                Indica la modalidad, el precio y el tiempo comprometido. La garantía se toma de tu
+                perfil si la dejas vacía.
+              </p>
+            </div>
+          </div>
+
+          @if (modalidadesDisponibles().length === 0) {
+            <div class="ft-alert ft-alert--warning" role="alert">
+              <mat-icon aria-hidden="true">report_problem</mat-icon>
+              <span>
+                Tu perfil no ofrece la modalidad que requiere esta solicitud. Actualiza tus
+                modalidades en “Mi perfil”.
+              </span>
+            </div>
+          }
+
+          <div class="oferta-form__grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Modalidad de la oferta</mat-label>
+              <mat-select
+                formControlName="modalidad"
+                [attr.aria-invalid]="mostrarError('modalidad')"
+              >
+                @for (modalidad of modalidadesDisponibles(); track modalidad) {
+                  <mat-option [value]="modalidad">{{ etiquetasModalidad[modalidad] }}</mat-option>
+                }
+              </mat-select>
+              @if (mostrarError('modalidad')) {
+                <mat-error>Selecciona la modalidad de la oferta.</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Precio del servicio</mat-label>
+              <span matTextPrefix>S/&nbsp;</span>
+              <input
+                matInput
+                type="number"
+                formControlName="precioServicio"
+                min="0.01"
+                max="99999999.99"
+                step="0.01"
+                inputmode="decimal"
+                [attr.aria-invalid]="mostrarError('precioServicio')"
+              />
+              <mat-hint>Monto por la mano de obra y el servicio, sin movilidad.</mat-hint>
+              @if (mostrarError('precioServicio')) {
+                <mat-error>
+                  @if (formulario.controls.precioServicio.hasError('required')) {
+                    Ingresa el precio del servicio.
+                  } @else if (formulario.controls.precioServicio.hasError('min')) {
+                    El precio debe ser mayor a cero.
+                  } @else {
+                    El precio no puede superar S/ 99,999,999.99.
+                  }
+                </mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Tiempo estimado (horas)</mat-label>
+              <input
+                matInput
+                type="number"
+                formControlName="tiempoEstimadoHoras"
+                min="1"
+                max="999"
+                step="1"
+                inputmode="numeric"
+                [attr.aria-invalid]="mostrarError('tiempoEstimadoHoras')"
+              />
+              <mat-hint>Horas de trabajo que estimas para completar el servicio.</mat-hint>
+              @if (mostrarError('tiempoEstimadoHoras')) {
+                <mat-error>
+                  @if (formulario.controls.tiempoEstimadoHoras.hasError('required')) {
+                    Ingresa el tiempo estimado.
+                  } @else if (formulario.controls.tiempoEstimadoHoras.hasError('min')) {
+                    El tiempo debe ser de al menos una hora.
+                  } @else {
+                    El tiempo no puede superar las 999 horas.
+                  }
+                </mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Garantía (días)</mat-label>
+              <input
+                matInput
+                type="number"
+                formControlName="garantiaDias"
+                min="0"
+                max="3650"
+                step="1"
+                inputmode="numeric"
+                [attr.aria-invalid]="mostrarError('garantiaDias')"
+              />
+              <mat-hint>
+                Si lo dejas vacío, se usará tu garantía por defecto ({{
+                  tecnico()?.garantiaDiasDefecto ?? 0
+                }}
+                días).
+              </mat-hint>
+              @if (mostrarError('garantiaDias')) {
+                <mat-error>La garantía debe ser un número entre 0 y 3650 días.</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Costo de movilidad</mat-label>
+              <span matTextPrefix>S/&nbsp;</span>
+              <input
+                matInput
+                type="number"
+                formControlName="costoMovilidad"
+                min="0"
+                max="99999999.99"
+                step="0.01"
+                inputmode="decimal"
+                [attr.aria-invalid]="mostrarErrorMovilidad()"
+              />
+              @if (esTaller()) {
+                <mat-hint>No aplica para la modalidad en taller.</mat-hint>
+              } @else if (topeMovilidad() !== null) {
+                <mat-hint>
+                  Tope para {{ distritoNombre() }}: S/ {{ topeMovilidad() | number: '1.2-2' }}.
+                </mat-hint>
+              } @else {
+                <mat-hint>El backend validará el tope de movilidad del distrito.</mat-hint>
+              }
+              @if (mostrarErrorMovilidad()) {
+                <mat-error>
+                  @if (formulario.controls.costoMovilidad.hasError('max')) {
+                    La movilidad no puede superar el tope de S/
+                    {{ topeMovilidad() | number: '1.2-2' }} para {{ distritoNombre() }}.
+                  } @else {
+                    La movilidad no puede ser negativa.
+                  }
+                </mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Costo de diagnóstico</mat-label>
+              <span matTextPrefix>S/&nbsp;</span>
+              <input
+                matInput
+                type="number"
+                formControlName="costoDiagnostico"
+                min="0"
+                max="99999999.99"
+                step="0.01"
+                inputmode="decimal"
+                [attr.aria-invalid]="mostrarError('costoDiagnostico')"
+              />
+              <mat-hint>Se muestra aparte y no se suma al total de la oferta.</mat-hint>
+              @if (mostrarError('costoDiagnostico')) {
+                <mat-error>El diagnóstico no puede ser negativo.</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="oferta-form__campo-ancho">
+              <mat-label>Mensaje para el cliente (opcional)</mat-label>
+              <textarea
+                matInput
+                formControlName="mensaje"
+                rows="4"
+                maxlength="500"
+                placeholder="Ejemplo: Incluye revisión de la placa y limpieza interna."
+                [attr.aria-invalid]="mostrarError('mensaje')"
+              ></textarea>
+              <mat-hint>Máximo 500 caracteres.</mat-hint>
+              @if (mostrarError('mensaje')) {
+                <mat-error>El mensaje no puede superar los 500 caracteres.</mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+          <div class="oferta-form__total" role="status" aria-live="polite">
+            <span>Total de tu oferta (servicio + movilidad)</span>
+            <strong>S/ {{ totalEstimado() | number: '1.2-2' }}</strong>
+            <small>El costo de diagnóstico se muestra por separado y no se suma.</small>
+          </div>
+        </section>
+
+        <div class="oferta-form__acciones">
+          <button
+            mat-flat-button
+            type="submit"
+            [disabled]="guardando() || modalidadesDisponibles().length === 0"
+          >
+            @if (guardando()) {
+              <mat-spinner diameter="20" aria-hidden="true" />
+            } @else {
+              <mat-icon aria-hidden="true">{{ esEdicion() ? 'save' : 'send' }}</mat-icon>
+            }
+            <span>
+              {{ guardando() ? 'Guardando…' : esEdicion() ? 'Guardar cambios' : 'Enviar oferta' }}
+            </span>
+          </button>
+          <a
+            mat-stroked-button
+            [routerLink]="
+              esEdicion() ? ['/app/tecnico/ofertas'] : ['/app/tecnico/solicitudes', s.id]
+            "
+          >
+            Cancelar
+          </a>
+        </div>
+      </form>
+
+      <aside class="oferta-form__ayuda ft-card" aria-labelledby="titulo-ayuda">
+        <h2 id="titulo-ayuda">Antes de enviar</h2>
+        <ul>
+          <li>La modalidad debe coincidir con la solicitud y con las opciones de tu perfil.</li>
+          <li>La movilidad solo aplica a domicilio y no puede superar el tope del distrito.</li>
+          <li>El total suma servicio y movilidad; el diagnóstico no se incluye.</li>
+          <li>Solo puedes tener una oferta activa por solicitud.</li>
+          <li>Mientras esté activa, puedes editarla o retirarla desde “Mis ofertas”.</li>
+          <li>
+            Si el cliente responde con una contraoferta, podrás aceptarla, rechazarla o proponer
+            otra.
+          </li>
+        </ul>
+        @if (esEdicion() && ofertaExistente(); as oferta) {
+          <div class="oferta-form__estado">
+            <span>Estado actual</span>
+            <app-estado-badge
+              [texto]="etiquetasEstadoOferta[oferta.estado]"
+              [tono]="tonosEstadoOferta[oferta.estado]"
+            />
+          </div>
+        }
+      </aside>
+    </div>
+  </div>
+}

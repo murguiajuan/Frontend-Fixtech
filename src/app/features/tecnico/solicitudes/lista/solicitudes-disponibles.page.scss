@@ -1,0 +1,239 @@
+:host {
+  display: block;
+}
+
+.disponibles {
+  width: min(100% - 2rem, var(--ft-content-max));
+  margin-inline: auto;
+}
+
+.disponibles__cabecera {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.disponibles__cabecera h1 {
+  margin-top: 0.2rem;
+  font-size: clamp(1.7rem, 5vw, 2.4rem);
+}
+
+.disponibles__cabecera .ft-muted {
+  max-width: 44rem;
+  margin-top: 0.35rem;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.disponibles__cabecera > button {
+  justify-self: start;
+}
+
+.disponibles__filtros {
+  padding: 1rem;
+}
+
+.disponibles__filtros-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.disponibles__filtros-cabecera h2 {
+  font-size: 1rem;
+}
+
+.disponibles__filtros-cabecera span {
+  font-size: 0.8rem;
+}
+
+.disponibles__buscador {
+  max-width: 32rem;
+}
+
+.disponibles__listado-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.disponibles__listado-cabecera h2 {
+  font-size: 1.2rem;
+}
+
+.disponibles__listado-cabecera p {
+  margin-top: 0.2rem;
+  font-size: 0.8rem;
+}
+
+.disponibles__lista {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.disponible {
+  display: grid;
+  overflow: hidden;
+}
+
+.disponible__imagen {
+  aspect-ratio: 16 / 9;
+  background: var(--ft-surface-muted);
+}
+
+.disponible__sin-imagen {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  color: var(--ft-on-surface-muted);
+}
+
+.disponible__cuerpo {
+  display: grid;
+  gap: 0.55rem;
+  min-width: 0;
+  padding: 1rem;
+}
+
+.disponible__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.disponible h3 {
+  font-size: 1.05rem;
+  line-height: 1.3;
+}
+
+.disponible__descripcion {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--ft-on-surface-muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.disponible__meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 0;
+}
+
+.disponible__meta dt {
+  color: var(--ft-on-surface-muted);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.disponible__meta dd {
+  margin: 0.15rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.disponible__pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--ft-border);
+}
+
+.disponible__preferencia {
+  color: var(--ft-on-surface-muted);
+  font-size: 0.75rem;
+}
+
+.disponible__pie a {
+  margin-left: auto;
+}
+
+.disponibles__paginacion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.disponibles__paginacion span {
+  color: var(--ft-on-surface-muted);
+  font-size: 0.82rem;
+}
+
+.estado-panel {
+  display: grid;
+  gap: 0.6rem;
+  justify-items: center;
+  padding: 2rem 1.25rem;
+  text-align: center;
+}
+
+.estado-panel > mat-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  color: var(--ft-primary-500);
+  font-size: 2.5rem;
+}
+
+.estado-panel h2 {
+  font-size: 1.2rem;
+}
+
+.estado-panel p {
+  max-width: 34rem;
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.estado-panel__detalles {
+  margin: 0.2rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--ft-danger);
+  font-size: 0.82rem;
+  text-align: left;
+}
+
+@media (min-width: 48rem) {
+  .disponibles__cabecera {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+  }
+
+  .disponibles__cabecera > button {
+    justify-self: end;
+  }
+
+  .disponibles__filtros {
+    padding: 1.25rem;
+  }
+
+  .disponibles__lista {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64rem) {
+  .disponibles__lista {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

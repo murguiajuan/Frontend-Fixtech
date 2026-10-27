@@ -6,6 +6,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { provideRouter } from '@angular/router';
 import { Subject, of, throwError } from 'rxjs';
 import { NotificacionService } from '../../../../shared/ui/notificacion.service';
+import { OfertasService } from '../../../ofertas/ofertas.service';
 import { SolicitudesService } from '../../services/solicitudes.service';
 import { SolicitudDetalle } from '../solicitud.models';
 import { SolicitudDetallePage } from './solicitud-detalle.page';
@@ -38,6 +39,7 @@ const SOLICITUD: SolicitudDetalle = {
 
 describe('SolicitudDetallePage', () => {
   const solicitudes = { obtener: vi.fn(), cancelar: vi.fn() };
+  const ofertasRecibidas = { listarDelCliente: vi.fn() };
   const dialogo = { open: vi.fn() };
   const notificaciones = { exito: vi.fn(), error: vi.fn(), info: vi.fn() };
 
@@ -45,6 +47,8 @@ describe('SolicitudDetallePage', () => {
     solicitudes.obtener.mockReset();
     solicitudes.obtener.mockReturnValue(of(SOLICITUD));
     solicitudes.cancelar.mockReset();
+    ofertasRecibidas.listarDelCliente.mockReset();
+    ofertasRecibidas.listarDelCliente.mockReturnValue(of([]));
     dialogo.open.mockReset();
     notificaciones.exito.mockReset();
     notificaciones.error.mockReset();
@@ -57,6 +61,7 @@ describe('SolicitudDetallePage', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: SolicitudesService, useValue: solicitudes },
+        { provide: OfertasService, useValue: ofertasRecibidas },
         { provide: MatDialog, useValue: dialogo },
         { provide: NotificacionService, useValue: notificaciones },
       ],

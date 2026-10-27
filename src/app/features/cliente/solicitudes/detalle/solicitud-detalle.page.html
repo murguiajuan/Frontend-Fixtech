@@ -228,5 +228,11 @@
         </section>
       </aside>
     </div>
+
+    <app-ofertas-recibidas
+      [solicitudId]="s.id"
+      [estadoSolicitud]="s.estado"
+      (servicioCreado)="actualizarTrasServicio()"
+    />
   </div>
 }

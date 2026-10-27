@@ -1,0 +1,363 @@
+@if (cargando()) {
+  <div class="disponible disponible--cargando">
+    <mat-spinner diameter="36" aria-label="Cargando la solicitud disponible" />
+    <p class="ft-muted">Cargando la solicitud y tu oferta…</p>
+  </div>
+} @else if (error(); as fallo) {
+  <div class="disponible ft-page">
+    <div class="ft-alert ft-alert--error" role="alert">
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <div class="disponible__error">
+        <strong>No pudimos cargar esta solicitud</strong>
+        <p>{{ fallo.mensaje }}</p>
+        @if (fallo.detalles.length > 0) {
+          <ul class="disponible__detalles">
+            @for (detalle of fallo.detalles; track detalle) {
+              <li>{{ detalle }}</li>
+            }
+          </ul>
+        }
+        <p class="disponible__nota">
+          Es posible que la solicitud haya vencido, sido cancelada o dejado de ser compatible con tu
+          perfil.
+        </p>
+        <div class="disponible__error-acciones">
+          <button mat-stroked-button type="button" (click)="reintentarCarga()">
+            <mat-icon aria-hidden="true">refresh</mat-icon>
+            Reintentar
+          </button>
+          <a mat-button routerLink="/app/tecnico/solicitudes">Volver a solicitudes disponibles</a>
+        </div>
+      </div>
+    </div>
+  </div>
+} @else if (solicitud(); as s) {
+  <div class="disponible ft-page">
+    <header class="disponible__cabecera">
+      <div>
+        <a class="disponible__volver" routerLink="/app/tecnico/solicitudes">
+          <mat-icon aria-hidden="true">arrow_back</mat-icon>
+          Solicitudes disponibles
+        </a>
+        <p class="ft-eyebrow">Solicitud #{{ s.id }}</p>
+        <h1>{{ s.tipoEquipo }} · {{ s.tipoServicio }}</h1>
+        <div class="disponible__badges">
+          <app-estado-badge
+            [texto]="etiquetasUrgencia[s.urgencia]"
+            [tono]="tonosUrgencia[s.urgencia]"
+          />
+          <app-estado-badge [texto]="etiquetasModalidad[s.modalidad]" [tono]="'info'" />
+          @if (oferta(); as o) {
+            <app-estado-badge
+              [texto]="etiquetasEstadoOferta[o.estado]"
+              [tono]="tonosEstadoOferta[o.estado]"
+            />
+          } @else {
+            <app-estado-badge texto="Sin oferta" tono="neutral" />
+          }
+        </div>
+      </div>
+      <div class="disponible__acciones">
+        @if (puedeCrearOferta()) {
+          <a mat-flat-button [routerLink]="['/app/tecnico/solicitudes', s.id, 'ofertar']">
+            <mat-icon aria-hidden="true">send</mat-icon>
+            {{ etiquetaCrear() }}
+          </a>
+        }
+        @if (oferta(); as o) {
+          @if (puedeEditar()) {
+            <a mat-stroked-button [routerLink]="['/app/tecnico/ofertas', o.id, 'editar']">
+              <mat-icon aria-hidden="true">edit</mat-icon>
+              Editar oferta
+            </a>
+          }
+          @if (puedeRetirar()) {
+            <button mat-stroked-button type="button" [disabled]="retirando()" (click)="retirar()">
+              <mat-icon aria-hidden="true">undo</mat-icon>
+              {{ retirando() ? 'Retirando…' : 'Retirar oferta' }}
+            </button>
+          }
+        }
+      </div>
+    </header>
+
+    @if (oferta(); as o) {
+      @if (esperaRespuesta()) {
+        <div class="ft-alert ft-alert--info" role="status">
+          <mat-icon aria-hidden="true">hourglass_top</mat-icon>
+          <span>
+            Tu contraoferta de S/
+            {{ pendiente()?.montoPropuesto | number: '1.2-2' }} está pendiente de respuesta del
+            cliente. Podrás seguir negociando cuando responda.
+          </span>
+        </div>
+      } @else if (puedeResponder()) {
+        <div class="ft-alert ft-alert--warning" role="alert">
+          <mat-icon aria-hidden="true">swap_horiz</mat-icon>
+          <div class="disponible__alerta-contenido">
+            <div>
+              <strong>El cliente envió una contraoferta.</strong>
+              <p>
+                Ronda {{ pendiente()?.ronda }}: propone S/
+                {{ pendiente()?.montoPropuesto | number: '1.2-2' }} por el servicio.
+              </p>
+              @if (pendiente()?.mensaje; as mensaje) {
+                <p class="disponible__mensaje">“{{ mensaje }}”</p>
+              }
+            </div>
+            <button mat-flat-button type="button" [disabled]="respondiendo()" (click)="negociar()">
+              <mat-icon aria-hidden="true">swap_horiz</mat-icon>
+              {{ respondiendo() ? 'Registrando…' : 'Responder contraoferta' }}
+            </button>
+          </div>
+        </div>
+      } @else if (o.estado === 'ACEPTADA') {
+        <div class="ft-alert ft-alert--success" role="status">
+          <mat-icon aria-hidden="true">check_circle</mat-icon>
+          <span>
+            El cliente aceptó tu oferta. El servicio quedó registrado; podrás gestionarlo desde “Mis
+            servicios” cuando esté disponible.
+          </span>
+        </div>
+      } @else if (o.estado === 'RECHAZADA') {
+        <div class="ft-alert ft-alert--error" role="status">
+          <mat-icon aria-hidden="true">cancel</mat-icon>
+          <span>
+            La oferta fue rechazada. Si la solicitud sigue vigente, puedes enviar una nueva
+            propuesta.
+          </span>
+        </div>
+      } @else if (!esActiva(o.estado)) {
+        <div class="ft-alert" role="status">
+          <mat-icon aria-hidden="true">info</mat-icon>
+          <span>Esta oferta ya no está activa y no admite cambios ni negociación.</span>
+        </div>
+      }
+    }
+
+    <div class="disponible__layout">
+      <div class="disponible__principal">
+        <section class="disponible__panel ft-card" aria-labelledby="titulo-descripcion">
+          <h2 id="titulo-descripcion">Descripción del problema</h2>
+          <p class="disponible__descripcion">{{ s.descripcion }}</p>
+        </section>
+
+        <section class="disponible__panel ft-card" aria-labelledby="titulo-equipo">
+          <h2 id="titulo-equipo">Equipo y servicio</h2>
+          <dl class="disponible__datos">
+            <div>
+              <dt>Tipo de equipo</dt>
+              <dd>{{ s.tipoEquipo }}</dd>
+            </div>
+            <div>
+              <dt>Tipo de servicio</dt>
+              <dd>{{ s.tipoServicio }}</dd>
+            </div>
+            <div>
+              <dt>Marca</dt>
+              <dd>{{ s.marca ?? 'No indicada' }}</dd>
+            </div>
+            <div>
+              <dt>Modelo</dt>
+              <dd>{{ s.modelo ?? 'No indicado' }}</dd>
+            </div>
+            <div>
+              <dt>Urgencia</dt>
+              <dd>{{ etiquetasUrgencia[s.urgencia] }}</dd>
+            </div>
+            <div>
+              <dt>Presupuesto referencial</dt>
+              <dd>
+                @if (s.presupuestoReferencial !== null) {
+                  S/ {{ s.presupuestoReferencial | number: '1.2-2' }}
+                } @else {
+                  A convenir
+                }
+              </dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="disponible__panel ft-card" aria-labelledby="titulo-ubicacion">
+          <h2 id="titulo-ubicacion">Ubicación y preferencias</h2>
+          <dl class="disponible__datos">
+            <div>
+              <dt>Modalidad</dt>
+              <dd>{{ etiquetasModalidad[s.modalidad] }}</dd>
+            </div>
+            <div>
+              <dt>Distrito</dt>
+              <dd>{{ s.distrito }}</dd>
+            </div>
+            <div>
+              <dt>Fecha preferida</dt>
+              <dd>
+                @if (s.fechaPreferida) {
+                  {{ s.fechaPreferida | date: 'dd MMM yyyy' }}
+                } @else {
+                  Sin preferencia
+                }
+              </dd>
+            </div>
+            <div>
+              <dt>Horario preferido</dt>
+              <dd>{{ s.horarioPreferido ?? 'Sin preferencia' }}</dd>
+            </div>
+          </dl>
+          <p class="disponible__nota">
+            La dirección exacta se comparte con el cliente cuando el servicio se confirme.
+          </p>
+        </section>
+
+        <section class="disponible__panel ft-card" aria-labelledby="titulo-fotos">
+          <h2 id="titulo-fotos">Fotos de la solicitud</h2>
+          @if (s.imagenes.length === 0) {
+            <p class="disponible__nota">Esta solicitud no tiene fotos registradas.</p>
+          } @else {
+            <ul class="disponible__galeria" aria-label="Fotos de la solicitud">
+              @for (imagen of s.imagenes; track imagen.id) {
+                <li>
+                  <app-imagen-autenticada
+                    [src]="imagen.url"
+                    [alt]="'Foto ' + imagen.orden + ' de la solicitud'"
+                  />
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      </div>
+
+      <aside class="disponible__lateral">
+        <section class="disponible__panel ft-card" aria-labelledby="titulo-vigencia">
+          <h2 id="titulo-vigencia">Vigencia</h2>
+          <dl class="disponible__datos">
+            <div>
+              <dt>Publicada</dt>
+              <dd>{{ s.creadoEn | date: 'dd MMM yyyy, HH:mm' }}</dd>
+            </div>
+            <div>
+              <dt>Vence</dt>
+              <dd>{{ s.fechaVencimiento | date: 'dd MMM yyyy, HH:mm' }}</dd>
+            </div>
+            <div>
+              <dt>Estado</dt>
+              <dd>{{ s.estado === 'PUBLICADA' ? 'Publicada' : 'Con ofertas' }}</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="disponible__panel ft-card" aria-labelledby="titulo-oferta">
+          <div class="disponible__panel-cabecera">
+            <h2 id="titulo-oferta">Tu oferta</h2>
+            @if (oferta(); as o) {
+              <app-estado-badge
+                [texto]="etiquetasEstadoOferta[o.estado]"
+                [tono]="tonosEstadoOferta[o.estado]"
+              />
+            }
+          </div>
+
+          @if (oferta(); as o) {
+            <dl class="disponible__precios">
+              <div>
+                <dt>Precio del servicio</dt>
+                <dd>S/ {{ o.precioServicio | number: '1.2-2' }}</dd>
+              </div>
+              <div>
+                <dt>Movilidad</dt>
+                <dd>S/ {{ o.costoMovilidad | number: '1.2-2' }}</dd>
+              </div>
+              <div>
+                <dt>Diagnóstico</dt>
+                <dd>S/ {{ o.costoDiagnostico | number: '1.2-2' }}</dd>
+              </div>
+              <div class="disponible__precio-total">
+                <dt>Total de la oferta</dt>
+                <dd>S/ {{ o.precioTotal | number: '1.2-2' }}</dd>
+              </div>
+              <div>
+                <dt>Tiempo estimado</dt>
+                <dd>{{ o.tiempoEstimadoHoras }} h</dd>
+              </div>
+              <div>
+                <dt>Garantía</dt>
+                <dd>{{ o.garantiaDias }} días</dd>
+              </div>
+              <div>
+                <dt>Modalidad</dt>
+                <dd>{{ etiquetasModalidad[o.modalidad] }}</dd>
+              </div>
+              <div>
+                <dt>Última actualización</dt>
+                <dd>{{ o.actualizadoEn | date: 'dd MMM yyyy, HH:mm' }}</dd>
+              </div>
+            </dl>
+
+            <p class="disponible__nota">
+              El total suma servicio y movilidad. El costo de diagnóstico se muestra aparte y no se
+              incluye en el total.
+            </p>
+
+            @if (o.mensaje) {
+              <div class="disponible__mensaje-oferta">
+                <h3>Mensaje enviado</h3>
+                <p>{{ o.mensaje }}</p>
+              </div>
+            }
+
+            <div class="disponible__acciones-oferta">
+              @if (puedeEditar()) {
+                <a mat-stroked-button [routerLink]="['/app/tecnico/ofertas', o.id, 'editar']">
+                  <mat-icon aria-hidden="true">edit</mat-icon>
+                  Editar
+                </a>
+              }
+              @if (puedeRetirar()) {
+                <button
+                  mat-stroked-button
+                  type="button"
+                  [disabled]="retirando()"
+                  (click)="retirar()"
+                >
+                  <mat-icon aria-hidden="true">undo</mat-icon>
+                  {{ retirando() ? 'Retirando…' : 'Retirar' }}
+                </button>
+              }
+              @if (puedeResponder()) {
+                <button
+                  mat-flat-button
+                  type="button"
+                  [disabled]="respondiendo()"
+                  (click)="negociar()"
+                >
+                  <mat-icon aria-hidden="true">swap_horiz</mat-icon>
+                  Responder
+                </button>
+              }
+            </div>
+          } @else {
+            <p class="disponible__nota">
+              Aún no has enviado una oferta para esta solicitud. Revisa los datos y presenta tu
+              propuesta.
+            </p>
+            <a mat-flat-button [routerLink]="['/app/tecnico/solicitudes', s.id, 'ofertar']">
+              <mat-icon aria-hidden="true">send</mat-icon>
+              Enviar oferta
+            </a>
+          }
+        </section>
+
+        @if (oferta(); as o) {
+          <section class="disponible__panel ft-card" aria-labelledby="titulo-negociacion">
+            <h2 id="titulo-negociacion">Negociación</h2>
+            <app-negociacion-historial
+              [contraofertas]="o.contraofertas"
+              mensajeVacio="Aún no hay contraofertas. El cliente puede proponer un nuevo precio sobre tu oferta."
+            />
+          </section>
+        }
+      </aside>
+    </div>
+  </div>
+}

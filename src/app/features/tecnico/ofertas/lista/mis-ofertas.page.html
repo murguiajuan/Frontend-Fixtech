@@ -1,0 +1,341 @@
+<div class="mis-ofertas ft-page">
+  <header class="mis-ofertas__cabecera">
+    <div>
+      <p class="ft-eyebrow">Técnico</p>
+      <h1>Mis ofertas</h1>
+      <p class="ft-muted">
+        Revisa el estado de tus propuestas, responde las contraofertas del cliente y actualiza tus
+        condiciones mientras la oferta siga activa.
+      </p>
+    </div>
+    <div class="mis-ofertas__cabecera-acciones">
+      <button mat-stroked-button type="button" [disabled]="cargando()" (click)="cargar()">
+        <mat-icon aria-hidden="true">refresh</mat-icon>
+        Actualizar
+      </button>
+      <a mat-flat-button routerLink="/app/tecnico/solicitudes">
+        <mat-icon aria-hidden="true">work_outline</mat-icon>
+        Solicitudes disponibles
+      </a>
+    </div>
+  </header>
+
+  @if (!cargando() && error() === null) {
+    <section class="metricas" aria-label="Resumen de tus ofertas">
+      <article class="metrica ft-card">
+        <mat-icon aria-hidden="true">request_quote</mat-icon>
+        <strong>{{ ofertas().length }}</strong>
+        <span>Ofertas enviadas</span>
+      </article>
+      <article class="metrica ft-card">
+        <mat-icon aria-hidden="true">pending_actions</mat-icon>
+        <strong>{{ activas() }}</strong>
+        <span>Ofertas activas</span>
+      </article>
+      <article class="metrica ft-card" [class.metrica--alerta]="pendientes() > 0">
+        <mat-icon aria-hidden="true">swap_horiz</mat-icon>
+        <strong>{{ pendientes() }}</strong>
+        <span>Contraofertas por responder</span>
+      </article>
+      <article class="metrica ft-card">
+        <mat-icon aria-hidden="true">check_circle</mat-icon>
+        <strong>{{ aceptadas() }}</strong>
+        <span>Ofertas aceptadas</span>
+      </article>
+    </section>
+  }
+
+  @if (error(); as fallo) {
+    <section class="estado-panel ft-card" role="alert" aria-labelledby="titulo-error">
+      <mat-icon aria-hidden="true">cloud_off</mat-icon>
+      <h2 id="titulo-error">No pudimos cargar tus ofertas</h2>
+      <p class="ft-muted">{{ fallo.mensaje }}</p>
+      @if (fallo.detalles.length > 0) {
+        <ul class="estado-panel__detalles">
+          @for (detalle of fallo.detalles; track detalle) {
+            <li>{{ detalle }}</li>
+          }
+        </ul>
+      }
+      <button mat-flat-button type="button" (click)="cargar()">
+        <mat-icon aria-hidden="true">refresh</mat-icon>
+        Reintentar
+      </button>
+    </section>
+  } @else if (cargando()) {
+    <section class="estado-panel ft-card" role="status" aria-labelledby="titulo-cargando">
+      <mat-spinner diameter="36" aria-hidden="true" />
+      <h2 id="titulo-cargando">Cargando tus ofertas…</h2>
+      <p class="ft-muted">Consultando tus propuestas y las negociaciones pendientes.</p>
+    </section>
+  } @else {
+    <section class="mis-ofertas__filtros ft-card" aria-labelledby="titulo-filtros">
+      <div class="mis-ofertas__filtros-cabecera">
+        <h2 id="titulo-filtros">Filtrar por estado</h2>
+        <span class="ft-muted" role="status">
+          {{ filtradas().length }}
+          {{ filtradas().length === 1 ? 'oferta' : 'ofertas' }}
+        </span>
+      </div>
+      <div class="mis-ofertas__opciones" role="group" aria-label="Filtrar ofertas por estado">
+        @for (opcion of opcionesFiltro; track opcion.valor) {
+          <button
+            mat-stroked-button
+            type="button"
+            class="mis-ofertas__filtro"
+            [class.mis-ofertas__filtro--activo]="filtro() === opcion.valor"
+            [attr.aria-pressed]="filtro() === opcion.valor"
+            (click)="cambiarFiltro(opcion.valor)"
+          >
+            {{ opcion.etiqueta }}
+            <span class="mis-ofertas__filtro-conteo">{{ contar(opcion.valor) }}</span>
+          </button>
+        }
+      </div>
+    </section>
+
+    @if (pendientes() > 0) {
+      <div class="ft-alert ft-alert--warning" role="alert">
+        <mat-icon aria-hidden="true">swap_horiz</mat-icon>
+        <div>
+          <strong>
+            Tienes {{ pendientes() }}
+            {{ pendientes() === 1 ? 'contraoferta pendiente' : 'contraofertas pendientes' }} de
+            respuesta.
+          </strong>
+          <p>
+            Revisa las ofertas marcadas como “En negociación” para aceptar, rechazar o proponer.
+          </p>
+        </div>
+      </div>
+    }
+
+    @if (ofertas().length === 0) {
+      <section class="estado-panel ft-card" aria-labelledby="titulo-sin-ofertas">
+        <mat-icon aria-hidden="true">request_quote</mat-icon>
+        <h2 id="titulo-sin-ofertas">Aún no has enviado ofertas</h2>
+        <p class="ft-muted">
+          Explora las solicitudes compatibles con tus distritos y modalidades. Cuando envíes una
+          propuesta, podrás seguir su estado desde aquí.
+        </p>
+        <a mat-flat-button routerLink="/app/tecnico/solicitudes">
+          <mat-icon aria-hidden="true">search</mat-icon>
+          Ver solicitudes disponibles
+        </a>
+      </section>
+    } @else if (filtradas().length === 0) {
+      <section class="estado-panel ft-card" aria-labelledby="titulo-filtro-vacio">
+        <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
+        <h2 id="titulo-filtro-vacio">No hay ofertas en este estado</h2>
+        <p class="ft-muted">Prueba con otro filtro para revisar el resto de tus propuestas.</p>
+        <button mat-stroked-button type="button" (click)="cambiarFiltro('TODAS')">
+          <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
+          Ver todas
+        </button>
+      </section>
+    } @else {
+      <section aria-labelledby="titulo-listado">
+        <div class="mis-ofertas__listado-cabecera">
+          <h2 id="titulo-listado">Tus propuestas</h2>
+          <span class="ft-muted"> Página {{ paginaActual() }} de {{ totalPaginas() }} </span>
+        </div>
+
+        <ul class="mis-ofertas__lista">
+          @for (oferta of visibles(); track oferta.id) {
+            <li>
+              <article class="oferta ft-card" [attr.aria-labelledby]="'oferta-' + oferta.id">
+                <div class="oferta__cabecera">
+                  <div>
+                    <p class="ft-eyebrow">Oferta #{{ oferta.id }}</p>
+                    <h3 [id]="'oferta-' + oferta.id">
+                      Solicitud #{{ oferta.solicitudId }} ·
+                      {{ etiquetasModalidad[oferta.modalidad] }}
+                    </h3>
+                  </div>
+                  <app-estado-badge
+                    [texto]="etiquetasEstado[oferta.estado]"
+                    [tono]="tonosEstado[oferta.estado]"
+                  />
+                </div>
+
+                <dl class="oferta__datos">
+                  <div class="oferta__total">
+                    <dt>Total de la oferta</dt>
+                    <dd>S/ {{ oferta.precioTotal | number: '1.2-2' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Precio del servicio</dt>
+                    <dd>S/ {{ oferta.precioServicio | number: '1.2-2' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Movilidad</dt>
+                    <dd>S/ {{ oferta.costoMovilidad | number: '1.2-2' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Diagnóstico</dt>
+                    <dd>S/ {{ oferta.costoDiagnostico | number: '1.2-2' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Tiempo estimado</dt>
+                    <dd>{{ oferta.tiempoEstimadoHoras }} h</dd>
+                  </div>
+                  <div>
+                    <dt>Garantía</dt>
+                    <dd>{{ oferta.garantiaDias }} días</dd>
+                  </div>
+                  <div>
+                    <dt>Enviada</dt>
+                    <dd>{{ oferta.creadoEn | date: 'dd MMM yyyy, HH:mm' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Última actualización</dt>
+                    <dd>{{ oferta.actualizadoEn | date: 'dd MMM yyyy, HH:mm' }}</dd>
+                  </div>
+                </dl>
+
+                @if (oferta.mensaje) {
+                  <p class="oferta__mensaje">{{ oferta.mensaje }}</p>
+                }
+
+                @if (puedeResponder(oferta)) {
+                  @if (pendiente(oferta); as contraoferta) {
+                    <div class="ft-alert ft-alert--warning oferta__negociacion" role="alert">
+                      <mat-icon aria-hidden="true">swap_horiz</mat-icon>
+                      <div class="oferta__negociacion-contenido">
+                        <div>
+                          <strong>Contraoferta del cliente · ronda {{ contraoferta.ronda }}</strong>
+                          <p>
+                            Propone S/ {{ contraoferta.montoPropuesto | number: '1.2-2' }} por el
+                            servicio.
+                          </p>
+                          @if (contraoferta.mensaje) {
+                            <p class="oferta__negociacion-mensaje">“{{ contraoferta.mensaje }}”</p>
+                          }
+                        </div>
+                        <button
+                          mat-flat-button
+                          type="button"
+                          [disabled]="respondiendoId() === oferta.id"
+                          (click)="negociar(oferta)"
+                        >
+                          <mat-icon aria-hidden="true">reply</mat-icon>
+                          {{ respondiendoId() === oferta.id ? 'Registrando…' : 'Responder' }}
+                        </button>
+                      </div>
+                    </div>
+                  }
+                } @else if (esperaRespuesta(oferta)) {
+                  <div class="ft-alert ft-alert--info oferta__negociacion" role="status">
+                    <mat-icon aria-hidden="true">hourglass_top</mat-icon>
+                    <span>
+                      Esperando la respuesta del cliente a tu contraoferta. Podrás continuar la
+                      negociación cuando responda.
+                    </span>
+                  </div>
+                } @else if (oferta.estado === 'ACEPTADA') {
+                  <div class="ft-alert ft-alert--success oferta__negociacion" role="status">
+                    <mat-icon aria-hidden="true">check_circle</mat-icon>
+                    <span>
+                      El cliente aceptó esta oferta. El servicio quedó registrado y podrás
+                      gestionarlo desde “Mis servicios” cuando esté disponible.
+                    </span>
+                  </div>
+                } @else if (oferta.estado === 'RECHAZADA') {
+                  <div class="ft-alert ft-alert--error oferta__negociacion" role="status">
+                    <mat-icon aria-hidden="true">cancel</mat-icon>
+                    <span>
+                      La oferta fue rechazada. Puedes consultar la solicitud y, si sigue vigente,
+                      enviar una nueva propuesta.
+                    </span>
+                  </div>
+                } @else if (oferta.estado === 'RETIRADA') {
+                  <div class="ft-alert oferta__negociacion" role="status">
+                    <mat-icon aria-hidden="true">undo</mat-icon>
+                    <span>Retiraste esta oferta. Ya no admite cambios ni negociación.</span>
+                  </div>
+                } @else if (oferta.estado === 'EXPIRADA') {
+                  <div class="ft-alert oferta__negociacion" role="status">
+                    <mat-icon aria-hidden="true">schedule</mat-icon>
+                    <span>La oferta expiró junto con la solicitud y ya no está activa.</span>
+                  </div>
+                }
+
+                <details class="oferta__historial">
+                  <summary>
+                    Historial de negociación
+                    <span class="oferta__historial-conteo">{{ oferta.contraofertas.length }}</span>
+                  </summary>
+                  <app-negociacion-historial [contraofertas]="oferta.contraofertas" />
+                </details>
+
+                <div class="oferta__acciones">
+                  @if (puedeEditar(oferta)) {
+                    <a
+                      mat-stroked-button
+                      [routerLink]="['/app/tecnico/ofertas', oferta.id, 'editar']"
+                    >
+                      <mat-icon aria-hidden="true">edit</mat-icon>
+                      Editar
+                    </a>
+                  }
+                  @if (puedeResponder(oferta)) {
+                    <button
+                      mat-flat-button
+                      type="button"
+                      [disabled]="respondiendoId() === oferta.id"
+                      (click)="negociar(oferta)"
+                    >
+                      <mat-icon aria-hidden="true">swap_horiz</mat-icon>
+                      Responder contraoferta
+                    </button>
+                  }
+                  @if (puedeRetirar(oferta)) {
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      [disabled]="retirandoId() === oferta.id"
+                      (click)="retirar(oferta)"
+                    >
+                      <mat-icon aria-hidden="true">undo</mat-icon>
+                      {{ retirandoId() === oferta.id ? 'Retirando…' : 'Retirar oferta' }}
+                    </button>
+                  }
+                  @if (puedeVerSolicitud(oferta)) {
+                    <a mat-button [routerLink]="['/app/tecnico/solicitudes', oferta.solicitudId]">
+                      Ver solicitud
+                      <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+                    </a>
+                  }
+                </div>
+              </article>
+            </li>
+          }
+        </ul>
+
+        @if (totalPaginas() > 1) {
+          <nav class="mis-ofertas__paginacion" aria-label="Paginación de mis ofertas">
+            <button
+              mat-stroked-button
+              type="button"
+              [disabled]="paginaActual() === 1"
+              (click)="cambiarPagina(-1)"
+            >
+              <mat-icon aria-hidden="true">chevron_left</mat-icon>
+              Anterior
+            </button>
+            <span role="status">Página {{ paginaActual() }} de {{ totalPaginas() }}</span>
+            <button
+              mat-stroked-button
+              type="button"
+              [disabled]="paginaActual() === totalPaginas()"
+              (click)="cambiarPagina(1)"
+            >
+              Siguiente
+              <mat-icon aria-hidden="true">chevron_right</mat-icon>
+            </button>
+          </nav>
+        }
+      </section>
+    }
+  }
+</div>
