@@ -339,7 +339,7 @@ describe('SolicitudFormPage', () => {
     const formulario = accederFormulario(fixture);
     const ayer = new Date();
     ayer.setDate(ayer.getDate() - 1);
-    formulario.patchValue({ fechaPreferida: ayer.toISOString().slice(0, 10) });
+    formulario.patchValue({ fechaPreferida: formatearFechaLocal(ayer) });
     fixture.detectChanges();
 
     pulsarBoton(fixture.nativeElement, 'Publicar solicitud');
@@ -455,4 +455,11 @@ function pulsarBotonAria(contenedor: HTMLElement, etiqueta: string): void {
     throw new Error(`No se encontró el botón con aria-label ${etiqueta}`);
   }
   boton.click();
+}
+
+function formatearFechaLocal(fecha: Date): string {
+  const anio = fecha.getFullYear();
+  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+  const dia = String(fecha.getDate()).padStart(2, '0');
+  return `${anio}-${mes}-${dia}`;
 }
