@@ -44,9 +44,9 @@
       <div class="resena__puntaje">
         <span class="resena__estrellas" role="img" [attr.aria-label]="ariaEstrellas(actual)">
           @for (valor of valores; track valor) {
-            <mat-icon aria-hidden="true">{{
-              actual.estrellas >= valor ? 'star' : 'star_border'
-            }}</mat-icon>
+            <mat-icon aria-hidden="true" [class.resena__estrella-llena]="actual.estrellas >= valor"
+              >star</mat-icon
+            >
           }
         </span>
         <strong>{{ actual.estrellas }} de 5</strong>
@@ -141,9 +141,9 @@
               [attr.aria-pressed]="estrellas() === valor"
               (click)="seleccionarEstrellas(valor)"
             >
-              <mat-icon aria-hidden="true">
-                {{ esEstrellaActiva(valor) ? 'star' : 'star_border' }}
-              </mat-icon>
+              <mat-icon aria-hidden="true" [class.resena__estrella-llena]="esEstrellaActiva(valor)"
+                >star</mat-icon
+              >
             </button>
           }
         </div>

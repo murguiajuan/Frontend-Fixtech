@@ -2,6 +2,24 @@
   display: block;
 }
 
+.saltar-contenido {
+  position: absolute;
+  z-index: 100;
+  top: 0.5rem;
+  left: 0.5rem;
+  padding: 0.6rem 1rem;
+  transform: translateY(-200%);
+  border-radius: 0.5rem;
+  background: var(--ft-primary-900);
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.saltar-contenido:focus {
+  transform: none;
+}
+
 .publico {
   display: flex;
   min-height: 100dvh;

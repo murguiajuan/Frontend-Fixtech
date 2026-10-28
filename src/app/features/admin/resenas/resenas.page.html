@@ -128,9 +128,11 @@
                       [attr.aria-label]="ariaEstrellas(resena)"
                     >
                       @for (valor of [1, 2, 3, 4, 5]; track valor) {
-                        <mat-icon aria-hidden="true">
-                          {{ resena.estrellas >= valor ? 'star' : 'star_border' }}
-                        </mat-icon>
+                        <mat-icon
+                          aria-hidden="true"
+                          [class.resena__estrella-llena]="resena.estrellas >= valor"
+                          >star</mat-icon
+                        >
                       }
                     </span>
                     <strong>{{ resena.estrellas }} de 5</strong>

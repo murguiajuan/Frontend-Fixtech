@@ -10,8 +10,9 @@ compila, pasa pruebas, pasa lint y mantiene accesibilidad básica en escritorio 
 - **Arquitectura:** SPA Angular 22, sin SSR ni hidratación.
 - **Backend:** API REST en `http://localhost:8082/api` (Swagger/OpenAPI como fuente de verdad).
 - **Sesión:** JWT en `sessionStorage` para el MVP. Limitación conocida: la sesión no se comparte
-  entre pestañas y se pierde al cerrar la pestaña. Se documentará una alternativa con cookies
-  `HttpOnly` para producción.
+  entre pestañas y se pierde al cerrar la pestaña; además los tokens son legibles por XSS. La
+  alternativa recomendada para producción (cookies `HttpOnly`/`Secure`/`SameSite` con CSRF y
+  access token en memoria) está documentada en el README.
 - **Estilos:** SCSS, Angular Material 22, enfoque mobile-first desde 360 px.
 - **Calidad:** TypeScript estricto, Vitest, ESLint, Prettier, Playwright y `@axe-core/playwright`.
 - **Regla de API:** no se inventan endpoints ni campos. Si falta un contrato, se registra como
@@ -59,7 +60,7 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
 | 8    | Comisiones y pagos del técnico                         | ✅ Completada |
 | 9    | Administración de catálogos, parámetros y reportes     | ✅ Completada |
 | 10   | Notificaciones y perfil de usuario                     | ✅ Completada |
-| 11   | Endurecimiento UX, rendimiento y seguridad             | ⏳ Pendiente  |
+| 11   | Endurecimiento UX, rendimiento y seguridad             | ✅ Completada |
 | 12   | QA final, documentación y despliegue                   | ⏳ Pendiente  |
 
 ## 4. Fase 0 — Base técnica ✅
@@ -582,14 +583,54 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
 > técnico sí es editable en Fase 4), cambio de contraseña ni recuperación de contraseña. La vista
 > de cuenta es de solo lectura y no promete esas funciones.
 
-## 15. Fase 11 — Endurecimiento UX, rendimiento y seguridad ⏳
+## 15. Fase 11 — Endurecimiento UX, rendimiento y seguridad ✅
 
-- [ ] Revisión de todos los estados: carga, vacío, error, sin permisos y offline.
-- [ ] Revisión de contraste, foco, teclado, lectores de pantalla y textos alternativos.
-- [ ] Revisión de rendimiento: presupuestos, lazy loading, imágenes y fuentes.
-- [ ] Revisión de seguridad: XSS, open redirect, manejo de tokens y errores.
-- [ ] Documentar limitaciones de `sessionStorage`.
-- [ ] Pruebas de regresión visual en 360, 768 y 1280 px.
+### Estados y accesibilidad
+
+- [x] Revisión de estados de carga, vacío, error con reintento, sin permisos y offline en las
+      pantallas existentes. Se añadió un aviso global de desconexión en los layouts público y
+      privado; el aviso es informativo y no sustituye el manejo de error de cada petición.
+- [x] `ConexionService` escucha `online`/`offline`, se limpia al destruir el layout y se cubre con
+      pruebas unitarias y E2E con `context.setOffline()`.
+- [x] Navegación con `aria-current="page"`, enlace “Saltar al contenido” también en el layout
+      público y foco al `<main>` después de cada navegación.
+- [x] Revisión de contraste y foco visible; los avisos usan los tokens de advertencia existentes.
+- [x] Se corrigieron las estrellas de reseña: `star_border` no existe en Material Symbols; ahora se
+      usa el eje variable `FILL` sobre `star` en la vista y en el selector.
+- [x] Axe en escritorio y 360 px para login, registro, 404 y `/no-autorizado`.
+
+### Rendimiento
+
+- [x] Roboto y Material Symbols autoalojados en `public/fonts/`. El subconjunto de iconos se generó
+      con `icon_names` (133 iconos) y se eliminaron los enlaces y preconnect de Google Fonts.
+- [x] `preload` de las dos fuentes locales y `font-display` adecuado (`swap` para texto, `block`
+      para iconos).
+- [x] Presupuestos de build ajustados: inicial 650 kB/750 kB y total de bundles 1.8 MB/2 MB.
+- [x] Build de cierre: 604.53 kB iniciales (146.40 kB de transferencia estimada), sin advertencias.
+- [x] Lazy loading por ruta e imágenes autenticadas descargadas como blob; no se añadieron
+      dependencias de imágenes externas.
+
+### Seguridad
+
+- [x] Validación estricta de `returnUrl`: solo rutas internas bajo `/app`; se rechazan URLs
+      absolutas, protocolo-relativas, credenciales, segmentos `..` codificados y controles.
+- [x] `resolverUrlArchivo` solo acepta rutas del mismo origen y bajo el prefijo `/api/`; una ruta
+      externa se muestra como imagen no disponible sin lanzar la petición.
+- [x] Revisión de XSS: sin `innerHTML`, `bypassSecurityTrust*`, `eval` ni `document.write`; los
+      mensajes del backend se renderizan como texto.
+- [x] Tokens solo en `sessionStorage`, nunca en `localStorage`; el E2E lo verifica.
+- [x] Errores normalizados sin trazas y `Referrer-Policy` restrictiva a nivel de documento.
+
+### Documentación y regresión
+
+- [x] Limitación de `sessionStorage` documentada en el README, con recomendación de cookies
+      `HttpOnly` + CSRF para producción.
+- [x] Pruebas estructurales sin desbordamiento horizontal a 360, 768 y 1280 px.
+- [x] Capturas de regresión de `/login` en las tres anchuras, con baselines en
+      `e2e/visual-baselines/responsive.spec.ts/` y comando de actualización documentado.
+- [x] Evidencia de cierre: 501 pruebas unitarias en 77 archivos, build de producción, lint,
+      Prettier y 54 ejecuciones E2E (51 aprobadas y 3 capturas omitidas en el proyecto móvil) con
+      Axe en escritorio y 360 px.
 
 ## 16. Fase 12 — QA final y despliegue ⏳
 

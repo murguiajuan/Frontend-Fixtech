@@ -1,6 +1,7 @@
+import { DOCUMENT } from '@angular/common';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, computed, DestroyRef, effect, inject, linkedSignal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
@@ -8,11 +9,12 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { filter, map } from 'rxjs/operators';
+import { filter, map, skip } from 'rxjs/operators';
 import { AuthService } from '../../auth/auth.service';
 import { SesionExpiradaService } from '../../auth/sesion-expirada.service';
 import { ETIQUETAS_ROL } from '../../models/etiquetas';
 import { NotificacionesService } from '../../notificaciones/notificaciones.service';
+import { AvisoConexion } from '../../../shared/ui/aviso-conexion';
 import { BrandLogo } from '../../../shared/ui/brand-logo';
 import { Icono } from '../../../shared/ui/icono';
 
@@ -36,6 +38,7 @@ interface ItemNavegacion {
     MatMenuModule,
     MatSidenavModule,
     MatToolbarModule,
+    AvisoConexion,
     BrandLogo,
     Icono,
   ],
@@ -49,6 +52,7 @@ export class AppLayout {
   private readonly notificaciones = inject(NotificacionesService);
   private readonly sesionExpirada = inject(SesionExpiradaService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly document = inject(DOCUMENT);
 
   protected readonly perfil = this.auth.perfil;
   protected readonly rol = this.auth.rol;
@@ -73,6 +77,16 @@ export class AppLayout {
       this.auth.cerrarSesion(false);
       void this.router.navigate(['/login'], { queryParams: { sesion: 'expirada' } });
     });
+
+    this.router.events
+      .pipe(
+        filter((evento): evento is NavigationEnd => evento instanceof NavigationEnd),
+        skip(1),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(() => {
+        this.document.getElementById('contenido')?.focus({ preventScroll: true });
+      });
   }
 
   private readonly esMovilSignal = toSignal(

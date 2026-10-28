@@ -90,6 +90,52 @@ describe('LoginPage', () => {
     expect(navegar).toHaveBeenCalledWith('/app/inicio');
   });
 
+  it('respeta un returnUrl interno al iniciar sesión', async () => {
+    TestBed.overrideProvider(ActivatedRoute, {
+      useValue: {
+        snapshot: { queryParamMap: convertToParamMap({ returnUrl: '/app/cliente/solicitudes' }) },
+      },
+    });
+    authStub.iniciarSesion.mockReturnValue(of(PERFIL_CLIENTE));
+    const router = TestBed.inject(Router);
+    const navegar = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+    const fixture = TestBed.createComponent(LoginPage);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    escribir(compiled, 'input[type="email"]', 'cliente@fixtech.pe');
+    escribir(compiled, 'input[formcontrolname="password"]', 'Password123');
+    fixture.detectChanges();
+
+    compiled.querySelector('form')?.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(navegar).toHaveBeenCalledWith('/app/cliente/solicitudes');
+  });
+
+  it('descarta un returnUrl externo para evitar redirecciones abiertas', async () => {
+    TestBed.overrideProvider(ActivatedRoute, {
+      useValue: {
+        snapshot: { queryParamMap: convertToParamMap({ returnUrl: 'https://evil.example/app' }) },
+      },
+    });
+    authStub.iniciarSesion.mockReturnValue(of(PERFIL_CLIENTE));
+    const router = TestBed.inject(Router);
+    const navegar = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+    const fixture = TestBed.createComponent(LoginPage);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    escribir(compiled, 'input[type="email"]', 'cliente@fixtech.pe');
+    escribir(compiled, 'input[formcontrolname="password"]', 'Password123');
+    fixture.detectChanges();
+
+    compiled.querySelector('form')?.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(navegar).toHaveBeenCalledWith('/app/inicio');
+  });
+
   it('muestra el mensaje de error del servidor', () => {
     authStub.iniciarSesion.mockReturnValue(
       throwError(() => ({

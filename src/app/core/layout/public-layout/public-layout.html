@@ -1,12 +1,19 @@
+<a class="saltar-contenido" href="#contenido">Saltar al contenido</a>
+
 <div class="publico">
+  <app-aviso-conexion />
   <header class="publico__cabecera">
     <div class="ft-container publico__barra">
       <a class="publico__marca" routerLink="/login">
         <app-brand />
       </a>
       <nav class="publico__acciones" aria-label="Acceso a la cuenta">
-        <a mat-button routerLink="/login">Iniciar sesión</a>
-        <a mat-flat-button routerLink="/registro">Crear cuenta</a>
+        @if (!enLogin()) {
+          <a mat-button routerLink="/login">Iniciar sesión</a>
+        }
+        @if (!enRegistro()) {
+          <a mat-flat-button routerLink="/registro">Crear cuenta</a>
+        }
       </nav>
     </div>
   </header>

@@ -19,6 +19,7 @@
             class="nav__enlace"
             [routerLink]="item.ruta"
             routerLinkActive="nav__enlace--activo"
+            ariaCurrentWhenActive="page"
             (click)="cerrarEnMovil()"
           >
             <mat-icon aria-hidden="true">{{ item.icono }}</mat-icon>
@@ -60,6 +61,7 @@
   </mat-sidenav>
 
   <mat-sidenav-content class="shell__contenido">
+    <app-aviso-conexion />
     <mat-toolbar class="toolbar">
       <button
         mat-icon-button

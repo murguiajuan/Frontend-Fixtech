@@ -80,6 +80,14 @@ describe('ImagenAutenticada', () => {
     expect(estado?.getAttribute('aria-label')).toBe('Foto del equipo: no disponible');
   });
 
+  it('rechaza rutas externas sin realizar la petición', () => {
+    const fixture = crear('https://evil.example/api/solicitudes/1/imagenes/2', 'Foto del equipo');
+    fixture.detectChanges();
+
+    const estado = (fixture.nativeElement as HTMLElement).querySelector('[role="img"]');
+    expect(estado?.getAttribute('aria-label')).toBe('Foto del equipo: no disponible');
+  });
+
   it('libera la URL del objeto al destruir el componente', () => {
     const fixture = crear('/api/solicitudes/1/imagenes/2', 'Foto del equipo');
     http

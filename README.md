@@ -6,25 +6,27 @@ FIXTECH en `http://localhost:8082/api`.
 
 ## Estado actual
 
-Fases 0 a 10 completadas: base técnica, autenticación JWT, sesión, guards, interceptores, layouts
+Fases 0 a 11 completadas: base técnica, autenticación JWT, sesión, guards, interceptores, layouts
 por rol, panel inicial, administración de técnicos y usuarios, registro y perfil editable del
 técnico con foto autorizada, solicitudes del cliente con fotos, listado, detalle, edición y
 cancelación, solicitudes disponibles y ofertas del técnico, negociación, servicios con aceptación,
 avances, mensajería, ajustes de precio, finalización y conformidad, constancias de taller con
 fotos, reseñas con respuesta y moderación, reclamos con seguimiento administrativo, comisiones del
 técnico con pagos, comprobantes y validación administrativa, administración de catálogos,
-parámetros del sistema, dashboard, reportes con exportación Excel y auditoría, y centro de
+parámetros del sistema, dashboard, reportes con exportación Excel y auditoría, centro de
 notificaciones con badge, polling, perfil de cuenta de solo lectura y cierre de sesión por
-expiración con aviso accesible. Las demás pantallas de negocio se incorporan en las siguientes
-fases. El plan completo y el progreso están en [`PLAN_FRONTEND.md`](./PLAN_FRONTEND.md).
+expiración con aviso accesible, y endurecimiento de UX, rendimiento y seguridad. La Fase 12 (QA
+final y despliegue) queda pendiente. El plan completo y el progreso están en
+[`PLAN_FRONTEND.md`](./PLAN_FRONTEND.md).
 
 ## Stack
 
 - Angular 22 con componentes standalone, signals y control de flujo `@if` / `@for`.
 - TypeScript estricto y `strictTemplates`.
 - SCSS y Angular Material 22 con tokens propios de FIXTECH.
+- Roboto y Material Symbols autoalojados en `public/fonts/`; sin peticiones a Google Fonts.
 - Vitest para pruebas unitarias.
-- Playwright y `@axe-core/playwright` para E2E y accesibilidad.
+- Playwright y `@axe-core/playwright` para E2E, accesibilidad y regresión visual.
 - ESLint (`angular-eslint`) y Prettier.
 - SPA pura: sin SSR, sin hidratación y sin `isPlatformBrowser`.
 
@@ -93,9 +95,54 @@ del técnico, moderación administrativa, reclamo con foto, respuesta técnica y
 oculta, reactiva y crea un distrito real; el smoke administrativo recorre parámetros, reportes y
 auditoría. La prueba de notificaciones y perfil consulta la bandeja real, aplica el filtro de no
 leídas, revisa el badge y la cuenta de solo lectura, y verifica el aviso de sesión expirada; todo
-con Axe en escritorio y 360 px. Requiere el backend y MySQL locales. Sin `E2E_BACKEND=1` esas
-pruebas se omiten y solo corren las públicas. No existe un endpoint para limpiar las cuentas,
-solicitudes y catálogos creados por las pruebas.
+con Axe en escritorio y 360 px. La prueba de seguridad verifica que un `returnUrl` externo no
+redirija fuera de la SPA, que un rol sin permisos llegue a `/no-autorizado`, que los tokens vivan
+solo en `sessionStorage` y que el aviso de conexión aparezca dentro de la aplicación. Las pruebas
+responsive comprueban que no haya desbordamiento horizontal a 360, 768 y 1280 px y comparan
+capturas del acceso contra las baselines de `e2e/visual-baselines/`. Requiere el backend y MySQL
+locales. Sin `E2E_BACKEND=1` esas pruebas se omiten y solo corren las públicas. No existe un
+endpoint para limpiar las cuentas, solicitudes y catálogos creados por las pruebas.
+
+Para regenerar las capturas de referencia después de un cambio visual intencional:
+
+```bash
+npx playwright test e2e/responsive.spec.ts --update-snapshots
+```
+
+## Endurecimiento (Fase 11)
+
+- **Rendimiento y fuentes:** Roboto y Material Symbols se sirven desde `public/fonts/`; el
+  subconjunto de iconos contiene los 133 nombres usados por la SPA. El build de producción no hace
+  peticiones a Google Fonts. Los presupuestos de `angular.json` quedaron en 650 kB de advertencia y
+  750 kB de error para el bundle inicial, y 1.8 MB / 2 MB para el total de bundles. El build de
+  cierre reporta 604.53 kB iniciales (146.40 kB de transferencia estimada). El lazy loading por
+  ruta se mantiene y las imágenes autenticadas se descargan como blob.
+- **Seguridad:** `returnUrl` solo acepta rutas internas bajo `/app`; se rechazan URLs absolutas,
+  protocolo-relativas, segmentos `..` codificados y valores que escapan del prefijo. Las rutas de
+  archivos entregadas por la API solo se aceptan si pertenecen al mismo origen y al prefijo
+  `/api/`. No se usa `innerHTML`, `bypassSecurityTrust*`, `eval` ni `document.write`; Angular
+  escapa los mensajes del backend. Los errores se normalizan y no exponen trazas. Se añadió
+  `Referrer-Policy: strict-origin-when-cross-origin` a nivel de documento.
+- **Conectividad:** `ConexionService` escucha `online`/`offline` y los layouts público y privado
+  muestran un aviso `role="status"` cuando el navegador pierde la conexión. El aviso es informativo:
+  `navigator.onLine` no garantiza que la API responda, por lo que cada petición conserva su manejo
+  de error y reintento. No hay service worker ni modo offline-first.
+- **Accesibilidad:** navegación con `aria-current="page"`, enlace “Saltar al contenido” en ambos
+  layouts, foco al `<main>` tras cada navegación y estrellas de reseña con el eje `FILL` de
+  Material Symbols. La suite E2E ejecuta Axe en escritorio y 360 px, incluidas las pantallas
+  públicas y `/no-autorizado`.
+- **Regresión visual:** capturas de `/login` a 360, 768 y 1280 px en
+  `e2e/visual-baselines/responsive.spec.ts/`; las pruebas estructurales verifican además ausencia
+  de desbordamiento horizontal.
+
+### Limitación de `sessionStorage`
+
+Los tokens de acceso y refresco se guardan en `sessionStorage` para el MVP. Esto evita compartirlos
+entre pestañas y los borra al cerrar la pestaña, pero **no los protege de XSS**: cualquier script
+que se ejecute en el origen puede leerlos. La mitigación actual es no introducir HTML dinámico ni
+confiar en contenido del backend como markup. Para producción se recomienda migrar a cookies
+`HttpOnly`, `Secure` y `SameSite` con protección CSRF, y mantener el access token en memoria. No se
+usa `localStorage` para credenciales.
 
 ## Estructura
 
@@ -105,6 +152,7 @@ src/
 │   ├── core/
 │   │   ├── auth/          # Sesión, AuthService, refresh, interceptores y guards
 │   │   ├── catalogos/     # Catálogos públicos de especialidades y distritos
+│   │   ├── conexion/      # Estado online/offline del navegador
 │   │   ├── http/          # Normalización de errores y descarga autenticada de archivos
 │   │   ├── layout/        # Layout público y layout privado con sidenav
 │   │   ├── models/        # Etiquetas, fechas y tipos compartidos
@@ -125,9 +173,10 @@ src/
 │   ├── app.config.ts      # Locale es-PE, router y HttpClient con interceptores
 │   └── app.routes.ts      # Rutas públicas y privadas con lazy loading
 ├── environments/          # URLs de API por entorno
-├── styles.scss            # Tema Material, tokens y utilidades globales
+├── styles.scss            # Tema Material, tokens, fuentes y utilidades globales
 └── index.html
-e2e/                       # Pruebas Playwright y Axe
+public/fonts/              # Roboto y subconjunto de Material Symbols
+e2e/                       # Pruebas Playwright, Axe y baselines visuales
 ```
 
 ## Roles y navegación

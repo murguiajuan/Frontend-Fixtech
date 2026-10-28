@@ -91,7 +91,13 @@ export class ImagenAutenticada {
         return;
       }
 
-      const peticion = this.http.get(resolverUrlArchivo(ruta), { responseType: 'blob' }).subscribe({
+      const url = resolverUrlArchivo(ruta);
+      if (url === null) {
+        this.estado.set('error');
+        return;
+      }
+
+      const peticion = this.http.get(url, { responseType: 'blob' }).subscribe({
         next: (blob) => {
           this.urlActual = URL.createObjectURL(blob);
           this.urlObjeto.set(this.urlActual);

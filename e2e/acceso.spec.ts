@@ -16,6 +16,36 @@ test.describe('Acceso público', () => {
     expect(accesibilidad.violations).toEqual([]);
   });
 
+  test('avisa cuando el navegador pierde la conexión y oculta el aviso al recuperarla', async ({
+    page,
+  }) => {
+    await page.goto('/login');
+    await expect(page.getByRole('heading', { level: 1, name: 'Iniciar sesión' })).toBeVisible();
+
+    await page.context().setOffline(true);
+    const aviso = page.getByRole('status').filter({ hasText: 'Sin conexión.' });
+    await expect(aviso).toBeVisible();
+    await expect(aviso).toContainText('Revisa tu red.');
+
+    await page.context().setOffline(false);
+    await expect(aviso).toHaveCount(0);
+  });
+
+  test('la pantalla de acceso no autorizado es accesible', async ({ page }) => {
+    await page.goto('/no-autorizado');
+
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'No tienes permisos para esta sección' }),
+    ).toBeVisible();
+    await expect(page.getByRole('link', { name: /Volver al inicio/i })).toBeVisible();
+
+    const accesibilidad = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze();
+
+    expect(accesibilidad.violations).toEqual([]);
+  });
+
   test('el registro valida los campos obligatorios', async ({ page }) => {
     await page.goto('/registro');
 

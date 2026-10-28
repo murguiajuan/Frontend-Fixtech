@@ -118,13 +118,19 @@
 
 .resena__estrellas {
   display: inline-flex;
-  color: #f5a623;
+  color: var(--ft-border);
 }
 
 .resena__estrellas mat-icon {
   width: 1.25rem;
   height: 1.25rem;
   font-size: 1.25rem;
+  font-variation-settings: 'FILL' 0;
+}
+
+.resena__estrellas mat-icon.resena__estrella-llena {
+  color: #f5a623;
+  font-variation-settings: 'FILL' 1;
 }
 
 .resena__puntaje strong {

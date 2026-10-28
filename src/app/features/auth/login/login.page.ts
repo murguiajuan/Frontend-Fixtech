@@ -7,6 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
+import { urlRetornoSegura } from '../../../core/auth/return-url';
 import { SesionExpiradaService } from '../../../core/auth/sesion-expirada.service';
 import { esApiError } from '../../../core/http/api-error';
 import { Icono } from '../../../shared/ui/icono';
@@ -93,7 +94,6 @@ export class LoginPage {
   }
 
   private urlRetorno(): string {
-    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
-    return returnUrl !== null && returnUrl.startsWith('/app') ? returnUrl : '/app/inicio';
+    return urlRetornoSegura(this.route.snapshot.queryParamMap.get('returnUrl'));
   }
 }
