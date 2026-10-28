@@ -138,6 +138,16 @@ export const routes: Routes = [
           import('./features/tecnico/perfil/perfil.page').then((m) => m.PerfilTecnicoPage),
       },
       {
+        path: 'tecnico/comisiones',
+        title: 'Comisiones y pagos | FIXTECH',
+        canActivate: [roleGuard],
+        data: { roles: ['TECNICO'] },
+        loadComponent: () =>
+          import('./features/comisiones/tecnico/mis-comisiones.page').then(
+            (m) => m.MisComisionesPage,
+          ),
+      },
+      {
         path: 'tecnico/solicitudes',
         title: 'Solicitudes disponibles | FIXTECH',
         canActivate: [roleGuard, tecnicoAprobadoGuard],
@@ -216,6 +226,16 @@ export const routes: Routes = [
         data: { roles: ['ADMIN'] },
         loadComponent: () =>
           import('./features/admin/reclamos/reclamos.page').then((m) => m.AdminReclamosPage),
+      },
+      {
+        path: 'admin/comisiones',
+        title: 'Comisiones y pagos | FIXTECH',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./features/comisiones/admin/admin-comisiones.page').then(
+            (m) => m.AdminComisionesPage,
+          ),
       },
     ],
   },

@@ -255,7 +255,7 @@ test.describe('Flujo completo del servicio', () => {
     await auditar(page);
   });
 
-  test('taller: constancias, finalización, reseña, reclamo y moderación', async ({
+  test('taller: constancias, finalización, reseña, reclamo, moderación y pago de comisión', async ({
     page,
     request,
   }, testInfo) => {
@@ -645,6 +645,94 @@ test.describe('Flujo completo del servicio', () => {
     await expect(
       page.locator('app-reclamos-servicio').getByRole('button', { name: 'Registrar reclamo' }),
     ).toBeVisible();
+    await auditar(page);
+
+    // Comisión generada al confirmar la conformidad: el técnico la paga y administración la valida.
+    await cerrarSesion(page);
+    await iniciarSesion(page, tecnico);
+    await page.goto('/app/tecnico/comisiones');
+    await expect(page.getByRole('heading', { level: 1, name: 'Comisiones y pagos' })).toBeVisible();
+    await expect(page.locator('.metrica').filter({ hasText: 'Saldo pendiente' })).toContainText(
+      'S/ 12.00',
+    );
+    const comision = page.locator('.comision').filter({ hasText: `Servicio #${servicioId}` });
+    await expect(comision).toBeVisible();
+    await comision.getByRole('checkbox').check();
+    await page.getByLabel('Número de operación').fill(`OP-E2E-${sufijo}`);
+    await page.locator('input[type="file"]').setInputFiles({
+      name: 'comprobante-e2e.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from(PNG_BASE64, 'base64'),
+    });
+    await expect(page.getByText('comprobante-e2e.png')).toBeVisible();
+    await auditar(page);
+    await page.getByRole('button', { name: 'Registrar pago' }).click();
+
+    await expect(page.getByText('Pago registrado. Queda pendiente de validación.')).toBeVisible();
+    const pagoTecnico = page.locator('.pago').first();
+    await expect(pagoTecnico).toContainText('En revisión');
+    await expect(pagoTecnico).toContainText(`OP-E2E-${sufijo}`);
+    await auditar(page);
+    await pagoTecnico.getByRole('button', { name: 'Ver comprobante' }).click();
+    const dialogoComprobanteTecnico = page.getByRole('dialog');
+    await expect(dialogoComprobanteTecnico).toBeVisible();
+    await esperarAnimaciones(dialogoComprobanteTecnico);
+    await expect(dialogoComprobanteTecnico.locator('app-imagen-autenticada img')).toBeVisible();
+    await auditar(page, 'mat-dialog-container');
+    await dialogoComprobanteTecnico.getByRole('button', { name: 'Cerrar', exact: true }).click();
+    await expect(dialogoComprobanteTecnico).toBeHidden();
+
+    await cerrarSesion(page);
+    await iniciarSesion(page, admin);
+    await page.goto('/app/admin/comisiones');
+    await expect(page.getByRole('heading', { level: 1, name: 'Comisiones y pagos' })).toBeVisible();
+    const pagoAdmin = page.locator('article.pago').filter({ hasText: tecnico.correo });
+    await expect(pagoAdmin).toBeVisible();
+    await expect(pagoAdmin.getByText('En revisión', { exact: true }).first()).toBeVisible();
+    await auditar(page);
+
+    await page.getByRole('tab', { name: /Deudores/ }).click();
+    const deudor = page.locator('article.deudor').filter({ hasText: tecnico.correo });
+    await expect(deudor).toBeVisible();
+    await expect(deudor).toContainText('S/ 12.00');
+    await expect(deudor.getByText('Sin bloqueo', { exact: true })).toBeVisible();
+    await auditar(page);
+    await page.getByRole('tab', { name: 'Pagos de técnicos' }).click();
+
+    await pagoAdmin.getByRole('button', { name: 'Validar pago' }).click();
+    const dialogoValidacion = page.getByRole('dialog');
+    await expect(dialogoValidacion).toBeVisible();
+    await esperarAnimaciones(dialogoValidacion);
+    await dialogoValidacion.getByRole('checkbox').check();
+    await dialogoValidacion
+      .getByLabel('Observación (opcional)')
+      .fill('Pago verificado en la prueba E2E.');
+    await auditar(page, 'mat-dialog-container');
+    await dialogoValidacion.getByRole('button', { name: 'Validar pago', exact: true }).click();
+    await expect(dialogoValidacion).toBeHidden();
+    await expect(page.getByText('Pago validado y comisiones actualizadas.')).toBeVisible();
+    await expect(pagoAdmin.getByText('Validado', { exact: true }).first()).toBeVisible();
+    await auditar(page);
+
+    await page.getByRole('tab', { name: /Deudores/ }).click();
+    const panelDeudores = page.getByRole('tabpanel').filter({ hasText: 'Deuda pendiente total' });
+    await expect(panelDeudores).toBeVisible();
+    await expect(
+      panelDeudores.getByText(/Técnicos deudores|No hay técnicos con deuda pendiente/),
+    ).toBeVisible();
+    await expect(page.locator('article.deudor').filter({ hasText: tecnico.correo })).toHaveCount(0);
+    await auditar(page);
+
+    await cerrarSesion(page);
+    await iniciarSesion(page, tecnico);
+    await page.goto('/app/tecnico/comisiones');
+    await expect(page.getByText('No tienes comisiones pendientes')).toBeVisible();
+    await expect(page.locator('.metrica').filter({ hasText: 'Total pagado' })).toContainText(
+      'S/ 12.00',
+    );
+    const pagoFinal = page.locator('.pago').first();
+    await expect(pagoFinal.getByText('Validado', { exact: true })).toBeVisible();
+    await expect(pagoFinal.getByText('Pago verificado en la prueba E2E.')).toBeVisible();
     await auditar(page);
   });
 });

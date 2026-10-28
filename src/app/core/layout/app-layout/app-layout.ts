@@ -119,6 +119,12 @@ export class AppLayout {
           ruta: '/app/tecnico/servicios',
           disponible: true,
         },
+        {
+          etiqueta: 'Comisiones',
+          icono: 'payments',
+          ruta: '/app/tecnico/comisiones',
+          disponible: true,
+        },
       );
     } else {
       items.push(
@@ -144,6 +150,12 @@ export class AppLayout {
           etiqueta: 'Reclamos',
           icono: 'support_agent',
           ruta: '/app/admin/reclamos',
+          disponible: true,
+        },
+        {
+          etiqueta: 'Pagos y deudores',
+          icono: 'account_balance_wallet',
+          ruta: '/app/admin/comisiones',
           disponible: true,
         },
       );

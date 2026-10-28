@@ -20,6 +20,7 @@ contrario.
 | 11  | Aprobación y deuda no se validan en el listado de disponibles | `GET /api/solicitudes/disponibles` no valida aprobación ni bloqueo por deuda; `POST` de oferta sí.                                      | El frontend aplica `tecnicoAprobadoGuard` y oculta las rutas si el técnico no puede ofertar.                                    |
 | 12  | Sin endpoints de notificaciones en la SPA                     | El backend genera notificaciones, pero el centro de notificaciones pertenece a la Fase 10.                                              | No se muestran badges ni bandejas de notificaciones todavía.                                                                    |
 | 13  | Mensajería sin actualización en tiempo real                   | No hay WebSocket ni SSE para mensajes; la conversación solo se actualiza al abrir el detalle o pulsar “Actualizar”.                     | Se mantiene la actualización manual y se informa en la interfaz; no se simula tiempo real.                                      |
+| 14  | Pagos de comisión sin anulación ni desbloqueo manual          | No hay endpoints para editar o anular pagos ni para retirar el bloqueo por deuda manualmente.                                           | El bloqueo se sincroniza al validar pagos y con la revisión programada; la UI lo explica y no ofrece acciones inexistentes.     |
 
 ## Brechas cerradas
 

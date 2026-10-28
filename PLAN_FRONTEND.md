@@ -427,14 +427,54 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
 - [x] Axe sin violaciones en constancias, reseñas, reclamos y sus diálogos.
 - [x] Flujo real de taller, reseña y reclamo verificado contra la API.
 
-## 12. Fase 8 — Comisiones y pagos ⏳
+## 12. Fase 8 — Comisiones y pagos ✅
 
-- [ ] Saldo de comisiones del técnico.
-- [ ] Historial de pagos y comprobantes.
-- [ ] Registro de pago multipart con número de operación.
-- [ ] Validación administrativa de pagos y deudores.
-- [ ] Aviso de bloqueo por deuda y enlaces a regularización.
-- [ ] Pruebas de carga de archivos y E2E.
+### Contratos usados
+
+- `GET /api/comisiones/mi-saldo`, con saldo pendiente, total pagado, límite, bloqueo,
+  comisiones vencidas, próximo vencimiento, comisiones pendientes y pagos.
+- `GET /api/comisiones/pagos?estado=` y `POST /api/comisiones/pagos` (multipart:
+  `comisionIds`, `metodo`, `numeroOperacion` y `comprobante`).
+- `GET /api/comisiones/pagos/{id}/comprobante` como blob autenticado.
+- `GET /api/admin/pagos?estado=`, `GET /api/admin/pagos/{id}/comprobante` y `PATCH
+/api/admin/pagos/{id}/validacion`.
+- `GET /api/admin/comisiones/deudores`.
+
+### Frontend
+
+- [x] `/app/tecnico/comisiones` muestra el saldo, total pagado, límite de deuda, próximo
+      vencimiento, comisiones pendientes e historial filtrable de pagos.
+- [x] Aviso de bloqueo por deuda con acceso directo a la regularización desde la propia pantalla,
+      el panel del técnico y la navegación lateral.
+- [x] Selección múltiple de comisiones disponibles; las comisiones incluidas en un pago
+      `PENDIENTE` o `VALIDADO` quedan deshabilitadas y se explican en la interfaz.
+- [x] Registro de pago multipart con métodos `YAPE`, `PLIN` y `TRANSFERENCIA`, número de
+      operación de hasta 40 caracteres y comprobante JPG/PNG obligatorio de hasta 5 MB, validado
+      antes de enviar.
+- [x] Historial con estado, monto, método, operación, comisiones incluidas, observación
+      administrativa y comprobante autenticado en un diálogo.
+- [x] `/app/admin/comisiones` con pestañas de pagos y deudores, filtro por estado, validación o
+      rechazo con confirmación obligatoria y motivo obligatorio al rechazar (máximo 300
+      caracteres).
+- [x] Los pagos validados marcan sus comisiones como pagadas y recargan pagos y deudores; los
+      rechazados conservan las comisiones pendientes y muestran el motivo al técnico.
+- [x] Listado de deudores con saldo, límite, comisiones pendientes y vencidas, próximo vencimiento
+      y estado de bloqueo. No se ofrecen acciones de desbloqueo manual ni anulación de pagos
+      porque el backend no las expone.
+- [x] Estados de carga, error con reintento y vacío en ambas pantallas y en el historial.
+- [x] Pruebas unitarias de servicios HTTP, filtros, selección, validaciones de archivo, diálogo de
+      validación, páginas y fixtures de comisiones, pagos y deudores.
+- [x] E2E real: la comisión generada al confirmar la conformidad se paga con comprobante, se
+      consulta el comprobante autenticado, se valida desde administración, desaparece de deudores
+      y el técnico ve el pago validado y su saldo en cero.
+
+### Criterios de cierre
+
+- [x] Build de producción, lint y formato sin errores.
+- [x] 393 pruebas unitarias en 57 archivos, todas en verde.
+- [x] 20 pruebas E2E en verde en Chromium y móvil de 360 px con el backend local.
+- [x] Axe sin violaciones en comisiones, historial, diálogos y pantalla administrativa.
+- [x] Flujo real de pago de comisión y validación administrativa verificado contra la API.
 
 ## 13. Fase 9 — Administración de catálogos, parámetros y reportes ⏳
 

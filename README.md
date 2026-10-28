@@ -6,14 +6,15 @@ FIXTECH en `http://localhost:8082/api`.
 
 ## Estado actual
 
-Fases 0 a 7 completadas: base técnica, autenticación JWT, sesión, guards, interceptores, layouts
+Fases 0 a 8 completadas: base técnica, autenticación JWT, sesión, guards, interceptores, layouts
 por rol, panel inicial, administración de técnicos y usuarios, registro y perfil editable del
 técnico con foto autorizada, solicitudes del cliente con fotos, listado, detalle, edición y
 cancelación, solicitudes disponibles y ofertas del técnico, negociación, servicios con aceptación,
 avances, mensajería, ajustes de precio, finalización y conformidad, constancias de taller con
-fotos, reseñas con respuesta y moderación, y reclamos con seguimiento administrativo. Las demás
-pantallas de negocio se incorporan en las siguientes fases. El plan completo y el progreso están
-en [`PLAN_FRONTEND.md`](./PLAN_FRONTEND.md).
+fotos, reseñas con respuesta y moderación, reclamos con seguimiento administrativo, y comisiones
+del técnico con pagos, comprobantes y validación administrativa. Las demás pantallas de negocio se
+incorporan en las siguientes fases. El plan completo y el progreso están en
+[`PLAN_FRONTEND.md`](./PLAN_FRONTEND.md).
 
 ## Stack
 
@@ -279,6 +280,30 @@ CERRADO` con `PATCH /api/admin/reclamos/{id}/estado`. Resolver o cerrar exige un
 - Las constancias, reseñas y reclamos tienen estados de carga, error con reintento y vacío. Los
   conflictos `409` se muestran con el mensaje del backend sin ocultar el estado actual.
 
+## Comisiones y pagos
+
+- `/app/tecnico/comisiones` consulta `GET /api/comisiones/mi-saldo` y muestra saldo pendiente,
+  total pagado, límite de deuda, comisiones vencidas, próximo vencimiento, comisiones pendientes e
+  historial. El aviso de bloqueo enlaza a la regularización desde el panel y la navegación.
+- El pago se registra con `POST /api/comisiones/pagos` multipart: una o más `comisionIds`, método
+  `YAPE`, `PLIN` o `TRANSFERENCIA`, número de operación de hasta 40 caracteres y comprobante
+  JPG/PNG de hasta 5 MB. El formulario valida tipo, tamaño y longitud antes de enviar.
+- Las comisiones incluidas en un pago `PENDIENTE` o `VALIDADO` no se pueden volver a seleccionar.
+  Un rechazo conserva las comisiones pendientes y muestra el motivo administrativo.
+- El historial usa `GET /api/comisiones/pagos?estado=` y el comprobante se descarga como blob
+  autenticado desde `GET /api/comisiones/pagos/{id}/comprobante`.
+- `/app/admin/comisiones` lista `GET /api/admin/pagos?estado=` y valida o rechaza con `PATCH
+/api/admin/pagos/{id}/validacion`. Validar marca las comisiones como pagadas y recalcula el
+  bloqueo; rechazar exige una observación de hasta 300 caracteres. La confirmación es obligatoria
+  en ambos casos.
+- La pestaña de deudores consume `GET /api/admin/comisiones/deudores` y muestra saldo, límite,
+  comisiones pendientes y vencidas, próximo vencimiento y bloqueo. Los comprobantes administrativos
+  se descargan desde `GET /api/admin/pagos/{id}/comprobante`.
+
+> Brecha: el backend no expone desbloqueo manual ni edición o anulación de pagos. El bloqueo se
+> sincroniza al validar pagos y con la revisión programada; la interfaz explica ese comportamiento
+> y no ofrece acciones que la API no admita.
+
 ## Autenticación
 
 1. `POST /api/auth/login` devuelve `accessToken`, `refreshToken` y `expiraEnSegundos`.
@@ -317,6 +342,10 @@ ofertas tampoco incluye el resumen de la solicitud en `OfertaResponse` ni una co
 la oferta propia por solicitud, y el detalle disponible deja de responder cuando la solicitud deja
 de ser compatible.
 
+Tampoco existen endpoints para desbloquear manualmente a un técnico ni para editar o anular un
+pago de comisión; el bloqueo se sincroniza automáticamente al validar pagos y con la revisión
+programada del backend.
+
 El registro completo, el impacto y la decisión provisional de cada brecha están en
 [`BRECHAS_PENDIENTES.md`](./BRECHAS_PENDIENTES.md). Se resolverán al final del proyecto.
 
@@ -334,7 +363,7 @@ npm run e2e
 
 Las pruebas E2E incluyen Axe con las reglas WCAG 2.0/2.1 A y AA en escritorio y en un viewport
 móvil de 360 px. La interfaz es mobile-first, con foco visible, etiquetas explícitas y mensajes
-de error anunciados. Las pantallas y diálogos de las fases 2 a 7 también se auditan; los iconos
+de error anunciados. Las pantallas y diálogos de las fases 2 a 8 también se auditan; los iconos
 de los botones con `aria-label` se renderizan como SVG decorativos para no mezclar ligaduras de
 fuentes con el nombre accesible.
 

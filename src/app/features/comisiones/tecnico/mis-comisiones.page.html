@@ -1,0 +1,526 @@
+<div class="comisiones ft-page">
+  <header class="encabezado">
+    <div>
+      <p class="ft-eyebrow">Técnico</p>
+      <h1>Comisiones y pagos</h1>
+      <p class="ft-muted">
+        Consulta el saldo de tus comisiones, registra el pago con su comprobante y revisa el estado
+        de cada validación administrativa.
+      </p>
+    </div>
+    <a mat-stroked-button routerLink="/app/tecnico/servicios">
+      <mat-icon aria-hidden="true">build_circle</mat-icon>
+      Mis servicios
+    </a>
+  </header>
+
+  @if (errorSaldo(); as fallo) {
+    <section class="estado-panel ft-card" role="alert" aria-labelledby="titulo-error-saldo">
+      <mat-icon aria-hidden="true">cloud_off</mat-icon>
+      <h2 id="titulo-error-saldo">No pudimos cargar tus comisiones</h2>
+      <p class="ft-muted">{{ fallo.mensaje }}</p>
+      @if (fallo.detalles.length > 0) {
+        <ul class="estado-panel__detalles">
+          @for (detalle of fallo.detalles; track detalle) {
+            <li>{{ detalle }}</li>
+          }
+        </ul>
+      }
+      <button mat-flat-button type="button" (click)="recargarTodo()">
+        <mat-icon aria-hidden="true">refresh</mat-icon>
+        Reintentar
+      </button>
+    </section>
+  } @else {
+    @if (saldo(); as resumen) {
+      @if (resumen.bloqueadoPorDeuda) {
+        <div class="ft-alert ft-alert--warning bloqueo" role="alert">
+          <mat-icon aria-hidden="true">account_balance_wallet</mat-icon>
+          <div>
+            <strong>Tu cuenta está bloqueada por deuda de comisiones.</strong>
+            <p>
+              El saldo pendiente es
+              {{ resumen.saldoPendiente | currency: 'PEN' : 'symbol-narrow' : '1.2-2' }} y el límite
+              es {{ resumen.limiteDeuda | currency: 'PEN' : 'symbol-narrow' : '1.2-2' }}.
+              @if (resumen.comisionesVencidas > 0) {
+                Tienes {{ resumen.comisionesVencidas }} comisión(es) vencida(s).
+              }
+              El bloqueo se retira cuando administración valida tus pagos y regularizas el saldo.
+            </p>
+            <button
+              mat-flat-button
+              type="button"
+              class="bloqueo__accion"
+              [disabled]="comisionesDisponibles().length === 0"
+              (click)="irARegistro()"
+            >
+              <mat-icon aria-hidden="true">payments</mat-icon>
+              Regularizar comisiones
+            </button>
+          </div>
+        </div>
+      }
+
+      <section class="metricas" aria-label="Resumen de comisiones">
+        <article class="metrica ft-card">
+          <mat-icon aria-hidden="true">account_balance_wallet</mat-icon>
+          <strong>{{
+            resumen.saldoPendiente | currency: 'PEN' : 'symbol-narrow' : '1.2-2'
+          }}</strong>
+          <span>Saldo pendiente</span>
+        </article>
+        <article class="metrica ft-card">
+          <mat-icon aria-hidden="true">price_check</mat-icon>
+          <strong>{{ resumen.totalPagado | currency: 'PEN' : 'symbol-narrow' : '1.2-2' }}</strong>
+          <span>Total pagado</span>
+        </article>
+        <article class="metrica ft-card">
+          <mat-icon aria-hidden="true">speed</mat-icon>
+          <strong>{{ resumen.limiteDeuda | currency: 'PEN' : 'symbol-narrow' : '1.2-2' }}</strong>
+          <span>Límite de deuda</span>
+        </article>
+        <article class="metrica ft-card">
+          <mat-icon aria-hidden="true">event</mat-icon>
+          <strong>
+            {{ resumen.proximoVencimiento ? (resumen.proximoVencimiento | date: 'dd MMM') : '—' }}
+          </strong>
+          <span>
+            {{
+              resumen.comisionesVencidas > 0
+                ? resumen.comisionesVencidas + ' comisión(es) vencida(s)'
+                : 'Próximo vencimiento'
+            }}
+          </span>
+        </article>
+      </section>
+
+      <section class="panel ft-card" aria-labelledby="titulo-comisiones-pendientes">
+        <div class="panel__cabecera">
+          <div>
+            <h2 id="titulo-comisiones-pendientes">Comisiones pendientes</h2>
+            <p class="ft-muted">
+              Selecciona las comisiones que incluirás en el pago. Las que ya tienen un pago en
+              revisión no se pueden volver a seleccionar.
+            </p>
+          </div>
+          <span class="contador" role="status">
+            {{ comisionesPendientes().length }}
+            {{ comisionesPendientes().length === 1 ? 'comisión' : 'comisiones' }}
+          </span>
+        </div>
+
+        @if (comisionesPendientes().length === 0) {
+          <div class="vacio">
+            <mat-icon aria-hidden="true">task_alt</mat-icon>
+            <h3>No tienes comisiones pendientes</h3>
+            <p class="ft-muted">
+              Cuando finalices un servicio, la comisión aparecerá aquí con su fecha límite de pago.
+            </p>
+          </div>
+        } @else {
+          @if (comisionesDisponibles().length > 0) {
+            <div class="seleccion__todas">
+              <mat-checkbox
+                [checked]="todasSeleccionadas()"
+                [indeterminate]="seleccionParcial()"
+                (change)="alternarTodas($event.checked)"
+              >
+                Seleccionar todas las disponibles
+              </mat-checkbox>
+              <span class="ft-muted" role="status">
+                {{ seleccionadasParaPago().length }} seleccionada(s) ·
+                {{ totalSeleccionado() | currency: 'PEN' : 'symbol-narrow' : '1.2-2' }}
+              </span>
+            </div>
+          }
+
+          <ul class="comisiones__lista" aria-label="Comisiones pendientes de pago">
+            @for (comision of comisionesPendientes(); track comision.id) {
+              <li class="comision" [class.comision--en-pago]="estaEnPago(comision.id)">
+                <mat-checkbox
+                  [checked]="seleccionadas().includes(comision.id)"
+                  [disabled]="estaEnPago(comision.id)"
+                  (change)="alternarComision(comision.id, $event.checked)"
+                >
+                  <span class="ft-sr-only">
+                    Seleccionar la comisión del servicio {{ comision.servicioId }}
+                  </span>
+                </mat-checkbox>
+
+                <div class="comision__principal">
+                  <div class="comision__titulo">
+                    <h3>Servicio #{{ comision.servicioId }}</h3>
+                    @if (estaEnPago(comision.id)) {
+                      <app-estado-badge texto="En revisión de pago" tono="info" />
+                    } @else if (esVencida(comision.fechaLimitePago)) {
+                      <app-estado-badge texto="Vencida" tono="error" />
+                    } @else {
+                      <app-estado-badge
+                        [texto]="etiquetasEstadoComision[comision.estado]"
+                        [tono]="tonosEstadoComision[comision.estado]"
+                      />
+                    }
+                  </div>
+                  <p class="ft-muted">
+                    Vence el {{ comision.fechaLimitePago | date: 'dd MMM yyyy' }} · Registrada el
+                    {{ comision.creadoEn | date: 'dd MMM yyyy' }}
+                  </p>
+                  @if (estaEnPago(comision.id)) {
+                    <p class="comision__nota">
+                      Esta comisión ya está incluida en un pago pendiente de validación.
+                    </p>
+                  }
+                </div>
+
+                <dl class="comision__montos">
+                  <div>
+                    <dt>Monto base</dt>
+                    <dd>{{ comision.montoBase | currency: 'PEN' : 'symbol-narrow' : '1.2-2' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Comisión ({{ comision.porcentaje | percent: '1.0-2' }})</dt>
+                    <dd>
+                      {{ comision.montoComision | currency: 'PEN' : 'symbol-narrow' : '1.2-2' }}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Neto técnico</dt>
+                    <dd>
+                      {{ comision.montoNetoTecnico | currency: 'PEN' : 'symbol-narrow' : '1.2-2' }}
+                    </dd>
+                  </div>
+                </dl>
+              </li>
+            }
+          </ul>
+
+          @if (hayComisionesEnPago()) {
+            <p class="ft-muted comisiones__nota" role="note">
+              Las comisiones marcadas “En revisión de pago” se habilitarán cuando administración
+              valide o rechace el pago correspondiente.
+            </p>
+          }
+        }
+      </section>
+
+      <section id="registrar-pago" class="panel ft-card" aria-labelledby="titulo-registrar-pago">
+        <div class="panel__cabecera">
+          <div>
+            <h2 id="titulo-registrar-pago" tabindex="-1">Registrar pago</h2>
+            <p class="ft-muted">
+              Adjunta el comprobante de Yape, Plin o transferencia. El pago queda en revisión hasta
+              que administración lo valide.
+            </p>
+          </div>
+        </div>
+
+        @if (comisionesDisponibles().length === 0) {
+          <div class="vacio">
+            <mat-icon aria-hidden="true">hourglass_top</mat-icon>
+            <h3>
+              {{
+                hayComisionesEnPago()
+                  ? 'Tus comisiones están en revisión'
+                  : 'No hay comisiones disponibles para pagar'
+              }}
+            </h3>
+            <p class="ft-muted">
+              {{
+                hayComisionesEnPago()
+                  ? 'Espera la validación administrativa del pago registrado. Si fue rechazado, la comisión volverá a estar disponible.'
+                  : 'Finaliza un servicio para generar una nueva comisión pendiente.'
+              }}
+            </p>
+          </div>
+        } @else {
+          <form [formGroup]="formularioPago" (ngSubmit)="registrarPago()" novalidate>
+            <div class="resumen-pago" role="status">
+              <span>
+                <strong>{{ seleccionadasParaPago().length }}</strong> comisión(es) seleccionada(s)
+              </span>
+              <strong class="resumen-pago__monto">
+                {{ totalSeleccionado() | currency: 'PEN' : 'symbol-narrow' : '1.2-2' }}
+              </strong>
+            </div>
+
+            @if (errorSeleccion(); as mensaje) {
+              <p class="campo-error" role="alert">{{ mensaje }}</p>
+            }
+
+            @if (errorPago(); as mensaje) {
+              <div class="ft-alert ft-alert--error" role="alert">
+                <mat-icon aria-hidden="true">error_outline</mat-icon>
+                <div>
+                  <p>{{ mensaje }}</p>
+                  @if (detallesError().length > 0) {
+                    <ul class="detalles">
+                      @for (detalle of detallesError(); track detalle) {
+                        <li>{{ detalle }}</li>
+                      }
+                    </ul>
+                  }
+                </div>
+              </div>
+            }
+
+            <div class="formulario__campos">
+              <mat-form-field appearance="outline">
+                <mat-label>Método de pago</mat-label>
+                <mat-select formControlName="metodo">
+                  @for (metodo of metodosPago; track metodo) {
+                    <mat-option [value]="metodo">{{ etiquetasMetodoPago[metodo] }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Número de operación</mat-label>
+                <input
+                  matInput
+                  formControlName="numeroOperacion"
+                  maxlength="40"
+                  autocomplete="off"
+                  aria-describedby="ayuda-operacion"
+                />
+                <mat-hint id="ayuda-operacion">
+                  Copia el número que aparece en tu comprobante. Máximo 40 caracteres.
+                </mat-hint>
+                @if (formularioPago.controls.numeroOperacion.hasError('required')) {
+                  <mat-error>Ingresa el número de operación.</mat-error>
+                }
+                @if (formularioPago.controls.numeroOperacion.hasError('maxlength')) {
+                  <mat-error>El número de operación no puede superar los 40 caracteres.</mat-error>
+                }
+              </mat-form-field>
+            </div>
+
+            <div class="archivo">
+              <input
+                #archivoComprobante
+                class="ft-sr-only"
+                type="file"
+                accept="image/jpeg,image/png"
+                aria-label="Seleccionar comprobante de pago"
+                (change)="seleccionarArchivo($event)"
+              />
+              <button
+                mat-stroked-button
+                type="button"
+                [disabled]="registrando()"
+                (click)="archivoComprobante.click()"
+              >
+                <mat-icon aria-hidden="true">upload_file</mat-icon>
+                Seleccionar comprobante
+              </button>
+              <span class="ft-muted">JPG o PNG, máximo 5 MB.</span>
+            </div>
+
+            @if (archivoSeleccionado(); as archivo) {
+              <div class="archivo__seleccion">
+                <mat-icon aria-hidden="true">description</mat-icon>
+                <span class="archivo__nombre">{{ archivo.name }}</span>
+                <button
+                  mat-icon-button
+                  type="button"
+                  aria-label="Quitar comprobante seleccionado"
+                  (click)="quitarArchivo()"
+                >
+                  <mat-icon aria-hidden="true">close</mat-icon>
+                </button>
+              </div>
+            }
+
+            @if (errorComprobante(); as mensaje) {
+              <p class="campo-error" role="alert">{{ mensaje }}</p>
+            }
+
+            <div class="formulario__acciones">
+              <button mat-flat-button type="submit" [disabled]="registrando()">
+                @if (registrando()) {
+                  <mat-spinner diameter="18" aria-label="Registrando pago" />
+                } @else {
+                  <mat-icon aria-hidden="true">send</mat-icon>
+                }
+                {{ registrando() ? 'Registrando…' : 'Registrar pago' }}
+              </button>
+              <p class="ft-muted">
+                Al registrar el pago aceptas que el comprobante sea revisado por administración.
+              </p>
+            </div>
+          </form>
+        }
+      </section>
+
+      <section class="panel ft-card" aria-labelledby="titulo-historial">
+        <div class="panel__cabecera panel__cabecera--filtro">
+          <div>
+            <h2 id="titulo-historial">Historial de pagos</h2>
+            <p class="ft-muted">
+              Revisa los pagos registrados, su estado y el comprobante adjunto.
+            </p>
+          </div>
+          <form [formGroup]="formularioFiltro" class="filtro">
+            <mat-form-field appearance="outline">
+              <mat-label>Estado del pago</mat-label>
+              <mat-select formControlName="estado" (selectionChange)="cambiarFiltro()">
+                <mat-option value="TODOS">Todos los estados</mat-option>
+                @for (estado of estadosPago; track estado) {
+                  <mat-option [value]="estado">{{ etiquetasEstadoPago[estado] }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </form>
+        </div>
+
+        @if (errorPagos(); as fallo) {
+          <div class="ft-alert ft-alert--error" role="alert">
+            <mat-icon aria-hidden="true">cloud_off</mat-icon>
+            <div>
+              <p>{{ fallo.mensaje }}</p>
+              <button mat-stroked-button type="button" (click)="recargarPagos()">
+                <mat-icon aria-hidden="true">refresh</mat-icon>
+                Reintentar
+              </button>
+            </div>
+          </div>
+        } @else if (pagosResource.isLoading() && pagos().length === 0) {
+          <div class="cargando" role="status">
+            <mat-spinner diameter="30" aria-hidden="true" />
+            <span>Cargando pagos…</span>
+          </div>
+        } @else if (pagos().length === 0) {
+          <div class="vacio">
+            <mat-icon aria-hidden="true">receipt_long</mat-icon>
+            <h3>
+              {{
+                formularioFiltro.getRawValue().estado === 'TODOS'
+                  ? 'Aún no registraste pagos'
+                  : 'No hay pagos con este estado'
+              }}
+            </h3>
+            <p class="ft-muted">
+              {{
+                formularioFiltro.getRawValue().estado === 'TODOS'
+                  ? 'Cuando registres un pago, podrás seguir su validación desde aquí.'
+                  : 'Cambia el filtro para revisar los demás pagos registrados.'
+              }}
+            </p>
+          </div>
+        } @else {
+          @if (pagosResource.isLoading()) {
+            <p class="actualizando" role="status">Actualizando…</p>
+          }
+          <ul class="pagos" aria-label="Pagos registrados">
+            @for (pago of pagos(); track pago.id) {
+              <li class="pago">
+                <header class="pago__cabecera">
+                  <div>
+                    <h3>Pago #{{ pago.id }}</h3>
+                    <p class="ft-muted">
+                      Registrado el {{ pago.creadoEn | date: 'dd MMM yyyy, HH:mm' }}
+                    </p>
+                  </div>
+                  <app-estado-badge
+                    [texto]="etiquetasEstadoPago[pago.estado]"
+                    [tono]="tonosEstadoPago[pago.estado]"
+                  />
+                </header>
+
+                <dl class="pago__datos">
+                  <div>
+                    <dt>Monto</dt>
+                    <dd>{{ pago.monto | currency: 'PEN' : 'symbol-narrow' : '1.2-2' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Método</dt>
+                    <dd>{{ etiquetasMetodoPago[pago.metodo] }}</dd>
+                  </div>
+                  <div>
+                    <dt>Operación</dt>
+                    <dd>{{ pago.numeroOperacion }}</dd>
+                  </div>
+                  <div>
+                    <dt>Comisiones</dt>
+                    <dd>{{ pago.comisiones.length }}</dd>
+                  </div>
+                  @if (pago.fechaValidacion) {
+                    <div>
+                      <dt>Validado el</dt>
+                      <dd>{{ pago.fechaValidacion | date: 'dd MMM yyyy, HH:mm' }}</dd>
+                    </div>
+                  }
+                </dl>
+
+                @if (pago.observacion) {
+                  <div class="pago__observacion" role="note">
+                    <strong>Observación de administración</strong>
+                    <p>{{ pago.observacion }}</p>
+                  </div>
+                }
+
+                <div class="pago__acciones">
+                  @if (pago.tieneComprobante) {
+                    <button mat-stroked-button type="button" (click)="abrirComprobante(pago)">
+                      <mat-icon aria-hidden="true">receipt</mat-icon>
+                      Ver comprobante
+                    </button>
+                  }
+                  <button
+                    mat-button
+                    type="button"
+                    [attr.aria-expanded]="expandido() === pago.id"
+                    [attr.aria-controls]="'comisiones-pago-' + pago.id"
+                    (click)="alternarComisionesPago(pago.id)"
+                  >
+                    <mat-icon aria-hidden="true">
+                      {{ expandido() === pago.id ? 'expand_less' : 'expand_more' }}
+                    </mat-icon>
+                    {{ expandido() === pago.id ? 'Ocultar comisiones' : 'Ver comisiones' }}
+                    ({{ pago.comisiones.length }})
+                  </button>
+                </div>
+
+                @if (expandido() === pago.id) {
+                  <ul
+                    class="pago__comisiones"
+                    [id]="'comisiones-pago-' + pago.id"
+                    aria-label="Comisiones incluidas en el pago"
+                  >
+                    @for (comision of pago.comisiones; track comision.id) {
+                      <li>
+                        <span>Servicio #{{ comision.servicioId }}</span>
+                        <span class="ft-muted">
+                          Comisión
+                          {{ comision.montoComision | currency: 'PEN' : 'symbol-narrow' : '1.2-2' }}
+                        </span>
+                        <app-estado-badge
+                          [texto]="etiquetasEstadoComision[comision.estado]"
+                          [tono]="tonosEstadoComision[comision.estado]"
+                        />
+                      </li>
+                    }
+                  </ul>
+                }
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    } @else if (saldoResource.isLoading()) {
+      <div class="cargando cargando--pagina" role="status">
+        <mat-spinner diameter="40" aria-hidden="true" />
+        <p class="ft-muted">Cargando tus comisiones…</p>
+      </div>
+    } @else {
+      <section class="estado-panel ft-card">
+        <mat-icon aria-hidden="true">payments</mat-icon>
+        <h2>No pudimos mostrar tus comisiones</h2>
+        <p class="ft-muted">Vuelve a intentarlo en unos segundos.</p>
+        <button mat-flat-button type="button" (click)="recargarSaldo()">
+          <mat-icon aria-hidden="true">refresh</mat-icon>
+          Reintentar
+        </button>
+      </section>
+    }
+  }
+</div>

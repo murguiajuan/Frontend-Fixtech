@@ -70,6 +70,10 @@
               {{ saldoPendiente() | currency: 'PEN' : 'symbol-narrow' : '1.2-2' }}. Regulariza el
               pago para volver a ofertar.
             </p>
+            <a mat-stroked-button class="bloqueo__accion" routerLink="/app/tecnico/comisiones">
+              <mat-icon aria-hidden="true">payments</mat-icon>
+              Regularizar comisiones
+            </a>
           </div>
         </div>
       }
@@ -220,6 +224,12 @@
             <span class="ft-muted">Da seguimiento y registra la resolución.</span>
             <mat-icon class="admin__flecha" aria-hidden="true">arrow_forward</mat-icon>
           </a>
+          <a class="admin__acceso" routerLink="/app/admin/comisiones">
+            <mat-icon aria-hidden="true">account_balance_wallet</mat-icon>
+            <strong>Pagos y deudores</strong>
+            <span class="ft-muted">Valida comprobantes y revisa la deuda de comisiones.</span>
+            <mat-icon class="admin__flecha" aria-hidden="true">arrow_forward</mat-icon>
+          </a>
           <div class="admin__acceso admin__acceso--bloqueado">
             <mat-icon aria-hidden="true">monitoring</mat-icon>
             <strong>Reportes</strong>
@@ -295,12 +305,12 @@
             <p class="ft-muted">Gestiona los servicios asignados y registra avances.</p>
             <span class="modulo__estado">Disponible</span>
           </a>
-          <article class="modulo ft-card">
+          <a class="modulo ft-card modulo--enlace" routerLink="/app/tecnico/comisiones">
             <mat-icon aria-hidden="true">payments</mat-icon>
             <h3>Comisiones</h3>
-            <p class="ft-muted">Consulta tu saldo y registra pagos.</p>
-            <span class="modulo__estado">Próximamente</span>
-          </article>
+            <p class="ft-muted">Consulta tu saldo, registra pagos y revisa tus comprobantes.</p>
+            <span class="modulo__estado">Disponible</span>
+          </a>
         } @else {
           <article class="modulo ft-card">
             <mat-icon aria-hidden="true">summarize</mat-icon>

@@ -1,0 +1,112 @@
+<h2 mat-dialog-title>{{ etiquetaDecision }} #{{ pago.id }}</h2>
+
+<mat-dialog-content class="dialogo__contenido">
+  <div class="resumen">
+    <div class="resumen__principal">
+      <strong>{{ pago.tecnicoNombre }}</strong>
+      <span>{{ pago.tecnicoCorreo }}</span>
+      <small>Registrado el {{ pago.creadoEn | date: 'dd MMM yyyy, HH:mm' }}</small>
+    </div>
+    <div class="resumen__monto">
+      <strong>{{ pago.monto | currency: 'PEN' : 'symbol-narrow' : '1.2-2' }}</strong>
+      <span>{{ pago.comisiones.length }} comisión(es)</span>
+    </div>
+    <app-estado-badge [texto]="etiquetasEstado[pago.estado]" [tono]="tonosEstado[pago.estado]" />
+  </div>
+
+  <dl class="datos">
+    <div>
+      <dt>Método</dt>
+      <dd>{{ etiquetasMetodo[pago.metodo] }}</dd>
+    </div>
+    <div>
+      <dt>Número de operación</dt>
+      <dd>{{ pago.numeroOperacion }}</dd>
+    </div>
+  </dl>
+
+  <div
+    class="ft-alert"
+    [class.ft-alert--warning]="esRechazo"
+    [class.ft-alert--info]="!esRechazo"
+    role="note"
+  >
+    <mat-icon aria-hidden="true">{{ esRechazo ? 'block' : 'task_alt' }}</mat-icon>
+    <p>{{ mensajeEfecto() }}</p>
+  </div>
+
+  @if (errorServidor(); as mensaje) {
+    <div class="ft-alert ft-alert--error" role="alert">
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <div>
+        <p>{{ mensaje }}</p>
+        @if (detallesError().length > 0) {
+          <ul class="dialogo__detalles">
+            @for (detalle of detallesError(); track detalle) {
+              <li>{{ detalle }}</li>
+            }
+          </ul>
+        }
+      </div>
+    </div>
+  }
+
+  <form id="form-validacion-pago" [formGroup]="formulario" (ngSubmit)="enviar()" novalidate>
+    <mat-form-field appearance="outline">
+      <mat-label>
+        {{ esRechazo ? 'Motivo del rechazo' : 'Observación (opcional)' }}
+      </mat-label>
+      <textarea
+        matInput
+        formControlName="observacion"
+        rows="3"
+        maxlength="300"
+        [attr.aria-invalid]="mostrarErrorObservacion() ? 'true' : null"
+        [attr.aria-describedby]="
+          mostrarErrorObservacion() ? 'observacion-ayuda observacion-error' : 'observacion-ayuda'
+        "
+      ></textarea>
+      <mat-hint id="observacion-ayuda">
+        {{
+          esRechazo
+            ? 'Explica al técnico por qué no se valida el pago. Máximo 300 caracteres.'
+            : 'Puedes dejar una nota interna para el técnico. Máximo 300 caracteres.'
+        }}
+      </mat-hint>
+      @if (mostrarErrorObservacion()) {
+        <mat-error id="observacion-error">
+          @if (formulario.controls.observacion.hasError('maxlength')) {
+            La observación no puede superar los 300 caracteres.
+          } @else {
+            El motivo es obligatorio para rechazar el pago.
+          }
+        </mat-error>
+      }
+    </mat-form-field>
+
+    <mat-checkbox formControlName="confirmado">
+      Confirmo que revisé el comprobante y el número de operación, y que esta decisión es correcta.
+    </mat-checkbox>
+    @if (mostrarErrorConfirmacion()) {
+      <p class="campo-error" role="alert">Debes marcar la confirmación para continuar.</p>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" [disabled]="enviando()" (click)="cancelar()">Cancelar</button>
+  <button
+    mat-flat-button
+    type="submit"
+    form="form-validacion-pago"
+    [class.dialogo__peligro]="esRechazo"
+    [disabled]="enviando()"
+  >
+    @if (enviando()) {
+      <mat-spinner diameter="18" aria-label="Guardando validación" />
+    } @else {
+      <mat-icon aria-hidden="true">{{ esRechazo ? 'block' : 'task_alt' }}</mat-icon>
+    }
+    {{ enviando() ? 'Guardando…' : etiquetaDecision }}
+  </button>
+</mat-dialog-actions>

@@ -100,6 +100,12 @@
   margin: 0;
 }
 
+.ft-alert .bloqueo__accion {
+  margin-top: 0.65rem;
+  --mat-button-outlined-label-text-color: currentcolor;
+  --mat-button-outlined-outline-color: currentcolor;
+}
+
 .metricas {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

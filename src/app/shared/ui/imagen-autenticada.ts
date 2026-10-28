@@ -17,7 +17,13 @@ type EstadoImagen = 'vacia' | 'cargando' | 'lista' | 'error';
         </span>
       }
       @case ('lista') {
-        <img class="imagen" [src]="urlObjeto()" [alt]="alt()" decoding="async" />
+        <img
+          class="imagen"
+          [src]="urlObjeto()"
+          [alt]="alt()"
+          [style.object-fit]="ajuste()"
+          decoding="async"
+        />
       }
       @case ('error') {
         <span class="imagen__estado" role="img" [attr.aria-label]="alt() + ': no disponible'">
@@ -68,6 +74,7 @@ export class ImagenAutenticada {
   readonly src = input<string | null>(null);
   readonly alt = input.required<string>();
   readonly version = input(0);
+  readonly ajuste = input<'cover' | 'contain'>('cover');
 
   protected readonly urlObjeto = signal<string | null>(null);
   protected readonly estado = signal<EstadoImagen>('vacia');
