@@ -31,6 +31,7 @@ npm test                  # pruebas unitarias (una ejecución)
 npm run lint              # ESLint
 npm run format:check      # verificación de formato
 npm run e2e               # Playwright (escritorio + móvil 360 px)
+npm run e2e:seed          # Cuentas semilla idempotentes para E2E
 
 # Login real contra backend local
 E2E_BACKEND=1 npm run e2e -- --project=chromium
@@ -49,7 +50,7 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
 
 | Fase | Alcance                                                | Estado        |
 | ---- | ------------------------------------------------------ | ------------- |
-| 0    | Base técnica, SSR, tooling y sistema de diseño         | ✅ Completada |
+| 0    | Base técnica, tooling y sistema de diseño              | ✅ Completada |
 | 1    | Autenticación, sesión, guards, interceptores y layouts | ✅ Completada |
 | 2    | Panel admin: técnicos y usuarios                       | ✅ Completada |
 | 3    | Registro y perfil de técnico                           | ✅ Completada |
@@ -61,7 +62,7 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
 | 9    | Administración de catálogos, parámetros y reportes     | ✅ Completada |
 | 10   | Notificaciones y perfil de usuario                     | ✅ Completada |
 | 11   | Endurecimiento UX, rendimiento y seguridad             | ✅ Completada |
-| 12   | QA final, documentación y despliegue                   | ⏳ Pendiente  |
+| 12   | QA final, documentación y despliegue                   | ✅ Completada |
 
 ## 4. Fase 0 — Base técnica ✅
 
@@ -632,31 +633,66 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
       Prettier y 54 ejecuciones E2E (51 aprobadas y 3 capturas omitidas en el proyecto móvil) con
       Axe en escritorio y 360 px.
 
-## 16. Fase 12 — QA final y despliegue ⏳
+## 16. Fase 12 — QA final, documentación y despliegue ✅
 
-- [ ] Suite completa: unitarias, E2E, Axe y build de producción.
-- [ ] Datos semilla para E2E con cliente, técnico aprobado y administrador.
-- [ ] Prueba de humo contra backend desplegado.
-- [ ] Documentación de despliegue (Nginx, variables, CORS y `/api`).
-- [ ] Checklist de aceptación por rol.
-- [ ] Cierre del proyecto y acta de conformidad.
+### Suite y datos de prueba
+
+- [x] Suite completa: 501 pruebas unitarias en 77 archivos, lint, Prettier y build de producción
+      (604.53 kB iniciales; 146.40 kB de transferencia estimada).
+- [x] 54 ejecuciones E2E con `E2E_BACKEND=1`: 51 aprobadas y 3 comparaciones visuales omitidas en
+      el proyecto móvil; Axe sin violaciones en las pantallas evaluadas.
+- [x] `e2e/seed/seed-e2e.mjs` y `npm run e2e:seed`: crean o reutilizan administrador, cliente y
+      técnico aprobado; el script se ejecutó dos veces con idempotencia correcta.
+- [x] `e2e/seed/README.md` documenta credenciales, uso y alcance solo para desarrollo o pruebas.
+
+### Despliegue y prueba de humo
+
+- [x] `deploy/nginx/fixtech.conf` y `deploy/nginx/fixtech.docker.conf.template` con fallback SPA,
+      proxy `/api`, caché, gzip, cabeceras de seguridad y CSP con hash SHA-256.
+- [x] `deploy/Dockerfile`, `deploy/docker-compose.yml` y `deploy/.env.example`; configuración
+      validada con `docker-compose config`. La imagen no se construyó por permisos del daemon.
+- [x] `deploy/smoke-test.sh` ejecutado contra Nginx en `http://127.0.0.1:8083` y backend en
+      `http://127.0.0.1:8082`: 14 comprobaciones correctas.
+- [x] Verificación en navegador del login administrativo, el saludo, la fuente Roboto y cero
+      errores de consola contra el despliegue de Nginx.
+- [x] `deploy/calcular-csp-hash.py` y hash vigente
+      `sha256-LMY6wYoFV9I4wWzxaq1N/dTpl4iurQktw706UCHK3vM=` validado en navegador.
+
+### Documentación y aceptación
+
+- [x] Seis documentos fuente en `docs/word/` y seis `.docx` con estilo UCV en
+      `/home/juan/Documentos/calidadd/`: informe de QA (26 páginas), manual de despliegue (21),
+      documentación técnica (29), manual de usuario (21), checklist de aceptación (12) y acta de
+      conformidad (12).
+- [x] Portada UCV, índice con numeración calculada, Times New Roman 12, A4, márgenes de 2.5 cm,
+      interlineado 1.5, tablas formales y diagramas monocromáticos.
+- [x] Checklist de aceptación por rol: 119 criterios (111 cumple, 6 no aplica y 2 no cumple por
+      permisos del daemon de Docker).
+- [x] Acta de conformidad generada; queda pendiente la firma de los involucrados.
+- [x] `README.md`, este plan y `BRECHAS_PENDIENTES.md` actualizados con el cierre.
+
+### Criterios de cierre
+
+- [x] Build, pruebas unitarias, E2E, lint, Prettier y Axe en verde.
+- [x] Prueba de humo contra un despliegue real con Nginx.
+- [x] Documentación de despliegue, operación y aceptación entregada.
 
 ## 17. Brechas de API conocidas
 
 El registro completo, con impacto y decisión provisional, está en
-[`BRECHAS_PENDIENTES.md`](./BRECHAS_PENDIENTES.md). Se resolverán al final del proyecto. Entre las
-principales están los documentos de verificación sin controlador, la recuperación/cambio de
-contraseña, la búsqueda pública de técnicos, las fotos no reemplazables en la edición de
-solicitudes, la edición del perfil de usuario general, la ausencia de seed/limpieza para E2E y la
-mensajería sin tiempo real.
+[`BRECHAS_PENDIENTES.md`](./BRECHAS_PENDIENTES.md). Las brechas abiertas quedan registradas para
+una siguiente iteración. Entre las principales están los documentos de verificación sin
+controlador, la recuperación/cambio de contraseña, la búsqueda pública de técnicos, las fotos no
+reemplazables en la edición de solicitudes, la edición del perfil de usuario general, la limpieza
+automática de datos E2E y la mensajería sin tiempo real.
 
-| Necesidad                          | Situación                                                    | Decisión                                                                                  |
-| ---------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| Perfil del usuario autenticado     | Implementado `GET /api/auth/me`                              | Usar en toda la sesión                                                                    |
-| Listado de técnicos para admin     | Implementado `GET /api/admin/tecnicos`                       | Usar `id` para verificar y `usuarioId` para usuarios                                      |
-| Edición de perfil/foto del técnico | Implementado `PUT /api/perfil/tecnico` y `POST /perfil/foto` | Editar reinicia la verificación; la foto no                                               |
-| Fotos en edición de solicitud      | `PUT /api/solicitudes/{id}` solo actualiza datos             | Adjuntar fotos únicamente al crear                                                        |
-| Datos de prueba E2E                | Sin seed específico ni limpieza                              | Los E2E crean cuentas y solicitudes únicas; requieren backend y MySQL con `E2E_BACKEND=1` |
+| Necesidad                          | Situación                                                    | Decisión                                                                                                               |
+| ---------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| Perfil del usuario autenticado     | Implementado `GET /api/auth/me`                              | Usar en toda la sesión                                                                                                 |
+| Listado de técnicos para admin     | Implementado `GET /api/admin/tecnicos`                       | Usar `id` para verificar y `usuarioId` para usuarios                                                                   |
+| Edición de perfil/foto del técnico | Implementado `PUT /api/perfil/tecnico` y `POST /perfil/foto` | Editar reinicia la verificación; la foto no                                                                            |
+| Fotos en edición de solicitud      | `PUT /api/solicitudes/{id}` solo actualiza datos             | Adjuntar fotos únicamente al crear                                                                                     |
+| Datos de prueba E2E                | Seed idempotente implementado; sin limpieza automática       | `npm run e2e:seed` prepara las cuentas base; los E2E usan datos únicos y requieren backend y MySQL con `E2E_BACKEND=1` |
 
 ## 18. Convenciones de implementación
 
@@ -674,15 +710,17 @@ mensajería sin tiempo real.
 
 ## 19. Registro de avances
 
-| Fecha      | Fase  | Evidencia                                                                                                                                                                                                                              |
-| ---------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-10-27 | 0 y 1 | Build de producción, 21 pruebas unitarias, lint, Prettier y 8 pruebas E2E con Axe en escritorio y 360 px; login real contra backend verificado                                                                                         |
-| 2026-10-27 | 2     | Build de producción, 53 pruebas unitarias, lint y Prettier; 10 pruebas E2E con Axe en escritorio y 360 px; aprobación real de un técnico creado vía API y estado verificado con `GET /api/admin/tecnicos`                              |
-| 2026-10-27 | 3     | Build de producción, 73 pruebas unitarias, lint y Prettier; 12 pruebas E2E con Axe en escritorio y 360 px; registro real de un técnico, login y perfil `PENDIENTE` verificado desde la interfaz                                        |
-| 2026-10-27 | 4     | Build de producción, 128 pruebas unitarias, lint y Prettier; 14 pruebas E2E con Axe en escritorio y 360 px; perfil técnico editable con foto autorizada y solicitud real con foto creada, editada y cancelada                          |
-| 2026-10-27 | 5     | Build de producción, 192 pruebas unitarias en 31 archivos, lint y Prettier; 16 pruebas E2E con Axe en escritorio y 360 px; oferta, contraoferta y creación real del servicio verificadas contra la API                                 |
-| 2026-10-27 | 6     | Build de producción, 270 pruebas unitarias en 42 archivos, lint y Prettier; 18 pruebas E2E con Axe en escritorio y 360 px; aceptación, ejecución, ajuste y conformidad verificados contra la API                                       |
-| 2026-10-27 | 7     | Build de producción, 358 pruebas unitarias en 52 archivos, lint y Prettier; 20 pruebas E2E con Axe en escritorio y 360 px; constancias de taller, reseña, moderación, reclamo y cierre verificados contra la API                       |
-| 2026-10-27 | 8     | Build de producción, 393 pruebas unitarias en 57 archivos, lint y Prettier; 20 pruebas E2E con Axe en escritorio y 360 px; pago real con comprobante y validación administrativa verificados contra la API                             |
-| 2026-10-27 | 9     | Build de producción, 460 pruebas unitarias en 70 archivos, lint y Prettier; 24 pruebas E2E con Axe en escritorio y 360 px; catálogos, parámetros, dashboard, reportes, Excel y auditoría verificados contra la API                     |
-| 2026-10-27 | 10    | Build de producción, 486 pruebas unitarias en 74 archivos, lint y Prettier; 28 pruebas E2E con Axe en escritorio y 360 px; notificaciones, badge, polling, perfil de solo lectura y aviso de sesión expirada verificados contra la API |
+| Fecha      | Fase  | Evidencia                                                                                                                                                                                                                                  |
+| ---------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-10-27 | 0 y 1 | Build de producción, 21 pruebas unitarias, lint, Prettier y 8 pruebas E2E con Axe en escritorio y 360 px; login real contra backend verificado                                                                                             |
+| 2026-10-27 | 2     | Build de producción, 53 pruebas unitarias, lint y Prettier; 10 pruebas E2E con Axe en escritorio y 360 px; aprobación real de un técnico creado vía API y estado verificado con `GET /api/admin/tecnicos`                                  |
+| 2026-10-27 | 3     | Build de producción, 73 pruebas unitarias, lint y Prettier; 12 pruebas E2E con Axe en escritorio y 360 px; registro real de un técnico, login y perfil `PENDIENTE` verificado desde la interfaz                                            |
+| 2026-10-27 | 4     | Build de producción, 128 pruebas unitarias, lint y Prettier; 14 pruebas E2E con Axe en escritorio y 360 px; perfil técnico editable con foto autorizada y solicitud real con foto creada, editada y cancelada                              |
+| 2026-10-27 | 5     | Build de producción, 192 pruebas unitarias en 31 archivos, lint y Prettier; 16 pruebas E2E con Axe en escritorio y 360 px; oferta, contraoferta y creación real del servicio verificadas contra la API                                     |
+| 2026-10-27 | 6     | Build de producción, 270 pruebas unitarias en 42 archivos, lint y Prettier; 18 pruebas E2E con Axe en escritorio y 360 px; aceptación, ejecución, ajuste y conformidad verificados contra la API                                           |
+| 2026-10-27 | 7     | Build de producción, 358 pruebas unitarias en 52 archivos, lint y Prettier; 20 pruebas E2E con Axe en escritorio y 360 px; constancias de taller, reseña, moderación, reclamo y cierre verificados contra la API                           |
+| 2026-10-27 | 8     | Build de producción, 393 pruebas unitarias en 57 archivos, lint y Prettier; 20 pruebas E2E con Axe en escritorio y 360 px; pago real con comprobante y validación administrativa verificados contra la API                                 |
+| 2026-10-27 | 9     | Build de producción, 460 pruebas unitarias en 70 archivos, lint y Prettier; 24 pruebas E2E con Axe en escritorio y 360 px; catálogos, parámetros, dashboard, reportes, Excel y auditoría verificados contra la API                         |
+| 2026-10-27 | 10    | Build de producción, 486 pruebas unitarias en 74 archivos, lint y Prettier; 28 pruebas E2E con Axe en escritorio y 360 px; notificaciones, badge, polling, perfil de solo lectura y aviso de sesión expirada verificados contra la API     |
+| 2026-10-27 | 11    | Build de producción, 501 pruebas unitarias en 77 archivos, lint y Prettier; 54 ejecuciones E2E (51 aprobadas y 3 capturas omitidas en móvil); fuentes locales, aviso offline, `returnUrl` estricto y regresión visual a 360, 768 y 1280 px |
+| 2026-10-27 | 12    | Suite final en verde; seed E2E idempotente; Nginx local en `:8083` con proxy `/api` y 14 comprobaciones de humo; Docker Compose validado; seis documentos Word UCV en `/home/juan/Documentos/calidadd/`                                    |

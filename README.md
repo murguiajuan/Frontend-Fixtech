@@ -6,7 +6,7 @@ FIXTECH en `http://localhost:8082/api`.
 
 ## Estado actual
 
-Fases 0 a 11 completadas: base técnica, autenticación JWT, sesión, guards, interceptores, layouts
+Fases 0 a 12 completadas: base técnica, autenticación JWT, sesión, guards, interceptores, layouts
 por rol, panel inicial, administración de técnicos y usuarios, registro y perfil editable del
 técnico con foto autorizada, solicitudes del cliente con fotos, listado, detalle, edición y
 cancelación, solicitudes disponibles y ofertas del técnico, negociación, servicios con aceptación,
@@ -15,8 +15,8 @@ fotos, reseñas con respuesta y moderación, reclamos con seguimiento administra
 técnico con pagos, comprobantes y validación administrativa, administración de catálogos,
 parámetros del sistema, dashboard, reportes con exportación Excel y auditoría, centro de
 notificaciones con badge, polling, perfil de cuenta de solo lectura y cierre de sesión por
-expiración con aviso accesible, y endurecimiento de UX, rendimiento y seguridad. La Fase 12 (QA
-final y despliegue) queda pendiente. El plan completo y el progreso están en
+expiración con aviso accesible, endurecimiento de UX, rendimiento y seguridad, y cierre de calidad
+con despliegue verificado y documentación de aceptación. El plan completo y el progreso están en
 [`PLAN_FRONTEND.md`](./PLAN_FRONTEND.md).
 
 ## Stack
@@ -74,6 +74,7 @@ Credenciales de desarrollo del administrador: `admin@fixtech.pe` / `Admin123!`.
 | `npm run format:check` | Verifica el formato sin modificar archivos     |
 | `npm run e2e`          | Playwright en escritorio y móvil de 360 px     |
 | `npm run e2e:ui`       | Interfaz interactiva de Playwright             |
+| `npm run e2e:seed`     | Crea o reutiliza las cuentas semilla de E2E    |
 
 El login real contra el backend local se ejecuta con:
 
@@ -100,8 +101,10 @@ redirija fuera de la SPA, que un rol sin permisos llegue a `/no-autorizado`, que
 solo en `sessionStorage` y que el aviso de conexión aparezca dentro de la aplicación. Las pruebas
 responsive comprueban que no haya desbordamiento horizontal a 360, 768 y 1280 px y comparan
 capturas del acceso contra las baselines de `e2e/visual-baselines/`. Requiere el backend y MySQL
-locales. Sin `E2E_BACKEND=1` esas pruebas se omiten y solo corren las públicas. No existe un
-endpoint para limpiar las cuentas, solicitudes y catálogos creados por las pruebas.
+locales. Sin `E2E_BACKEND=1` esas pruebas se omiten y solo corren las públicas. Para preparar las
+cuentas base se usa `npm run e2e:seed`, que crea o reutiliza al administrador, un cliente y un
+técnico aprobado; es idempotente y solo debe ejecutarse en desarrollo o en una base de pruebas. No
+existe un endpoint para limpiar las cuentas, solicitudes y catálogos creados por las pruebas.
 
 Para regenerar las capturas de referencia después de un cambio visual intencional:
 
@@ -477,10 +480,54 @@ fuentes con el nombre accesible.
 
 ## Despliegue
 
-El build de producción genera una SPA en `dist/fixtech-frontend/browser`. El servidor debe:
+El build de producción genera una SPA en `dist/fixtech-frontend/browser`. La carpeta `deploy/`
+contiene los artefactos de despliegue:
 
-1. Servir `index.html` para cualquier ruta no encontrada (fallback de SPA).
-2. Proxyear `/api` al backend FIXTECH.
-3. Enviar cabeceras de seguridad y cachear los archivos con hash de forma agresiva.
+| Archivo                                     | Uso                                                                 |
+| ------------------------------------------- | ------------------------------------------------------------------- |
+| `deploy/nginx/fixtech.conf`                 | Nginx para VPS: fallback SPA, proxy `/api`, caché, gzip y cabeceras |
+| `deploy/nginx/fixtech.docker.conf.template` | Configuración del contenedor con `envsubst`                         |
+| `deploy/Dockerfile`                         | Imagen multietapa Node 22 + Nginx                                   |
+| `deploy/docker-compose.yml`                 | Pila frontend, backend y MySQL                                      |
+| `deploy/.env.example`                       | Plantilla de variables de entorno                                   |
+| `deploy/smoke-test.sh`                      | Prueba de humo con 14 comprobaciones                                |
+| `deploy/calcular-csp-hash.py`               | Cálculo del hash SHA-256 del script inline de Angular               |
 
-Los detalles de despliegue y el checklist de aceptación se completan en la Fase 12.
+Pasos para Nginx:
+
+1. Ejecutar `npm run build`.
+2. Copiar `dist/fixtech-frontend/browser` a `/var/www/fixtech`.
+3. Ajustar `server_name` y `proxy_pass` en `deploy/nginx/fixtech.conf`.
+4. Copiar la configuración a `/etc/nginx/sites-available/fixtech`, enlazarla y validar con
+   `nginx -t`.
+5. Incluir el origen público en `FIXTECH_CORS_ORIGINS` del backend.
+6. Recalcular el hash CSP con `deploy/calcular-csp-hash.py` y actualizarlo en la configuración
+   si cambió.
+7. Ejecutar `./deploy/smoke-test.sh https://dominio`.
+
+```bash
+python3 deploy/calcular-csp-hash.py dist/fixtech-frontend/browser/index.html
+```
+
+La SPA usa `apiUrl: '/api'` en producción: Nginx publica la SPA y la API bajo el mismo origen y
+redirige `/api` al backend. El backend debe incluir el origen público en `FIXTECH_CORS_ORIGINS`
+porque el navegador envía `Origin` en las peticiones que modifican datos. El hash CSP vigente es
+`sha256-LMY6wYoFV9I4wWzxaq1N/dTpl4iurQktw706UCHK3vM=`; debe recalcularse cuando cambie el build.
+
+La prueba de humo se ejecutó contra Nginx en `http://127.0.0.1:8083` con el backend en
+`http://127.0.0.1:8082`: 14 comprobaciones correctas, incluido el login administrativo y las
+cabeceras de seguridad. La configuración de Docker Compose se validó con `docker-compose config`;
+la imagen no se construyó en el entorno de desarrollo porque el daemon no era accesible sin
+permisos. El procedimiento completo está en `docs/word/02_Manual_Despliegue_FIXTECH.md` y en el
+documento final de `/home/juan/Documentos/calidadd/`.
+
+## Cierre de calidad (Fase 12)
+
+- 501 pruebas unitarias en 77 archivos, sin fallos.
+- 54 ejecuciones E2E: 51 aprobadas y 3 comparaciones visuales omitidas en el proyecto móvil.
+- Axe sin violaciones en las pantallas evaluadas; ESLint y Prettier sin errores.
+- Build de producción: 604.53 kB iniciales y 146.40 kB de transferencia estimada.
+- Backend: 337 pruebas y 0 fallos; cobertura de 94.00 % en servicios y 87.08 % global; JMeter con
+  p95 de 103 ms y 0 errores; OWASP ZAP sin alertas altas, medias ni bajas.
+- Documentos Word: informe de QA, manual de despliegue, documentación técnica, manual de usuario,
+  checklist de aceptación y acta de conformidad.
