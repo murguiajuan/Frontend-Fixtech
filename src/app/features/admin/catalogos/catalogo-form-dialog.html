@@ -1,0 +1,136 @@
+<h2 mat-dialog-title>{{ titulo }}</h2>
+
+<mat-dialog-content class="catalogo-form">
+  @if (errorServidor(); as mensaje) {
+    <div class="ft-alert ft-alert--error" role="alert">
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <div>
+        <p>{{ mensaje }}</p>
+        @if (detallesError().length > 0) {
+          <ul class="catalogo-form__detalles">
+            @for (detalle of detallesError(); track detalle) {
+              <li>{{ detalle }}</li>
+            }
+          </ul>
+        }
+      </div>
+    </div>
+  }
+
+  <form id="form-catalogo" [formGroup]="formulario" (ngSubmit)="guardar()" novalidate>
+    <mat-form-field appearance="outline">
+      <mat-label>Nombre</mat-label>
+      <input
+        matInput
+        formControlName="nombre"
+        autocomplete="off"
+        [attr.maxlength]="opcion.maxNombre"
+        [attr.aria-describedby]="'ayuda-nombre-catalogo'"
+      />
+      <mat-hint id="ayuda-nombre-catalogo"> Máximo {{ opcion.maxNombre }} caracteres. </mat-hint>
+      @if (
+        (formulario.controls.nombre.touched || enviado()) && formulario.controls.nombre.invalid
+      ) {
+        <mat-error>
+          @if (formulario.controls.nombre.hasError('required')) {
+            El nombre es obligatorio.
+          } @else {
+            El nombre no puede superar los {{ opcion.maxNombre }} caracteres.
+          }
+        </mat-error>
+      }
+    </mat-form-field>
+
+    @if (esEspecialidad) {
+      <mat-form-field appearance="outline">
+        <mat-label>Descripción</mat-label>
+        <textarea
+          matInput
+          formControlName="descripcion"
+          rows="3"
+          [attr.maxlength]="maxDescripcion"
+          aria-describedby="ayuda-descripcion-catalogo"
+        ></textarea>
+        <mat-hint id="ayuda-descripcion-catalogo">
+          Opcional. Máximo {{ maxDescripcion }} caracteres.
+        </mat-hint>
+        @if (
+          (formulario.controls.descripcion.touched || enviado()) &&
+          formulario.controls.descripcion.hasError('maxlength')
+        ) {
+          <mat-error
+            >La descripción no puede superar los {{ maxDescripcion }} caracteres.</mat-error
+          >
+        }
+      </mat-form-field>
+    }
+
+    @if (esDistrito) {
+      <mat-form-field appearance="outline">
+        <mat-label>Provincia</mat-label>
+        <input
+          matInput
+          formControlName="provincia"
+          autocomplete="off"
+          [attr.maxlength]="maxProvincia"
+          aria-describedby="ayuda-provincia-catalogo"
+        />
+        <mat-hint id="ayuda-provincia-catalogo"> Máximo {{ maxProvincia }} caracteres. </mat-hint>
+        @if (
+          (formulario.controls.provincia.touched || enviado()) &&
+          formulario.controls.provincia.invalid
+        ) {
+          <mat-error>
+            @if (formulario.controls.provincia.hasError('required')) {
+              La provincia es obligatoria.
+            } @else {
+              La provincia no puede superar los {{ maxProvincia }} caracteres.
+            }
+          </mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Tope de movilidad</mat-label>
+        <span matTextPrefix>S/&nbsp;</span>
+        <input
+          matInput
+          type="number"
+          formControlName="topeMovilidad"
+          min="0"
+          [attr.max]="maxTope"
+          step="0.01"
+          inputmode="decimal"
+          aria-describedby="ayuda-tope-catalogo"
+        />
+        <mat-hint id="ayuda-tope-catalogo">
+          Monto máximo de movilidad para el distrito, hasta S/ 1,000,000.00.
+        </mat-hint>
+        @if (
+          (formulario.controls.topeMovilidad.touched || enviado()) &&
+          formulario.controls.topeMovilidad.invalid
+        ) {
+          <mat-error>
+            @if (formulario.controls.topeMovilidad.hasError('required')) {
+              El tope de movilidad es obligatorio.
+            } @else {
+              El tope debe estar entre S/ 0.00 y S/ 1,000,000.00.
+            }
+          </mat-error>
+        }
+      </mat-form-field>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" [disabled]="enviando()" (click)="cancelar()">Cancelar</button>
+  <button mat-flat-button type="submit" form="form-catalogo" [disabled]="enviando()">
+    @if (enviando()) {
+      <mat-spinner diameter="18" aria-label="Guardando catálogo" />
+    } @else {
+      <mat-icon aria-hidden="true">{{ item === null ? 'add' : 'save' }}</mat-icon>
+    }
+    {{ enviando() ? 'Guardando…' : etiquetaAccion }}
+  </button>
+</mat-dialog-actions>

@@ -1,0 +1,341 @@
+<div class="admin-reportes ft-page">
+  <header class="encabezado">
+    <div>
+      <p class="ft-eyebrow">Administración</p>
+      <h1>Reportes e indicadores</h1>
+      <p class="ft-muted">
+        Consulta el pulso operativo de FIXTECH y genera reportes por periodo. La exportación en
+        Excel usa el mismo rango de fechas del formulario.
+      </p>
+    </div>
+  </header>
+
+  <section class="panel ft-card" aria-labelledby="titulo-resumen-operativo">
+    <div class="panel__cabecera">
+      <div>
+        <h2 id="titulo-resumen-operativo">Resumen operativo</h2>
+        <p class="ft-muted">
+          Indicadores generales de solicitudes, servicios, comisiones, reseñas y reclamos.
+        </p>
+      </div>
+      <button
+        mat-stroked-button
+        type="button"
+        [disabled]="dashboardResource.isLoading()"
+        (click)="recargarDashboard()"
+      >
+        <mat-icon aria-hidden="true">refresh</mat-icon>
+        Actualizar
+      </button>
+    </div>
+
+    @if (errorDashboard(); as fallo) {
+      <div class="estado-panel" role="alert">
+        <mat-icon aria-hidden="true">cloud_off</mat-icon>
+        <h3>No pudimos cargar los indicadores</h3>
+        <p class="ft-muted">{{ fallo.mensaje }}</p>
+        @if (fallo.detalles.length > 0) {
+          <ul class="estado-panel__detalles">
+            @for (detalle of fallo.detalles; track detalle) {
+              <li>{{ detalle }}</li>
+            }
+          </ul>
+        }
+        <button mat-flat-button type="button" (click)="recargarDashboard()">
+          <mat-icon aria-hidden="true">refresh</mat-icon>
+          Reintentar
+        </button>
+      </div>
+    } @else if (dashboardResource.isLoading()) {
+      <div class="estado-panel" role="status" aria-live="polite">
+        <mat-spinner diameter="40" aria-label="Cargando indicadores" />
+        <p class="ft-muted">Cargando indicadores…</p>
+      </div>
+    } @else if (dashboard(); as resumen) {
+      <div class="metricas">
+        @for (metrica of metricasDashboard(); track metrica.etiqueta) {
+          <article class="metrica">
+            <mat-icon aria-hidden="true">{{ metrica.icono }}</mat-icon>
+            <p class="metrica__etiqueta">{{ metrica.etiqueta }}</p>
+            <strong>{{ metrica.valor }}</strong>
+            <span>{{ metrica.detalle }}</span>
+          </article>
+        }
+      </div>
+
+      <div class="resumen-grid">
+        <section class="subpanel" aria-labelledby="titulo-servicios-resumen">
+          <h3 id="titulo-servicios-resumen">Servicios por estado</h3>
+          <ul class="barras">
+            @for (fila of serviciosDashboard(); track fila.estado) {
+              <li>
+                <div class="barras__texto">
+                  <span>{{ fila.etiqueta }}</span>
+                  <strong>{{ fila.cantidad }}</strong>
+                </div>
+                <div class="barras__pista" aria-hidden="true">
+                  <span
+                    class="barras__relleno"
+                    [style.width.%]="(fila.cantidad / maxServiciosDashboard()) * 100"
+                  ></span>
+                </div>
+              </li>
+            }
+          </ul>
+        </section>
+
+        <section class="subpanel" aria-labelledby="titulo-tecnicos-resumen">
+          <h3 id="titulo-tecnicos-resumen">Técnicos más activos del mes</h3>
+          @if (resumen.tecnicosMasActivos.length === 0) {
+            <p class="subpanel__vacio ft-muted">
+              Sin actividad de técnicos registrada en el mes actual.
+            </p>
+          } @else {
+            <ol class="ranking">
+              @for (tecnico of resumen.tecnicosMasActivos; track tecnico.tecnicoId) {
+                <li>
+                  <span class="ranking__puesto" aria-hidden="true">#{{ $index + 1 }}</span>
+                  <div class="ranking__datos">
+                    <strong>{{ tecnico.nombre }}</strong>
+                    <span class="ft-muted">
+                      {{ tecnico.servicios }}
+                      {{ tecnico.servicios === 1 ? 'servicio' : 'servicios' }}
+                    </span>
+                  </div>
+                  <span class="ranking__calificacion">
+                    <mat-icon aria-hidden="true">star</mat-icon>
+                    {{ tecnico.calificacionPromedio }}
+                  </span>
+                </li>
+              }
+            </ol>
+          }
+        </section>
+      </div>
+    } @else {
+      <div class="estado-panel">
+        <mat-icon aria-hidden="true">monitoring</mat-icon>
+        <h3>No hay indicadores disponibles</h3>
+        <p class="ft-muted">La API no devolvió datos para el resumen operativo.</p>
+      </div>
+    }
+  </section>
+
+  <section class="panel ft-card" aria-labelledby="titulo-reporte-periodo">
+    <div class="panel__cabecera">
+      <div>
+        <h2 id="titulo-reporte-periodo">Reporte por periodo</h2>
+        <p class="ft-muted">
+          Elige las fechas de inicio y fin. El periodo máximo permitido es de 366 días.
+        </p>
+      </div>
+    </div>
+
+    <form [formGroup]="formulario" (ngSubmit)="aplicarFiltros()" novalidate>
+      <div class="filtros">
+        <mat-form-field appearance="outline">
+          <mat-label>Desde</mat-label>
+          <input matInput type="date" formControlName="desde" />
+          @if (
+            (formulario.controls.desde.touched || enviado()) &&
+            formulario.controls.desde.hasError('required')
+          ) {
+            <mat-error>La fecha de inicio es obligatoria.</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Hasta</mat-label>
+          <input matInput type="date" formControlName="hasta" />
+          <mat-hint>Periodo máximo: 366 días.</mat-hint>
+          @if (
+            (formulario.controls.hasta.touched || enviado()) &&
+            formulario.controls.hasta.hasError('required')
+          ) {
+            <mat-error>La fecha de fin es obligatoria.</mat-error>
+          }
+        </mat-form-field>
+
+        <div class="filtros__acciones">
+          <button mat-flat-button type="submit">
+            <mat-icon aria-hidden="true">query_stats</mat-icon>
+            Generar reporte
+          </button>
+          <button mat-stroked-button type="button" [disabled]="exportando()" (click)="exportar()">
+            @if (exportando()) {
+              <mat-spinner diameter="18" aria-label="Descargando reporte" />
+            } @else {
+              <mat-icon aria-hidden="true">download</mat-icon>
+            }
+            {{ exportando() ? 'Descargando…' : 'Descargar Excel' }}
+          </button>
+        </div>
+      </div>
+
+      @if (mensajeRango(); as mensaje) {
+        <p class="campo-error" role="alert">{{ mensaje }}</p>
+      }
+
+      <div class="rangos">
+        <button mat-button type="button" (click)="aplicarRangoMes()">Este mes</button>
+        <button mat-button type="button" (click)="aplicarUltimos30Dias()">Últimos 30 días</button>
+        @if (reporteResource.isLoading()) {
+          <span class="actualizando" role="status">Actualizando reporte…</span>
+        }
+      </div>
+    </form>
+  </section>
+
+  @if (errorReporte(); as fallo) {
+    <section class="estado-panel ft-card" role="alert" aria-labelledby="titulo-error-reporte">
+      <mat-icon aria-hidden="true">cloud_off</mat-icon>
+      <h2 id="titulo-error-reporte">No pudimos generar el reporte</h2>
+      <p class="ft-muted">{{ fallo.mensaje }}</p>
+      @if (fallo.detalles.length > 0) {
+        <ul class="estado-panel__detalles">
+          @for (detalle of fallo.detalles; track detalle) {
+            <li>{{ detalle }}</li>
+          }
+        </ul>
+      }
+      <button mat-flat-button type="button" (click)="recargarReporte()">
+        <mat-icon aria-hidden="true">refresh</mat-icon>
+        Reintentar
+      </button>
+    </section>
+  } @else if (reporte(); as resumen) {
+    <section class="panel ft-card" aria-labelledby="titulo-resultado-reporte">
+      <div class="panel__cabecera">
+        <div>
+          <h2 id="titulo-resultado-reporte">Resultado del periodo</h2>
+          <p class="ft-muted">Del {{ resumen.desde }} al {{ resumen.hasta }}.</p>
+        </div>
+      </div>
+
+      <div class="metricas metricas--reporte">
+        @for (metrica of metricasReporte(); track metrica.etiqueta) {
+          <article class="metrica">
+            <mat-icon aria-hidden="true">{{ metrica.icono }}</mat-icon>
+            <p class="metrica__etiqueta">{{ metrica.etiqueta }}</p>
+            <strong>{{ metrica.valor }}</strong>
+            <span>{{ metrica.detalle }}</span>
+          </article>
+        }
+      </div>
+
+      <div class="resumen-grid">
+        <section class="subpanel" aria-labelledby="titulo-servicios-reporte">
+          <h3 id="titulo-servicios-reporte">Servicios por estado</h3>
+          <ul class="barras">
+            @for (fila of serviciosReporte(); track fila.estado) {
+              <li>
+                <div class="barras__texto">
+                  <span>{{ fila.etiqueta }}</span>
+                  <strong>{{ fila.cantidad }}</strong>
+                </div>
+                <div class="barras__pista" aria-hidden="true">
+                  <span
+                    class="barras__relleno"
+                    [style.width.%]="(fila.cantidad / maxServiciosReporte()) * 100"
+                  ></span>
+                </div>
+              </li>
+            }
+          </ul>
+        </section>
+
+        <section class="subpanel" aria-labelledby="titulo-reclamos-reporte">
+          <h3 id="titulo-reclamos-reporte">Reclamos por estado</h3>
+          <ul class="barras">
+            @for (fila of reclamosReporte(); track fila.estado) {
+              <li>
+                <div class="barras__texto">
+                  <span>{{ fila.etiqueta }}</span>
+                  <strong>{{ fila.cantidad }}</strong>
+                </div>
+                <div class="barras__pista" aria-hidden="true">
+                  <span
+                    class="barras__relleno"
+                    [style.width.%]="(fila.cantidad / maxReclamosReporte()) * 100"
+                  ></span>
+                </div>
+              </li>
+            }
+          </ul>
+        </section>
+      </div>
+
+      <div class="resumen-grid resumen-grid--tablas">
+        <section class="subpanel subpanel--ancho" aria-labelledby="titulo-ingresos-reporte">
+          <h3 id="titulo-ingresos-reporte">Ingresos por mes</h3>
+          @if (resumen.ingresosPorMes.length === 0) {
+            <p class="subpanel__vacio ft-muted">No hay ingresos registrados en el periodo.</p>
+          } @else {
+            <div class="tabla-contenedor">
+              <table>
+                <caption class="ft-sr-only">
+                  Ingresos mensuales del periodo seleccionado
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Mes</th>
+                    <th scope="col">Servicios</th>
+                    <th scope="col">Volumen</th>
+                    <th scope="col">Ingreso FIXTECH</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (ingreso of resumen.ingresosPorMes; track ingreso.mes) {
+                    <tr>
+                      <th scope="row">{{ etiquetaMes(ingreso.mes) }}</th>
+                      <td>{{ ingreso.servicios }}</td>
+                      <td>S/ {{ ingreso.volumenTotal | number: '1.2-2' }}</td>
+                      <td>S/ {{ ingreso.ingresoFixtech | number: '1.2-2' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </section>
+
+        <section class="subpanel" aria-labelledby="titulo-tecnicos-reporte">
+          <h3 id="titulo-tecnicos-reporte">Técnicos más activos</h3>
+          @if (resumen.tecnicosMasActivos.length === 0) {
+            <p class="subpanel__vacio ft-muted">Sin actividad de técnicos en el periodo.</p>
+          } @else {
+            <ol class="ranking">
+              @for (tecnico of resumen.tecnicosMasActivos; track tecnico.tecnicoId) {
+                <li>
+                  <span class="ranking__puesto" aria-hidden="true">#{{ $index + 1 }}</span>
+                  <div class="ranking__datos">
+                    <strong>{{ tecnico.nombre }}</strong>
+                    <span class="ft-muted">
+                      {{ tecnico.servicios }}
+                      {{ tecnico.servicios === 1 ? 'servicio' : 'servicios' }}
+                    </span>
+                  </div>
+                  <span class="ranking__calificacion">
+                    <mat-icon aria-hidden="true">star</mat-icon>
+                    {{ tecnico.calificacionPromedio }}
+                  </span>
+                </li>
+              }
+            </ol>
+          }
+        </section>
+      </div>
+    </section>
+  } @else if (reporteResource.isLoading()) {
+    <div class="estado-panel ft-card" role="status" aria-live="polite">
+      <mat-spinner diameter="40" aria-label="Generando reporte" />
+      <p class="ft-muted">Generando reporte…</p>
+    </div>
+  } @else {
+    <div class="estado-panel ft-card">
+      <mat-icon aria-hidden="true">query_stats</mat-icon>
+      <h2>Sin reporte generado</h2>
+      <p class="ft-muted">Selecciona un periodo y pulsa «Generar reporte».</p>
+    </div>
+  }
+</div>

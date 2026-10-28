@@ -1,0 +1,264 @@
+:host {
+  display: block;
+}
+
+.admin-auditoria {
+  width: min(100% - 2rem, var(--ft-content-max));
+  margin-inline: auto;
+}
+
+.encabezado {
+  display: grid;
+  gap: 1rem;
+}
+
+.encabezado h1 {
+  margin-top: 0.3rem;
+  font-size: clamp(1.7rem, 5vw, 2.4rem);
+}
+
+.encabezado p {
+  max-width: 54rem;
+  margin-top: 0.55rem;
+  font-size: 0.94rem;
+  line-height: 1.6;
+}
+
+.panel-filtros {
+  padding: 1.1rem;
+}
+
+.panel-filtros__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.9rem;
+}
+
+.panel-filtros__cabecera h2 {
+  font-size: 1.05rem;
+}
+
+.panel-filtros__cabecera p {
+  max-width: 44rem;
+  margin-top: 0.2rem;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.panel-filtros__formulario {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.panel-filtros__accion {
+  justify-self: start;
+}
+
+.campo-error {
+  margin-top: 0.15rem;
+  color: var(--ft-danger);
+  font-size: 0.78rem;
+}
+
+.listado__cabecera {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.55rem;
+}
+
+.listado__cabecera h2 {
+  font-size: 1.2rem;
+}
+
+.listado__cabecera p {
+  margin-top: 0.2rem;
+  font-size: 0.82rem;
+}
+
+.listado__actualizando {
+  color: var(--ft-primary-700);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.registros {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.registro {
+  display: grid;
+  gap: 0.7rem;
+  padding: 1rem;
+}
+
+.registro__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem;
+}
+
+.registro__accion {
+  padding: 0.22rem 0.5rem;
+  border-radius: var(--ft-radius-sm);
+  background: var(--ft-primary-50);
+  color: var(--ft-primary-800);
+  font-size: 0.72rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.registro__fecha {
+  color: var(--ft-on-surface-muted);
+  font-size: 0.76rem;
+}
+
+.registro__datos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.registro__datos > div {
+  min-width: 0;
+  padding: 0.5rem 0.6rem;
+  border-radius: var(--ft-radius-sm);
+  background: var(--ft-surface);
+}
+
+.registro__datos > div:first-child {
+  grid-column: 1 / -1;
+}
+
+.registro__datos dt {
+  color: var(--ft-on-surface-muted);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.registro__datos dd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0.15rem 0 0;
+  overflow-wrap: anywhere;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.registro__datos code {
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.registro__datos span {
+  color: var(--ft-on-surface-muted);
+  font-weight: 500;
+}
+
+.registro__detalle {
+  padding: 0.6rem 0.7rem;
+  border-left: 3px solid var(--ft-primary-500);
+  border-radius: 0 var(--ft-radius-sm) var(--ft-radius-sm) 0;
+  background: var(--ft-primary-50);
+  color: var(--ft-primary-950);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.paginacion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.paginacion__estado {
+  min-width: 8rem;
+  color: var(--ft-on-surface-muted);
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.estado-panel {
+  display: grid;
+  justify-items: center;
+  gap: 0.55rem;
+  padding: 2rem 1.25rem;
+  text-align: center;
+}
+
+.estado-panel > mat-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  color: var(--ft-primary-600);
+  font-size: 2.5rem;
+}
+
+.estado-panel h2,
+.estado-panel h3 {
+  font-size: 1.15rem;
+}
+
+.estado-panel p {
+  max-width: 36rem;
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.estado-panel__detalles {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--ft-danger);
+  font-size: 0.82rem;
+  text-align: left;
+}
+
+@media (min-width: 48rem) {
+  .admin-auditoria {
+    width: min(100% - 3rem, var(--ft-content-max));
+  }
+
+  .panel-filtros {
+    padding: 1.35rem;
+  }
+
+  .panel-filtros__formulario {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .panel-filtros__accion {
+    min-height: 3.5rem;
+    align-self: start;
+  }
+
+  .registro {
+    padding: 1.15rem 1.35rem;
+  }
+
+  .registro__datos {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr) minmax(0, 1fr);
+  }
+
+  .registro__datos > div:first-child {
+    grid-column: auto;
+  }
+}

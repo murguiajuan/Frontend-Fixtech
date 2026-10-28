@@ -6,14 +6,15 @@ FIXTECH en `http://localhost:8082/api`.
 
 ## Estado actual
 
-Fases 0 a 8 completadas: base técnica, autenticación JWT, sesión, guards, interceptores, layouts
+Fases 0 a 9 completadas: base técnica, autenticación JWT, sesión, guards, interceptores, layouts
 por rol, panel inicial, administración de técnicos y usuarios, registro y perfil editable del
 técnico con foto autorizada, solicitudes del cliente con fotos, listado, detalle, edición y
 cancelación, solicitudes disponibles y ofertas del técnico, negociación, servicios con aceptación,
 avances, mensajería, ajustes de precio, finalización y conformidad, constancias de taller con
-fotos, reseñas con respuesta y moderación, reclamos con seguimiento administrativo, y comisiones
-del técnico con pagos, comprobantes y validación administrativa. Las demás pantallas de negocio se
-incorporan en las siguientes fases. El plan completo y el progreso están en
+fotos, reseñas con respuesta y moderación, reclamos con seguimiento administrativo, comisiones del
+técnico con pagos, comprobantes y validación administrativa, y administración de catálogos,
+parámetros del sistema, dashboard, reportes con exportación Excel y auditoría. Las demás pantallas
+de negocio se incorporan en las siguientes fases. El plan completo y el progreso están en
 [`PLAN_FRONTEND.md`](./PLAN_FRONTEND.md).
 
 ## Stack
@@ -87,9 +88,11 @@ aceptación directa de una oferta, PIN de inicio, diagnóstico con foto, mensaje
 finalización y conformidad. La prueba de taller crea un técnico que solo atiende en taller y
 verifica constancias de recepción y entrega, finalización, reseña del cliente, respuesta y reporte
 del técnico, moderación administrativa, reclamo con foto, respuesta técnica y el seguimiento
-`ABIERTO → EN_REVISION → RESUELTO → CERRADO`. Requiere el backend y MySQL locales. Sin
-`E2E_BACKEND=1` esas pruebas se omiten y solo corren las públicas. No existe un endpoint para
-limpiar las cuentas y solicitudes creadas por las pruebas.
+`ABIERTO → EN_REVISION → RESUELTO → CERRADO`. La prueba de catálogos crea, edita, desactiva,
+oculta, reactiva y crea un distrito real; el smoke administrativo recorre parámetros, reportes y
+auditoría. Requiere el backend y MySQL locales. Sin `E2E_BACKEND=1` esas pruebas se omiten y solo
+corren las públicas. No existe un endpoint para limpiar las cuentas, solicitudes y catálogos creados
+por las pruebas.
 
 ## Estructura
 
@@ -99,11 +102,12 @@ src/
 │   ├── core/
 │   │   ├── auth/          # Sesión, AuthService, refresh, interceptores y guards
 │   │   ├── catalogos/     # Catálogos públicos de especialidades y distritos
-│   │   ├── http/          # Normalización de errores de API
+│   │   ├── http/          # Normalización de errores y descarga autenticada de archivos
 │   │   ├── layout/        # Layout público y layout privado con sidenav
-│   │   └── models/        # Etiquetas y tipos compartidos
+│   │   └── models/        # Etiquetas, fechas y tipos compartidos
 │   ├── features/
-│   │   ├── admin/         # Técnicos, usuarios, reseñas y reclamos
+│   │   ├── admin/         # Técnicos, usuarios, reseñas, reclamos, catálogos, parámetros,
+│   │   │                  # reportes y auditoría
 │   │   ├── auth/          # Login, registro de cliente y registro de técnico
 │   │   ├── cliente/       # Solicitudes: creación, listado, detalle, edición y cancelación
 │   │   ├── dashboard/     # Panel inicial por rol
@@ -126,7 +130,7 @@ e2e/                       # Pruebas Playwright y Axe
 | --------- | -------------- | -------------------------------------------------------------------------------------------------------------------- |
 | `CLIENTE` | `/app/inicio`  | Inicio, nueva solicitud, mis solicitudes y mis servicios; ofertas y negociación en el detalle                        |
 | `TECNICO` | `/app/inicio`  | Inicio, mi perfil, solicitudes disponibles, mis ofertas y mis servicios; bloqueado si no está aprobado o tiene deuda |
-| `ADMIN`   | `/app/inicio`  | Inicio, técnicos, usuarios, reseñas y reclamos; reportes y catálogos como “Próximamente”                             |
+| `ADMIN`   | `/app/inicio`  | Inicio, técnicos, usuarios, reseñas, reclamos, comisiones y pagos, reportes, catálogos, parámetros y auditoría       |
 
 Los guards protegen las rutas privadas:
 
@@ -304,6 +308,31 @@ CERRADO` con `PATCH /api/admin/reclamos/{id}/estado`. Resolver o cerrar exige un
 > sincroniza al validar pagos y con la revisión programada; la interfaz explica ese comportamiento
 > y no ofrece acciones que la API no admita.
 
+## Catálogos, parámetros, reportes y auditoría
+
+- `/app/admin/catalogos` administra tipos de equipo, tipos de servicio, especialidades y distritos
+  con `GET/POST/PUT /api/admin/catalogos/{tipo}`. El listado usa `incluirInactivos=true` por
+  defecto y permite ocultar los inactivos; la búsqueda se aplica en el cliente.
+- El diálogo de alta y edición es único y adapta sus campos al catálogo: nombre, descripción
+  opcional y, en distritos, provincia y tope de movilidad. Los límites replican el backend (60 u
+  80 caracteres según el catálogo, descripción de hasta 200 y provincia de hasta 60, tope de
+  movilidad de 0 a 1,000,000.00).
+- La activación y desactivación usan `PATCH /api/admin/catalogos/{tipo}/{id}/estado` con
+  `{ activo }`. Desactivar exige confirmación; activar no. No se ofrece borrado físico porque la
+  API no lo expone.
+- `/app/admin/parametros` edita los 13 parámetros del sistema con `GET/PUT /api/admin/parametros`.
+  El formulario muestra descripción, valor vigente y última actualización, valida enteros,
+  decimales y rangos igual que el backend, y envía solo los parámetros modificados.
+- `/app/admin/reportes` muestra el dashboard de `GET /api/admin/dashboard` y el reporte de
+  `GET /api/admin/reportes?desde=&hasta=`. El periodo es obligatorio, no puede superar los 366
+  días de diferencia y la descarga usa `GET /api/admin/reportes/excel` como blob autenticado,
+  respetando el nombre indicado en `Content-Disposition`.
+- `/app/admin/auditoria` consulta `GET /api/admin/auditoria` con filtros por usuario, entidad,
+  acción y rango de fechas opcional, y paginación de 20 elementos. Cada registro muestra la acción,
+  entidad afectada, detalle, IP y fecha.
+- Los cuatro módulos incluyen estados de carga, error con reintento y vacío, y son accesibles desde
+  la navegación lateral y el panel inicial del administrador.
+
 ## Autenticación
 
 1. `POST /api/auth/login` devuelve `accessToken`, `refreshToken` y `expiraEnSegundos`.
@@ -344,7 +373,8 @@ de ser compatible.
 
 Tampoco existen endpoints para desbloquear manualmente a un técnico ni para editar o anular un
 pago de comisión; el bloqueo se sincroniza automáticamente al validar pagos y con la revisión
-programada del backend.
+programada del backend. Los catálogos administrativos no tienen borrado físico: se crean, editan y
+activan o desactivan.
 
 El registro completo, el impacto y la decisión provisional de cada brecha están en
 [`BRECHAS_PENDIENTES.md`](./BRECHAS_PENDIENTES.md). Se resolverán al final del proyecto.
@@ -363,7 +393,7 @@ npm run e2e
 
 Las pruebas E2E incluyen Axe con las reglas WCAG 2.0/2.1 A y AA en escritorio y en un viewport
 móvil de 360 px. La interfaz es mobile-first, con foco visible, etiquetas explícitas y mensajes
-de error anunciados. Las pantallas y diálogos de las fases 2 a 8 también se auditan; los iconos
+de error anunciados. Las pantallas y diálogos de las fases 2 a 9 también se auditan; los iconos
 de los botones con `aria-label` se renderizan como SVG decorativos para no mezclar ligaduras de
 fuentes con el nombre accesible.
 

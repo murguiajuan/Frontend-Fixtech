@@ -21,6 +21,7 @@ contrario.
 | 12  | Sin endpoints de notificaciones en la SPA                     | El backend genera notificaciones, pero el centro de notificaciones pertenece a la Fase 10.                                              | No se muestran badges ni bandejas de notificaciones todavía.                                                                    |
 | 13  | Mensajería sin actualización en tiempo real                   | No hay WebSocket ni SSE para mensajes; la conversación solo se actualiza al abrir el detalle o pulsar “Actualizar”.                     | Se mantiene la actualización manual y se informa en la interfaz; no se simula tiempo real.                                      |
 | 14  | Pagos de comisión sin anulación ni desbloqueo manual          | No hay endpoints para editar o anular pagos ni para retirar el bloqueo por deuda manualmente.                                           | El bloqueo se sincroniza al validar pagos y con la revisión programada; la UI lo explica y no ofrece acciones inexistentes.     |
+| 15  | Catálogos administrativos sin borrado físico                  | No existe `DELETE` para tipos de equipo, tipos de servicio, especialidades ni distritos.                                                | Solo se crean, editan y activan/desactivan; la interfaz no ofrece eliminación.                                                  |
 
 ## Brechas cerradas
 

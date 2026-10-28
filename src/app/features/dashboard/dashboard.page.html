@@ -194,7 +194,8 @@
           <div>
             <h2 id="titulo-admin">Panel administrativo</h2>
             <p class="ft-muted">
-              Revisa las cuentas y la verificación de técnicos desde un solo lugar.
+              Consulta indicadores, administra catálogos, parámetros y revisa la auditoría desde un
+              solo lugar.
             </p>
           </div>
           <span class="estado estado--ok">Administrador</span>
@@ -230,109 +231,110 @@
             <span class="ft-muted">Valida comprobantes y revisa la deuda de comisiones.</span>
             <mat-icon class="admin__flecha" aria-hidden="true">arrow_forward</mat-icon>
           </a>
-          <div class="admin__acceso admin__acceso--bloqueado">
+          <a class="admin__acceso" routerLink="/app/admin/reportes">
             <mat-icon aria-hidden="true">monitoring</mat-icon>
-            <strong>Reportes</strong>
-            <span class="ft-muted">Consulta indicadores y exporta información.</span>
-            <span class="admin__pronto">Próximamente</span>
-          </div>
+            <strong>Reportes e indicadores</strong>
+            <span class="ft-muted">Consulta indicadores y exporta información a Excel.</span>
+            <mat-icon class="admin__flecha" aria-hidden="true">arrow_forward</mat-icon>
+          </a>
+          <a class="admin__acceso" routerLink="/app/admin/catalogos">
+            <mat-icon aria-hidden="true">category</mat-icon>
+            <strong>Catálogos</strong>
+            <span class="ft-muted">Gestiona equipos, servicios, especialidades y distritos.</span>
+            <mat-icon class="admin__flecha" aria-hidden="true">arrow_forward</mat-icon>
+          </a>
+          <a class="admin__acceso" routerLink="/app/admin/parametros">
+            <mat-icon aria-hidden="true">tune</mat-icon>
+            <strong>Parámetros</strong>
+            <span class="ft-muted">Ajusta comisiones, plazos, movilidad y topes.</span>
+            <mat-icon class="admin__flecha" aria-hidden="true">arrow_forward</mat-icon>
+          </a>
+          <a class="admin__acceso" routerLink="/app/admin/auditoria">
+            <mat-icon aria-hidden="true">history</mat-icon>
+            <strong>Auditoría</strong>
+            <span class="ft-muted">Revisa las acciones administrativas registradas.</span>
+            <mat-icon class="admin__flecha" aria-hidden="true">arrow_forward</mat-icon>
+          </a>
         </div>
       </section>
     }
 
-    <section aria-labelledby="titulo-modulos">
-      <div class="seccion__cabecera">
-        <div>
-          <p class="ft-eyebrow">Hoja de ruta</p>
-          <h2 id="titulo-modulos">Próximos módulos</h2>
+    @if (!esAdmin()) {
+      <section aria-labelledby="titulo-modulos">
+        <div class="seccion__cabecera">
+          <div>
+            <p class="ft-eyebrow">Hoja de ruta</p>
+            <h2 id="titulo-modulos">Próximos módulos</h2>
+          </div>
         </div>
-      </div>
-      <div class="modulos">
-        @if (esCliente()) {
-          <a class="modulo ft-card modulo--enlace" routerLink="/app/cliente/solicitudes/nueva">
-            <mat-icon aria-hidden="true">add_circle</mat-icon>
-            <h3>Nueva solicitud</h3>
-            <p class="ft-muted">Publica una solicitud con fotos y recibe ofertas.</p>
-            <span class="modulo__estado">Disponible</span>
-          </a>
-          <a class="modulo ft-card modulo--enlace" routerLink="/app/cliente/solicitudes">
-            <mat-icon aria-hidden="true">assignment</mat-icon>
-            <h3>Mis solicitudes</h3>
-            <p class="ft-muted">Sigue el estado de tus publicaciones activas.</p>
-            <span class="modulo__estado">Disponible</span>
-          </a>
-          <a class="modulo ft-card modulo--enlace" routerLink="/app/cliente/servicios">
-            <mat-icon aria-hidden="true">build_circle</mat-icon>
-            <h3>Mis servicios</h3>
-            <p class="ft-muted">Consulta avances, mensajes y confirma la conformidad.</p>
-            <span class="modulo__estado">Disponible</span>
-          </a>
-        } @else if (esTecnico()) {
-          @if (aprobado() && !bloqueado()) {
-            <a class="modulo ft-card modulo--enlace" routerLink="/app/tecnico/solicitudes">
-              <mat-icon aria-hidden="true">work_outline</mat-icon>
-              <h3>Solicitudes disponibles</h3>
-              <p class="ft-muted">Encuentra trabajos compatibles con tu especialidad.</p>
+        <div class="modulos">
+          @if (esCliente()) {
+            <a class="modulo ft-card modulo--enlace" routerLink="/app/cliente/solicitudes/nueva">
+              <mat-icon aria-hidden="true">add_circle</mat-icon>
+              <h3>Nueva solicitud</h3>
+              <p class="ft-muted">Publica una solicitud con fotos y recibe ofertas.</p>
               <span class="modulo__estado">Disponible</span>
             </a>
-            <a class="modulo ft-card modulo--enlace" routerLink="/app/tecnico/ofertas">
-              <mat-icon aria-hidden="true">request_quote</mat-icon>
-              <h3>Mis ofertas</h3>
-              <p class="ft-muted">Revisa el estado de las propuestas enviadas.</p>
+            <a class="modulo ft-card modulo--enlace" routerLink="/app/cliente/solicitudes">
+              <mat-icon aria-hidden="true">assignment</mat-icon>
+              <h3>Mis solicitudes</h3>
+              <p class="ft-muted">Sigue el estado de tus publicaciones activas.</p>
+              <span class="modulo__estado">Disponible</span>
+            </a>
+            <a class="modulo ft-card modulo--enlace" routerLink="/app/cliente/servicios">
+              <mat-icon aria-hidden="true">build_circle</mat-icon>
+              <h3>Mis servicios</h3>
+              <p class="ft-muted">Consulta avances, mensajes y confirma la conformidad.</p>
               <span class="modulo__estado">Disponible</span>
             </a>
           } @else {
-            <article class="modulo ft-card modulo--bloqueado">
-              <mat-icon aria-hidden="true">work_outline</mat-icon>
-              <h3>Solicitudes disponibles</h3>
-              <p class="ft-muted">Encuentra trabajos compatibles con tu especialidad.</p>
-              <span class="modulo__estado">
-                {{ bloqueado() ? 'Requiere regularizar comisiones' : 'Requiere perfil aprobado' }}
-              </span>
-            </article>
-            <article class="modulo ft-card modulo--bloqueado">
-              <mat-icon aria-hidden="true">request_quote</mat-icon>
-              <h3>Mis ofertas</h3>
-              <p class="ft-muted">Revisa el estado de las propuestas enviadas.</p>
-              <span class="modulo__estado">
-                {{ bloqueado() ? 'Requiere regularizar comisiones' : 'Requiere perfil aprobado' }}
-              </span>
-            </article>
+            @if (aprobado() && !bloqueado()) {
+              <a class="modulo ft-card modulo--enlace" routerLink="/app/tecnico/solicitudes">
+                <mat-icon aria-hidden="true">work_outline</mat-icon>
+                <h3>Solicitudes disponibles</h3>
+                <p class="ft-muted">Encuentra trabajos compatibles con tu especialidad.</p>
+                <span class="modulo__estado">Disponible</span>
+              </a>
+              <a class="modulo ft-card modulo--enlace" routerLink="/app/tecnico/ofertas">
+                <mat-icon aria-hidden="true">request_quote</mat-icon>
+                <h3>Mis ofertas</h3>
+                <p class="ft-muted">Revisa el estado de las propuestas enviadas.</p>
+                <span class="modulo__estado">Disponible</span>
+              </a>
+            } @else {
+              <article class="modulo ft-card modulo--bloqueado">
+                <mat-icon aria-hidden="true">work_outline</mat-icon>
+                <h3>Solicitudes disponibles</h3>
+                <p class="ft-muted">Encuentra trabajos compatibles con tu especialidad.</p>
+                <span class="modulo__estado">
+                  {{ bloqueado() ? 'Requiere regularizar comisiones' : 'Requiere perfil aprobado' }}
+                </span>
+              </article>
+              <article class="modulo ft-card modulo--bloqueado">
+                <mat-icon aria-hidden="true">request_quote</mat-icon>
+                <h3>Mis ofertas</h3>
+                <p class="ft-muted">Revisa el estado de las propuestas enviadas.</p>
+                <span class="modulo__estado">
+                  {{ bloqueado() ? 'Requiere regularizar comisiones' : 'Requiere perfil aprobado' }}
+                </span>
+              </article>
+            }
+            <a class="modulo ft-card modulo--enlace" routerLink="/app/tecnico/servicios">
+              <mat-icon aria-hidden="true">build_circle</mat-icon>
+              <h3>Mis servicios</h3>
+              <p class="ft-muted">Gestiona los servicios asignados y registra avances.</p>
+              <span class="modulo__estado">Disponible</span>
+            </a>
+            <a class="modulo ft-card modulo--enlace" routerLink="/app/tecnico/comisiones">
+              <mat-icon aria-hidden="true">payments</mat-icon>
+              <h3>Comisiones</h3>
+              <p class="ft-muted">Consulta tu saldo, registra pagos y revisa tus comprobantes.</p>
+              <span class="modulo__estado">Disponible</span>
+            </a>
           }
-          <a class="modulo ft-card modulo--enlace" routerLink="/app/tecnico/servicios">
-            <mat-icon aria-hidden="true">build_circle</mat-icon>
-            <h3>Mis servicios</h3>
-            <p class="ft-muted">Gestiona los servicios asignados y registra avances.</p>
-            <span class="modulo__estado">Disponible</span>
-          </a>
-          <a class="modulo ft-card modulo--enlace" routerLink="/app/tecnico/comisiones">
-            <mat-icon aria-hidden="true">payments</mat-icon>
-            <h3>Comisiones</h3>
-            <p class="ft-muted">Consulta tu saldo, registra pagos y revisa tus comprobantes.</p>
-            <span class="modulo__estado">Disponible</span>
-          </a>
-        } @else {
-          <article class="modulo ft-card">
-            <mat-icon aria-hidden="true">summarize</mat-icon>
-            <h3>Reportes</h3>
-            <p class="ft-muted">Indicadores operativos y exportación.</p>
-            <span class="modulo__estado">Próximamente</span>
-          </article>
-          <article class="modulo ft-card">
-            <mat-icon aria-hidden="true">category</mat-icon>
-            <h3>Catálogos</h3>
-            <p class="ft-muted">Gestión de especialidades, distritos y tipos de servicio.</p>
-            <span class="modulo__estado">Próximamente</span>
-          </article>
-          <article class="modulo ft-card">
-            <mat-icon aria-hidden="true">tune</mat-icon>
-            <h3>Parámetros</h3>
-            <p class="ft-muted">Configuración de comisiones, movilidad y topes.</p>
-            <span class="modulo__estado">Próximamente</span>
-          </article>
-        }
-      </div>
-    </section>
+        </div>
+      </section>
+    }
   </div>
 } @else {
   <div class="tablero tablero--cargando">

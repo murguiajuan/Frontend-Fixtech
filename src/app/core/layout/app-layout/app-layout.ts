@@ -158,6 +158,30 @@ export class AppLayout {
           ruta: '/app/admin/comisiones',
           disponible: true,
         },
+        {
+          etiqueta: 'Reportes',
+          icono: 'monitoring',
+          ruta: '/app/admin/reportes',
+          disponible: true,
+        },
+        {
+          etiqueta: 'Catálogos',
+          icono: 'category',
+          ruta: '/app/admin/catalogos',
+          disponible: true,
+        },
+        {
+          etiqueta: 'Parámetros',
+          icono: 'tune',
+          ruta: '/app/admin/parametros',
+          disponible: true,
+        },
+        {
+          etiqueta: 'Auditoría',
+          icono: 'history',
+          ruta: '/app/admin/auditoria',
+          disponible: true,
+        },
       );
     }
     return items;

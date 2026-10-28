@@ -56,8 +56,8 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
 | 5    | Técnico: solicitudes disponibles y ofertas             | ✅ Completada |
 | 6    | Servicios: aceptación y ejecución del servicio         | ✅ Completada |
 | 7    | Cierre, constancias, reseñas y reclamos                | ✅ Completada |
-| 8    | Comisiones y pagos del técnico                         | ⏳ Pendiente  |
-| 9    | Administración de catálogos, parámetros y reportes     | ⏳ Pendiente  |
+| 8    | Comisiones y pagos del técnico                         | ✅ Completada |
+| 9    | Administración de catálogos, parámetros y reportes     | ✅ Completada |
 | 10   | Notificaciones y perfil de usuario                     | ⏳ Pendiente  |
 | 11   | Endurecimiento UX, rendimiento y seguridad             | ⏳ Pendiente  |
 | 12   | QA final, documentación y despliegue                   | ⏳ Pendiente  |
@@ -476,15 +476,62 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
 - [x] Axe sin violaciones en comisiones, historial, diálogos y pantalla administrativa.
 - [x] Flujo real de pago de comisión y validación administrativa verificado contra la API.
 
-## 13. Fase 9 — Administración de catálogos, parámetros y reportes ⏳
+## 13. Fase 9 — Administración de catálogos, parámetros y reportes ✅
 
-- [ ] CRUD de tipos de equipo, tipos de servicio, especialidades y distritos.
-- [ ] Activación/desactivación de catálogos.
-- [ ] Parámetros del sistema con validación.
-- [ ] Dashboard administrativo con indicadores.
-- [ ] Reportes y exportación Excel.
-- [ ] Auditoría con filtros y paginación.
-- [ ] Pruebas de formularios y E2E de catálogos.
+### Contratos usados
+
+- `GET`, `POST`, `PUT` y `PATCH /api/admin/catalogos/{tipos-equipo|tipos-servicio|especialidades|distritos}`.
+  El listado acepta `incluirInactivos`; el cambio de estado usa `PATCH /{id}/estado` con
+  `{ activo: boolean }`. La API no expone borrado físico.
+- `GET` y `PUT /api/admin/parametros`. El `PUT` recibe solo los cambios con
+  `{ parametros: [{ clave, valor }] }`, admite hasta 13 elementos y devuelve la lista completa.
+- `GET /api/admin/dashboard` y `GET /api/admin/reportes?desde=YYYY-MM-DD&hasta=YYYY-MM-DD`.
+- `GET /api/admin/reportes/excel` con el mismo rango; responde un blob y expone
+  `Content-Disposition`.
+- `GET /api/admin/auditoria?usuarioId=&entidad=&accion=&desde=&hasta=&pagina=0&tamano=20`, con
+  paginación 0-based y `tamano` máximo 100.
+
+### Frontend
+
+- [x] `/app/admin/catalogos` con pestañas de tipos de equipo, tipos de servicio, especialidades y
+      distritos; listado con búsqueda, inclusión de inactivos y estados de carga, error y vacío.
+- [x] Alta y edición en un diálogo único con formulario tipado: nombre obligatorio, descripción
+      opcional y campos propios del distrito (provincia y tope de movilidad). Los límites replican
+      los del backend: 60 caracteres para equipo y distrito, 80 para servicio y especialidad, 200
+      para descripción, 60 para provincia y tope de movilidad de `0` a `1,000,000.00`.
+- [x] Activación y desactivación con `PATCH /{id}/estado`; desactivar exige confirmación y activar
+      no. El listado se recarga después de cada cambio y se explican los errores de la API.
+- [x] Edición visible según el tipo de catálogo; no se ofrecen acciones de borrado porque la API
+      no las expone.
+- [x] `/app/admin/parametros` edita los 13 parámetros del sistema en un formulario único, muestra
+      su descripción, valor vigente y última actualización, valida enteros, decimales y rangos con
+      las mismas reglas del backend y envía únicamente los cambios.
+- [x] Confirmación de cambios pendientes, opción de descartarlos, estados de carga, error con
+      reintento y vacío, y mensajes de validación por campo.
+- [x] `/app/admin/reportes` combina el dashboard administrativo (`GET /api/admin/dashboard`) con
+      el reporte por periodo (`GET /api/admin/reportes`) y muestra solicitudes, servicios por
+      estado, comisiones, deuda, pagos por validar, técnicos activos, calificación, reseñas,
+      reclamos, ingresos por mes y técnicos más activos.
+- [x] El reporte usa un rango obligatorio, rechaza periodos con más de 366 días de diferencia
+      —igual que el backend— y permite descargar el Excel autenticado con el nombre indicado por
+      `Content-Disposition`.
+- [x] `/app/admin/auditoria` lista las acciones con filtros por usuario, entidad, acción y rango de
+      fechas opcional, paginación de 20 elementos, detalle de IP y entidad afectada, y estados de
+      carga, error con reintento y vacío.
+- [x] Rutas con `roleGuard` de `ADMIN`, entradas en el sidenav y accesos desde el panel inicial;
+      se retiraron los avisos de “Próximamente”.
+- [x] Pruebas unitarias de servicios HTTP, modelos de parámetros y reportes, helpers de fechas y
+      descarga, páginas de catálogos, parámetros, reportes y auditoría, y diálogo de catálogos.
+- [x] E2E de catálogos que crea, edita, desactiva, oculta, reactiva y crea un distrito real, más un
+      smoke E2E de parámetros, reportes y auditoría; ambos con Axe en escritorio y 360 px.
+
+### Criterios de cierre
+
+- [x] Build de producción, lint y formato sin errores.
+- [x] 460 pruebas unitarias en 70 archivos, todas en verde.
+- [x] 24 pruebas E2E en verde en Chromium y móvil de 360 px con el backend local.
+- [x] Axe sin violaciones en catálogos, parámetros, reportes, auditoría y diálogos.
+- [x] Exportación real de Excel verificada contra la API con 6511 bytes.
 
 ## 14. Fase 10 — Notificaciones y perfil ⏳
 
@@ -549,12 +596,14 @@ mensajería sin tiempo real.
 
 ## 19. Registro de avances
 
-| Fecha      | Fase  | Evidencia                                                                                                                                                                                                        |
-| ---------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-10-27 | 0 y 1 | Build de producción, 21 pruebas unitarias, lint, Prettier y 8 pruebas E2E con Axe en escritorio y 360 px; login real contra backend verificado                                                                   |
-| 2026-10-27 | 2     | Build de producción, 53 pruebas unitarias, lint y Prettier; 10 pruebas E2E con Axe en escritorio y 360 px; aprobación real de un técnico creado vía API y estado verificado con `GET /api/admin/tecnicos`        |
-| 2026-10-27 | 3     | Build de producción, 73 pruebas unitarias, lint y Prettier; 12 pruebas E2E con Axe en escritorio y 360 px; registro real de un técnico, login y perfil `PENDIENTE` verificado desde la interfaz                  |
-| 2026-10-27 | 4     | Build de producción, 128 pruebas unitarias, lint y Prettier; 14 pruebas E2E con Axe en escritorio y 360 px; perfil técnico editable con foto autorizada y solicitud real con foto creada, editada y cancelada    |
-| 2026-10-27 | 5     | Build de producción, 192 pruebas unitarias en 31 archivos, lint y Prettier; 16 pruebas E2E con Axe en escritorio y 360 px; oferta, contraoferta y creación real del servicio verificadas contra la API           |
-| 2026-10-27 | 6     | Build de producción, 270 pruebas unitarias en 42 archivos, lint y Prettier; 18 pruebas E2E con Axe en escritorio y 360 px; aceptación, ejecución, ajuste y conformidad verificados contra la API                 |
-| 2026-10-27 | 7     | Build de producción, 358 pruebas unitarias en 52 archivos, lint y Prettier; 20 pruebas E2E con Axe en escritorio y 360 px; constancias de taller, reseña, moderación, reclamo y cierre verificados contra la API |
+| Fecha      | Fase  | Evidencia                                                                                                                                                                                                          |
+| ---------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-10-27 | 0 y 1 | Build de producción, 21 pruebas unitarias, lint, Prettier y 8 pruebas E2E con Axe en escritorio y 360 px; login real contra backend verificado                                                                     |
+| 2026-10-27 | 2     | Build de producción, 53 pruebas unitarias, lint y Prettier; 10 pruebas E2E con Axe en escritorio y 360 px; aprobación real de un técnico creado vía API y estado verificado con `GET /api/admin/tecnicos`          |
+| 2026-10-27 | 3     | Build de producción, 73 pruebas unitarias, lint y Prettier; 12 pruebas E2E con Axe en escritorio y 360 px; registro real de un técnico, login y perfil `PENDIENTE` verificado desde la interfaz                    |
+| 2026-10-27 | 4     | Build de producción, 128 pruebas unitarias, lint y Prettier; 14 pruebas E2E con Axe en escritorio y 360 px; perfil técnico editable con foto autorizada y solicitud real con foto creada, editada y cancelada      |
+| 2026-10-27 | 5     | Build de producción, 192 pruebas unitarias en 31 archivos, lint y Prettier; 16 pruebas E2E con Axe en escritorio y 360 px; oferta, contraoferta y creación real del servicio verificadas contra la API             |
+| 2026-10-27 | 6     | Build de producción, 270 pruebas unitarias en 42 archivos, lint y Prettier; 18 pruebas E2E con Axe en escritorio y 360 px; aceptación, ejecución, ajuste y conformidad verificados contra la API                   |
+| 2026-10-27 | 7     | Build de producción, 358 pruebas unitarias en 52 archivos, lint y Prettier; 20 pruebas E2E con Axe en escritorio y 360 px; constancias de taller, reseña, moderación, reclamo y cierre verificados contra la API   |
+| 2026-10-27 | 8     | Build de producción, 393 pruebas unitarias en 57 archivos, lint y Prettier; 20 pruebas E2E con Axe en escritorio y 360 px; pago real con comprobante y validación administrativa verificados contra la API         |
+| 2026-10-27 | 9     | Build de producción, 460 pruebas unitarias en 70 archivos, lint y Prettier; 24 pruebas E2E con Axe en escritorio y 360 px; catálogos, parámetros, dashboard, reportes, Excel y auditoría verificados contra la API |

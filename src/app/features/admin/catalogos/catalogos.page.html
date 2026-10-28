@@ -1,0 +1,173 @@
+<div class="admin-catalogos ft-page">
+  <header class="encabezado">
+    <div>
+      <p class="ft-eyebrow">Administración</p>
+      <h1>Catálogos</h1>
+      <p class="ft-muted">
+        Administra los tipos de equipo y servicio, las especialidades técnicas y los distritos que
+        usa la plataforma. Los registros inactivos se conservan como historial.
+      </p>
+    </div>
+  </header>
+
+  <section class="selector ft-card" aria-labelledby="titulo-selector-catalogo">
+    <div class="selector__cabecera">
+      <div>
+        <h2 id="titulo-selector-catalogo">Catálogo</h2>
+        <p class="ft-muted">Elige el catálogo y crea o actualiza sus registros.</p>
+      </div>
+      <button mat-flat-button type="button" (click)="abrirCrear()">
+        <mat-icon aria-hidden="true">add</mat-icon>
+        {{ opcion().tituloCrear }}
+      </button>
+    </div>
+
+    <div class="selector__tipos" role="group" aria-label="Seleccionar catálogo">
+      @for (opcionTipo of opciones; track opcionTipo.tipo) {
+        <button
+          class="selector__tipo"
+          type="button"
+          [class.selector__tipo--activo]="tipoSeleccionado() === opcionTipo.tipo"
+          [attr.aria-pressed]="tipoSeleccionado() === opcionTipo.tipo"
+          (click)="cambiarTipo(opcionTipo.tipo)"
+        >
+          <mat-icon aria-hidden="true">{{ opcionTipo.icono }}</mat-icon>
+          <span>{{ opcionTipo.etiqueta }}</span>
+        </button>
+      }
+    </div>
+
+    <div class="selector__opciones">
+      <mat-checkbox [checked]="incluirInactivos()" (change)="cambiarIncluirInactivos($event)">
+        Mostrar inactivos
+      </mat-checkbox>
+      <span class="ft-muted"> Desmárcalo para ver únicamente los registros disponibles. </span>
+    </div>
+  </section>
+
+  @if (error(); as fallo) {
+    <section class="estado-panel ft-card" role="alert" aria-labelledby="titulo-error-catalogos">
+      <mat-icon aria-hidden="true">cloud_off</mat-icon>
+      <h2 id="titulo-error-catalogos">No pudimos cargar el catálogo</h2>
+      <p class="ft-muted">{{ fallo.mensaje }}</p>
+      @if (fallo.detalles.length > 0) {
+        <ul class="estado-panel__detalles">
+          @for (detalle of fallo.detalles; track detalle) {
+            <li>{{ detalle }}</li>
+          }
+        </ul>
+      }
+      <button mat-flat-button type="button" (click)="recargar()">
+        <mat-icon aria-hidden="true">refresh</mat-icon>
+        Reintentar
+      </button>
+    </section>
+  } @else if (catalogoResource.isLoading()) {
+    <div class="estado-panel ft-card" role="status" aria-live="polite">
+      <mat-spinner diameter="40" aria-label="Cargando catálogo" />
+      <p class="ft-muted">Cargando {{ opcion().etiqueta.toLowerCase() }}…</p>
+    </div>
+  } @else {
+    <section aria-labelledby="titulo-listado-catalogo">
+      <div class="listado__cabecera">
+        <div>
+          <h2 id="titulo-listado-catalogo">{{ opcion().etiqueta }}</h2>
+          <p class="ft-muted" role="status">
+            {{ itemsVista().length }}
+            {{ itemsVista().length === 1 ? 'registro' : 'registros' }}
+            @if (!incluirInactivos()) {
+              activos
+            } @else {
+              en total
+            }
+          </p>
+        </div>
+      </div>
+
+      @if (itemsVista().length === 0) {
+        <div class="estado-panel ft-card">
+          <mat-icon aria-hidden="true">category</mat-icon>
+          <h3>No se encontraron registros</h3>
+          <p class="ft-muted">
+            @if (!incluirInactivos()) {
+              Este catálogo no tiene registros activos. Puedes mostrar los inactivos para revisar el
+              historial.
+            } @else {
+              Crea el primer registro para comenzar a usarlo en la plataforma.
+            }
+          </p>
+          <div class="estado-panel__acciones">
+            @if (!incluirInactivos()) {
+              <button mat-stroked-button type="button" (click)="mostrarInactivos()">
+                <mat-icon aria-hidden="true">visibility</mat-icon>
+                Mostrar inactivos
+              </button>
+            }
+            <button mat-flat-button type="button" (click)="abrirCrear()">
+              <mat-icon aria-hidden="true">add</mat-icon>
+              {{ opcion().tituloCrear }}
+            </button>
+          </div>
+        </div>
+      } @else {
+        <ul class="listado">
+          @for (vista of itemsVista(); track vista.item.id) {
+            <li>
+              <article
+                class="catalogo ft-card"
+                [class.catalogo--inactivo]="esInactivo(vista.item)"
+                [attr.aria-labelledby]="'catalogo-' + opcion().tipo + '-' + vista.item.id"
+              >
+                <div class="catalogo__cabecera">
+                  <span class="catalogo__icono" aria-hidden="true">
+                    <mat-icon>{{ opcion().icono }}</mat-icon>
+                  </span>
+                  <div class="catalogo__identidad">
+                    <h3 [id]="'catalogo-' + opcion().tipo + '-' + vista.item.id">
+                      {{ vista.item.nombre }}
+                    </h3>
+                    @if (vista.detalle; as detalle) {
+                      <p class="ft-muted">{{ detalle }}</p>
+                    }
+                  </div>
+                  <app-estado-badge
+                    [texto]="vista.item.activo ? 'Activo' : 'Inactivo'"
+                    [tono]="vista.item.activo ? 'ok' : 'neutral'"
+                  />
+                </div>
+
+                <div class="catalogo__acciones">
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    [disabled]="procesandoId() !== null"
+                    (click)="abrirEditar(vista.item)"
+                  >
+                    <mat-icon aria-hidden="true">edit</mat-icon>
+                    Editar
+                  </button>
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    [color]="vista.item.activo ? 'warn' : 'primary'"
+                    [disabled]="procesandoId() !== null"
+                    (click)="cambiarEstado(vista.item)"
+                  >
+                    @if (procesandoId() === vista.item.id) {
+                      <mat-spinner diameter="18" aria-label="Actualizando estado" />
+                    } @else {
+                      <mat-icon aria-hidden="true">
+                        {{ vista.item.activo ? 'toggle_off' : 'toggle_on' }}
+                      </mat-icon>
+                    }
+                    {{ vista.item.activo ? 'Desactivar' : 'Activar' }}
+                  </button>
+                </div>
+              </article>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  }
+</div>

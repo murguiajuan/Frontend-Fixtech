@@ -1,0 +1,26 @@
+mat-dialog-content {
+  padding-top: 0.5rem;
+}
+
+.catalogo-form {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.catalogo-form__detalles {
+  margin: 0.35rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.82rem;
+  text-align: left;
+}
+
+mat-dialog-actions {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-bottom: 1rem;
+}
+
+mat-spinner {
+  display: inline-block;
+  margin-right: 0.35rem;
+}

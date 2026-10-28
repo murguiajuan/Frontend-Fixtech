@@ -1,0 +1,249 @@
+<div class="admin-auditoria ft-page">
+  <header class="encabezado">
+    <div>
+      <p class="ft-eyebrow">Administración</p>
+      <h1>Auditoría</h1>
+      <p class="ft-muted">
+        Revisa las acciones administrativas registradas por FIXTECH. Puedes filtrar por usuario,
+        entidad, acción y rango de fechas.
+      </p>
+    </div>
+  </header>
+
+  <section class="panel-filtros ft-card" aria-labelledby="titulo-filtros-auditoria">
+    <div class="panel-filtros__cabecera">
+      <div>
+        <h2 id="titulo-filtros-auditoria">Filtros</h2>
+        <p class="ft-muted">
+          Los filtros de entidad y acción aceptan hasta 60 caracteres. Las fechas son opcionales.
+        </p>
+      </div>
+      @if (hayFiltros()) {
+        <button mat-button type="button" (click)="limpiarFiltros()">
+          <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
+          Limpiar filtros
+        </button>
+      }
+    </div>
+
+    <form
+      class="panel-filtros__formulario"
+      [formGroup]="formulario"
+      (ngSubmit)="aplicarFiltros()"
+      novalidate
+    >
+      <mat-form-field appearance="outline">
+        <mat-label>ID de usuario</mat-label>
+        <input
+          matInput
+          formControlName="usuarioId"
+          inputmode="numeric"
+          autocomplete="off"
+          placeholder="Ej. 12"
+          aria-describedby="ayuda-usuario-auditoria"
+        />
+        <mat-hint id="ayuda-usuario-auditoria">Opcional. Solo números enteros.</mat-hint>
+        @if (usuarioIdInvalido()) {
+          <mat-error>El ID debe ser un número entero positivo.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Entidad</mat-label>
+        <input
+          matInput
+          formControlName="entidad"
+          autocomplete="off"
+          maxlength="60"
+          placeholder="Ej. servicio"
+        />
+        <mat-hint>Opcional. Máximo 60 caracteres.</mat-hint>
+        @if (
+          (formulario.controls.entidad.touched || enviado()) &&
+          formulario.controls.entidad.hasError('maxlength')
+        ) {
+          <mat-error>La entidad no puede superar los 60 caracteres.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Acción</mat-label>
+        <input
+          matInput
+          formControlName="accion"
+          autocomplete="off"
+          maxlength="60"
+          placeholder="Ej. ACTUALIZAR_PARAMETRO"
+        />
+        <mat-hint>Opcional. Máximo 60 caracteres.</mat-hint>
+        @if (
+          (formulario.controls.accion.touched || enviado()) &&
+          formulario.controls.accion.hasError('maxlength')
+        ) {
+          <mat-error>La acción no puede superar los 60 caracteres.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Desde</mat-label>
+        <input matInput type="date" formControlName="desde" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Hasta</mat-label>
+        <input matInput type="date" formControlName="hasta" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Registros por página</mat-label>
+        <mat-select formControlName="tamano">
+          @for (tamano of tamanosPagina; track tamano) {
+            <mat-option [value]="tamano">{{ tamano }} registros</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <button mat-flat-button type="submit" class="panel-filtros__accion">
+        <mat-icon aria-hidden="true">search</mat-icon>
+        Filtrar
+      </button>
+    </form>
+
+    @if (errorFechas(); as mensaje) {
+      <p class="campo-error" role="alert">{{ mensaje }}</p>
+    }
+  </section>
+
+  @if (error(); as fallo) {
+    <section class="estado-panel ft-card" role="alert" aria-labelledby="titulo-error-auditoria">
+      <mat-icon aria-hidden="true">cloud_off</mat-icon>
+      <h2 id="titulo-error-auditoria">No pudimos cargar la auditoría</h2>
+      <p class="ft-muted">{{ fallo.mensaje }}</p>
+      @if (fallo.detalles.length > 0) {
+        <ul class="estado-panel__detalles">
+          @for (detalle of fallo.detalles; track detalle) {
+            <li>{{ detalle }}</li>
+          }
+        </ul>
+      }
+      <button mat-flat-button type="button" (click)="recargar()">
+        <mat-icon aria-hidden="true">refresh</mat-icon>
+        Reintentar
+      </button>
+    </section>
+  } @else if (pagina(); as resultado) {
+    <section aria-labelledby="titulo-registros-auditoria">
+      <div class="listado__cabecera">
+        <div>
+          <h2 id="titulo-registros-auditoria">Registros de auditoría</h2>
+          <p class="ft-muted" role="status">
+            {{ resultado.totalElementos }}
+            {{ resultado.totalElementos === 1 ? 'registro' : 'registros' }}
+            @if (hayFiltros()) {
+              con los filtros aplicados
+            }
+            · {{ resultado.tamano }} por página
+          </p>
+        </div>
+        @if (auditoriaResource.isLoading()) {
+          <span class="listado__actualizando" role="status">Actualizando…</span>
+        }
+      </div>
+
+      @if (resultado.contenido.length === 0) {
+        <div class="estado-panel ft-card">
+          <mat-icon aria-hidden="true">history</mat-icon>
+          <h3>No hay registros de auditoría</h3>
+          <p class="ft-muted">
+            @if (hayFiltros()) {
+              No encontramos acciones para los filtros seleccionados. Prueba con otro usuario,
+              entidad, acción o rango de fechas.
+            } @else {
+              Las acciones administrativas aparecerán aquí a medida que se realicen.
+            }
+          </p>
+          @if (hayFiltros()) {
+            <button mat-stroked-button type="button" (click)="limpiarFiltros()">
+              <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
+              Limpiar filtros
+            </button>
+          }
+        </div>
+      } @else {
+        <ul class="registros">
+          @for (registro of resultado.contenido; track registro.id) {
+            <li>
+              <article class="registro ft-card" [attr.aria-labelledby]="'registro-' + registro.id">
+                <div class="registro__cabecera">
+                  <code class="registro__accion">{{ registro.accion }}</code>
+                  <span class="registro__fecha">
+                    {{ registro.creadoEn | date: 'dd MMM yyyy, HH:mm' }}
+                  </span>
+                </div>
+
+                <dl class="registro__datos">
+                  <div>
+                    <dt>Entidad</dt>
+                    <dd>
+                      <code>{{ registro.entidad }}</code>
+                      @if (registro.entidadId !== null) {
+                        <span>#{{ registro.entidadId }}</span>
+                      }
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Usuario</dt>
+                    <dd>
+                      {{ registro.usuarioId === null ? 'Sistema' : '#' + registro.usuarioId }}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>IP</dt>
+                    <dd>{{ registro.ip ?? 'No registrada' }}</dd>
+                  </div>
+                </dl>
+
+                @if (registro.detalle; as detalle) {
+                  <p class="registro__detalle">{{ detalle }}</p>
+                }
+              </article>
+            </li>
+          }
+        </ul>
+      }
+
+      <nav class="paginacion" aria-label="Paginación de auditoría">
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="!puedeAnterior()"
+          (click)="cambiarPagina(-1)"
+        >
+          <mat-icon aria-hidden="true">chevron_left</mat-icon>
+          Anterior
+        </button>
+        <span class="paginacion__estado" role="status">
+          @if (resultado.totalPaginas === 0) {
+            Sin páginas
+          } @else {
+            Página {{ resultado.pagina + 1 }} de {{ resultado.totalPaginas }}
+          }
+        </span>
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="!puedeSiguiente()"
+          (click)="cambiarPagina(1)"
+        >
+          Siguiente
+          <mat-icon aria-hidden="true">chevron_right</mat-icon>
+        </button>
+      </nav>
+    </section>
+  } @else {
+    <div class="estado-panel ft-card" role="status" aria-live="polite">
+      <mat-spinner diameter="40" aria-label="Cargando auditoría" />
+      <p class="ft-muted">Cargando auditoría…</p>
+    </div>
+  }
+</div>

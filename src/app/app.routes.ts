@@ -237,6 +237,38 @@ export const routes: Routes = [
             (m) => m.AdminComisionesPage,
           ),
       },
+      {
+        path: 'admin/catalogos',
+        title: 'Catálogos | FIXTECH',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./features/admin/catalogos/catalogos.page').then((m) => m.AdminCatalogosPage),
+      },
+      {
+        path: 'admin/parametros',
+        title: 'Parámetros del sistema | FIXTECH',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./features/admin/parametros/parametros.page').then((m) => m.AdminParametrosPage),
+      },
+      {
+        path: 'admin/reportes',
+        title: 'Reportes e indicadores | FIXTECH',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./features/admin/reportes/reportes.page').then((m) => m.AdminReportesPage),
+      },
+      {
+        path: 'admin/auditoria',
+        title: 'Auditoría | FIXTECH',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./features/admin/auditoria/auditoria.page').then((m) => m.AdminAuditoriaPage),
+      },
     ],
   },
   {
