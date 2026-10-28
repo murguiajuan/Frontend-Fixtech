@@ -12,7 +12,8 @@ export const routes: Routes = [
       {
         path: '',
         pathMatch: 'full',
-        redirectTo: 'login',
+        title: 'FIXTECH | Soporte y Reparación Técnica',
+        loadComponent: () => import('./features/landing/landing.page').then((m) => m.LandingPage),
       },
       {
         path: 'login',
