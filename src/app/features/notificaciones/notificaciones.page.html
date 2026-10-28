@@ -1,0 +1,175 @@
+<div class="notificaciones ft-page">
+  <header class="encabezado">
+    <div class="encabezado__texto">
+      <p class="ft-eyebrow">Tu actividad</p>
+      <h1>Notificaciones</h1>
+      <p class="ft-muted">
+        Revisa las novedades de tus solicitudes, ofertas, servicios, pagos y reclamos. El contador
+        de no leídas se actualiza automáticamente cada minuto.
+      </p>
+    </div>
+
+    <div class="encabezado__acciones">
+      <button mat-stroked-button type="button" (click)="recargar()" [disabled]="cargando()">
+        @if (cargando()) {
+          <mat-spinner diameter="18" aria-hidden="true" />
+        } @else {
+          <mat-icon aria-hidden="true">refresh</mat-icon>
+        }
+        <span>Actualizar</span>
+      </button>
+      <button
+        mat-flat-button
+        type="button"
+        (click)="marcarTodas()"
+        [disabled]="noLeidas() === 0 || marcandoTodas()"
+      >
+        @if (marcandoTodas()) {
+          <mat-spinner diameter="18" aria-hidden="true" />
+        } @else {
+          <mat-icon aria-hidden="true">mark_email_read</mat-icon>
+        }
+        <span>Marcar todas como leídas</span>
+      </button>
+    </div>
+  </header>
+
+  <section class="filtros ft-card" aria-labelledby="titulo-filtros-notificaciones">
+    <div>
+      <h2 id="titulo-filtros-notificaciones">Filtrar bandeja</h2>
+      <p class="ft-muted">Puedes ocultar las notificaciones que ya leíste.</p>
+    </div>
+    <mat-checkbox
+      [checked]="soloNoLeidas()"
+      [disabled]="cargando()"
+      (change)="cambiarFiltro($event.checked)"
+    >
+      Mostrar solo no leídas
+    </mat-checkbox>
+  </section>
+
+  @if (error(); as fallo) {
+    <div class="ft-alert ft-alert--error alerta" role="alert">
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <div class="alerta__contenido">
+        <strong>No pudimos cargar las notificaciones</strong>
+        <p>{{ fallo.mensaje }}</p>
+        @if (fallo.detalles.length > 0) {
+          <ul class="alerta__detalles">
+            @for (detalle of fallo.detalles; track detalle) {
+              <li>{{ detalle }}</li>
+            }
+          </ul>
+        }
+      </div>
+      <button mat-button type="button" class="alerta__accion" (click)="recargar()">
+        Reintentar
+      </button>
+    </div>
+  }
+
+  @if (cargando() && notificaciones().length === 0) {
+    <div class="estado-panel ft-card" role="status">
+      <mat-spinner diameter="36" aria-hidden="true" />
+      <p class="ft-muted">Cargando notificaciones…</p>
+    </div>
+  } @else if (notificaciones().length === 0) {
+    @if (error() === null) {
+      <div class="estado-panel ft-card">
+        <span class="estado-panel__icono" aria-hidden="true">
+          <mat-icon>{{ soloNoLeidas() ? 'mark_email_read' : 'inbox' }}</mat-icon>
+        </span>
+        <h2>
+          {{ soloNoLeidas() ? 'No tienes notificaciones sin leer' : 'No tienes notificaciones' }}
+        </h2>
+        <p class="ft-muted">
+          @if (soloNoLeidas()) {
+            Ya revisaste todas tus notificaciones. Puedes volver a la bandeja completa.
+          } @else {
+            Cuando ocurra una novedad en tus solicitudes o servicios, aparecerá aquí.
+          }
+        </p>
+        @if (soloNoLeidas()) {
+          <button mat-stroked-button type="button" (click)="cambiarFiltro(false)">
+            <mat-icon aria-hidden="true">inbox</mat-icon>
+            Ver todas
+          </button>
+        } @else {
+          <a mat-stroked-button routerLink="/app/inicio">
+            <mat-icon aria-hidden="true">arrow_back</mat-icon>
+            Volver al inicio
+          </a>
+        }
+      </div>
+    }
+  } @else {
+    <section class="bandeja" aria-labelledby="titulo-bandeja">
+      <div class="bandeja__cabecera">
+        <div>
+          <h2 id="titulo-bandeja">Bandeja de entrada</h2>
+          <p class="ft-muted" role="status" aria-live="polite">{{ textoNoLeidas() }}</p>
+        </div>
+        <div class="bandeja__meta">
+          @if (cargando()) {
+            <span class="bandeja__actualizando" role="status">Actualizando…</span>
+          }
+          @if (ultimaActualizacion(); as fecha) {
+            <span class="ft-muted">Actualizado {{ fecha | date: 'HH:mm' }}</span>
+          }
+        </div>
+      </div>
+
+      <ul class="lista">
+        @for (notificacion of notificaciones(); track notificacion.id) {
+          <li class="notificacion ft-card" [class.notificacion--no-leida]="!notificacion.leida">
+            <span class="notificacion__icono" aria-hidden="true">
+              <mat-icon>{{ iconoNotificacion(notificacion.tipo) }}</mat-icon>
+            </span>
+
+            <div class="notificacion__cuerpo">
+              <div class="notificacion__cabecera">
+                @if (!notificacion.leida) {
+                  <span class="notificacion__punto" aria-hidden="true"></span>
+                  <span class="ft-sr-only">Sin leer.</span>
+                }
+                <h3 class="notificacion__titulo">{{ notificacion.titulo }}</h3>
+              </div>
+              <p class="notificacion__mensaje">{{ notificacion.mensaje }}</p>
+              <p class="notificacion__meta">
+                <time [attr.datetime]="notificacion.creadoEn">
+                  {{ notificacion.creadoEn | date: 'd MMM y, HH:mm' }}
+                </time>
+                @if (etiquetaReferencia(notificacion.referenciaTipo); as referencia) {
+                  <span class="notificacion__referencia">
+                    {{ referencia }}
+                    @if (notificacion.referenciaId !== null) {
+                      #{{ notificacion.referenciaId }}
+                    }
+                  </span>
+                }
+              </p>
+            </div>
+
+            @if (!notificacion.leida) {
+              <button
+                mat-stroked-button
+                type="button"
+                class="notificacion__accion"
+                [disabled]="marcandoId() !== null"
+                [attr.aria-label]="'Marcar como leída: «' + notificacion.titulo + '»'"
+                (click)="marcarLeida(notificacion)"
+              >
+                @if (marcandoId() === notificacion.id) {
+                  <mat-spinner diameter="18" aria-hidden="true" />
+                } @else {
+                  <mat-icon aria-hidden="true">done</mat-icon>
+                }
+                <span>Marcar como leída</span>
+              </button>
+            }
+          </li>
+        }
+      </ul>
+    </section>
+  }
+</div>

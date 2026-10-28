@@ -1,5 +1,5 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { Component, computed, inject, linkedSignal } from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, linkedSignal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
@@ -10,7 +10,9 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs/operators';
 import { AuthService } from '../../auth/auth.service';
+import { SesionExpiradaService } from '../../auth/sesion-expirada.service';
 import { ETIQUETAS_ROL } from '../../models/etiquetas';
+import { NotificacionesService } from '../../notificaciones/notificaciones.service';
 import { BrandLogo } from '../../../shared/ui/brand-logo';
 import { Icono } from '../../../shared/ui/icono';
 
@@ -19,6 +21,7 @@ interface ItemNavegacion {
   readonly icono: string;
   readonly ruta: string;
   readonly disponible: boolean;
+  readonly contador?: number;
 }
 
 @Component({
@@ -43,10 +46,34 @@ export class AppLayout {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly breakpoint = inject(BreakpointObserver);
+  private readonly notificaciones = inject(NotificacionesService);
+  private readonly sesionExpirada = inject(SesionExpiradaService);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly perfil = this.auth.perfil;
   protected readonly rol = this.auth.rol;
+  protected readonly noLeidas = this.notificaciones.noLeidas;
   protected readonly etiquetasRol = ETIQUETAS_ROL;
+
+  protected readonly textoNotificaciones = computed(() => {
+    const total = this.noLeidas();
+    if (total === 0) {
+      return 'Notificaciones: no hay pendientes sin leer';
+    }
+    return total === 1 ? 'Notificaciones: 1 sin leer' : `Notificaciones: ${total} sin leer`;
+  });
+
+  constructor() {
+    this.destroyRef.onDestroy(this.notificaciones.iniciarPolling());
+    effect(() => {
+      if (!this.sesionExpirada.expirada()) {
+        return;
+      }
+      this.notificaciones.limpiar();
+      this.auth.cerrarSesion(false);
+      void this.router.navigate(['/login'], { queryParams: { sesion: 'expirada' } });
+    });
+  }
 
   private readonly esMovilSignal = toSignal(
     this.breakpoint.observe('(max-width: 899px)').pipe(map((resultado) => resultado.matches)),
@@ -74,6 +101,19 @@ export class AppLayout {
         etiqueta: 'Inicio',
         icono: 'space_dashboard',
         ruta: '/app/inicio',
+        disponible: true,
+      },
+      {
+        etiqueta: 'Notificaciones',
+        icono: 'notifications',
+        ruta: '/app/notificaciones',
+        disponible: true,
+        contador: this.noLeidas(),
+      },
+      {
+        etiqueta: 'Mi cuenta',
+        icono: 'account_circle',
+        ruta: '/app/perfil',
         disponible: true,
       },
     ];
@@ -204,6 +244,7 @@ export class AppLayout {
   }
 
   protected cerrarSesion(): void {
+    this.notificaciones.limpiar();
     this.auth.cerrarSesion();
   }
 }

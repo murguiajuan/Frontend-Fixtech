@@ -18,10 +18,9 @@ contrario.
 | 9   | Sin endpoint “mi oferta de una solicitud”                     | Para saber si el técnico ya ofertó se debe consultar `GET /api/ofertas/mias` y filtrar por `solicitudId`.                               | Se usa ese listado como fuente de verdad; es aceptable para el volumen del MVP.                                                 |
 | 10  | `SolicitudDisponibleResponse` no trae `imagenPrincipalUrl`    | El listado de solicitudes disponibles no tiene un campo directo para la miniatura.                                                      | Se usa la primera imagen de `imagenes`; si no hay, se muestra un marcador.                                                      |
 | 11  | Aprobación y deuda no se validan en el listado de disponibles | `GET /api/solicitudes/disponibles` no valida aprobación ni bloqueo por deuda; `POST` de oferta sí.                                      | El frontend aplica `tecnicoAprobadoGuard` y oculta las rutas si el técnico no puede ofertar.                                    |
-| 12  | Sin endpoints de notificaciones en la SPA                     | El backend genera notificaciones, pero el centro de notificaciones pertenece a la Fase 10.                                              | No se muestran badges ni bandejas de notificaciones todavía.                                                                    |
-| 13  | Mensajería sin actualización en tiempo real                   | No hay WebSocket ni SSE para mensajes; la conversación solo se actualiza al abrir el detalle o pulsar “Actualizar”.                     | Se mantiene la actualización manual y se informa en la interfaz; no se simula tiempo real.                                      |
-| 14  | Pagos de comisión sin anulación ni desbloqueo manual          | No hay endpoints para editar o anular pagos ni para retirar el bloqueo por deuda manualmente.                                           | El bloqueo se sincroniza al validar pagos y con la revisión programada; la UI lo explica y no ofrece acciones inexistentes.     |
-| 15  | Catálogos administrativos sin borrado físico                  | No existe `DELETE` para tipos de equipo, tipos de servicio, especialidades ni distritos.                                                | Solo se crean, editan y activan/desactivan; la interfaz no ofrece eliminación.                                                  |
+| 12  | Mensajería sin actualización en tiempo real                   | No hay WebSocket ni SSE para mensajes; la conversación solo se actualiza al abrir el detalle o pulsar “Actualizar”.                     | Se mantiene la actualización manual y se informa en la interfaz; no se simula tiempo real.                                      |
+| 13  | Pagos de comisión sin anulación ni desbloqueo manual          | No hay endpoints para editar o anular pagos ni para retirar el bloqueo por deuda manualmente.                                           | El bloqueo se sincroniza al validar pagos y con la revisión programada; la UI lo explica y no ofrece acciones inexistentes.     |
+| 14  | Catálogos administrativos sin borrado físico                  | No existe `DELETE` para tipos de equipo, tipos de servicio, especialidades ni distritos.                                                | Solo se crean, editan y activan/desactivan; la interfaz no ofrece eliminación.                                                  |
 
 ## Brechas cerradas
 
@@ -32,6 +31,9 @@ contrario.
   cliente y bloqueo de la finalización hasta la constancia de entrega (Fase 7).
 - Reseñas y reclamos: alta, consulta, respuesta del técnico, reporte y moderación de reseñas,
   resolución y seguimiento administrativo de reclamos con fotos autenticadas (Fase 7).
+- Notificaciones: `GET /api/notificaciones?soloNoLeidas=`, `PATCH /api/notificaciones/{id}/leer` y
+  `PATCH /api/notificaciones/leer-todas`, con bandeja, filtro, badge, “leer todas” y polling del
+  contador cada 60 segundos (Fase 10).
 
 ## Regla de trabajo
 

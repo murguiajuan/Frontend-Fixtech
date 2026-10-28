@@ -54,6 +54,17 @@ export const routes: Routes = [
           import('./features/dashboard/dashboard.page').then((m) => m.DashboardPage),
       },
       {
+        path: 'notificaciones',
+        title: 'Notificaciones | FIXTECH',
+        loadComponent: () =>
+          import('./features/notificaciones/notificaciones.page').then((m) => m.NotificacionesPage),
+      },
+      {
+        path: 'perfil',
+        title: 'Mi cuenta | FIXTECH',
+        loadComponent: () => import('./features/perfil/perfil.page').then((m) => m.PerfilPage),
+      },
+      {
         path: 'cliente/solicitudes',
         title: 'Mis solicitudes | FIXTECH',
         canActivate: [roleGuard],

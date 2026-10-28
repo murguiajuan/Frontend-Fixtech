@@ -7,6 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
+import { SesionExpiradaService } from '../../../core/auth/sesion-expirada.service';
 import { esApiError } from '../../../core/http/api-error';
 import { Icono } from '../../../shared/ui/icono';
 import { NotificacionService } from '../../../shared/ui/notificacion.service';
@@ -31,6 +32,7 @@ export class LoginPage {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly notificaciones = inject(NotificacionService);
+  private readonly sesionExpiradaService = inject(SesionExpiradaService);
   private readonly fb = inject(NonNullableFormBuilder);
 
   protected readonly formulario = this.fb.group({
@@ -42,8 +44,13 @@ export class LoginPage {
   protected readonly enviado = signal(false);
   protected readonly errorServidor = signal<string | null>(null);
   protected readonly ocultarPassword = signal(true);
+  protected readonly sesionExpirada = signal(false);
 
   constructor() {
+    const porQuery = this.route.snapshot.queryParamMap.get('sesion') === 'expirada';
+    const porServicio = this.sesionExpiradaService.consumir();
+    this.sesionExpirada.set(porQuery || porServicio);
+
     const registrado = this.route.snapshot.queryParamMap.get('registrado');
     if (registrado === '1') {
       this.notificaciones.exito('Cuenta creada. Ya puedes iniciar sesión.');

@@ -58,7 +58,7 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
 | 7    | Cierre, constancias, reseñas y reclamos                | ✅ Completada |
 | 8    | Comisiones y pagos del técnico                         | ✅ Completada |
 | 9    | Administración de catálogos, parámetros y reportes     | ✅ Completada |
-| 10   | Notificaciones y perfil de usuario                     | ⏳ Pendiente  |
+| 10   | Notificaciones y perfil de usuario                     | ✅ Completada |
 | 11   | Endurecimiento UX, rendimiento y seguridad             | ⏳ Pendiente  |
 | 12   | QA final, documentación y despliegue                   | ⏳ Pendiente  |
 
@@ -533,17 +533,54 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
 - [x] Axe sin violaciones en catálogos, parámetros, reportes, auditoría y diálogos.
 - [x] Exportación real de Excel verificada contra la API con 6511 bytes.
 
-## 14. Fase 10 — Notificaciones y perfil ⏳
+## 14. Fase 10 — Notificaciones y perfil ✅
 
-- [ ] Centro de notificaciones con no leídas y “leer todas”.
-- [ ] Badge de notificaciones en el layout.
-- [ ] Perfil de usuario de solo lectura.
-- [ ] Cierre de sesión por expiración con aviso accesible.
-- [ ] Pruebas de polling/refresco y E2E.
+### Contratos usados
+
+- `GET /api/notificaciones?soloNoLeidas=false` devuelve `{ notificaciones, noLeidas }` sin
+  paginación. Cada notificación incluye `id`, `tipo`, `titulo`, `mensaje`, `referenciaTipo`,
+  `referenciaId`, `leida` y `creadoEn`.
+- `PATCH /api/notificaciones/{id}/leer` marca una notificación como leída y devuelve la
+  notificación actualizada.
+- `PATCH /api/notificaciones/leer-todas` marca todas las notificaciones del usuario como leídas.
+- `GET /api/auth/me` entrega el perfil general (`id`, `correo`, `rol`, `estado`, `nombres`,
+  `apellidos`, `fotoUrl` y `tecnico`) usado por la vista de cuenta.
+
+### Frontend
+
+- [x] `/app/notificaciones` disponible para todos los roles: bandeja con título, mensaje, fecha,
+      tipo, referencia e indicador de no leída; filtro “Mostrar solo no leídas”; acción “Marcar como
+      leída” por elemento y “Marcar todas como leídas”.
+- [x] Estados de carga inicial, actualización, error con reintento y vacío para la bandeja
+      completa y para el filtro de no leídas.
+- [x] Badge de no leídas en la barra superior, en la navegación lateral y en el menú de usuario,
+      con texto accesible y límite visual `99+`.
+- [x] Polling del contador cada 60 segundos desde el layout; las peticiones de refresco usan
+      `SILENCIAR_ERROR` para no repetir avisos globales. El polling se detiene y el estado se limpia
+      al cerrar sesión o desmontar el layout.
+- [x] `/app/perfil` muestra la cuenta de solo lectura: identidad, correo, rol, estado,
+      identificador y, para técnicos, el resumen profesional con enlace al perfil editable.
+- [x] `SesionExpiradaService` registra el motivo del cierre; al fallar el refresh de tokens se
+      limpia la sesión y se redirige a `/login?sesion=expirada` con un aviso accesible.
+- [x] El login consume el aviso una sola vez, tanto por el query param como por el servicio, y lo
+      muestra con `role="alert"`.
+- [x] Pruebas unitarias de `NotificacionesService` (carga, filtro, marcado, polling, error y
+      limpieza), `SesionExpiradaService`, `TokenRefreshService`, aviso de login y página de
+      notificaciones.
+- [x] E2E real de notificaciones y perfil con Axe en escritorio y 360 px, más verificación del
+      aviso de sesión expirada.
+
+### Criterios de cierre
+
+- [x] Build de producción, lint y formato sin errores.
+- [x] 486 pruebas unitarias en 74 archivos, todas en verde.
+- [x] 28 pruebas E2E en verde en Chromium y móvil de 360 px con el backend local.
+- [x] Axe sin violaciones en notificaciones, perfil y aviso de sesión expirada.
+- [x] Bandeja, filtro, badge y perfil verificados contra la API real.
 
 > Brecha: no hay endpoints de edición del perfil de usuario general (el perfil profesional del
-> técnico sí es editable en Fase 4), cambio de contraseña ni recuperación de contraseña. No se
-> deben crear pantallas que prometan esas funciones.
+> técnico sí es editable en Fase 4), cambio de contraseña ni recuperación de contraseña. La vista
+> de cuenta es de solo lectura y no promete esas funciones.
 
 ## 15. Fase 11 — Endurecimiento UX, rendimiento y seguridad ⏳
 
@@ -596,14 +633,15 @@ mensajería sin tiempo real.
 
 ## 19. Registro de avances
 
-| Fecha      | Fase  | Evidencia                                                                                                                                                                                                          |
-| ---------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 2026-10-27 | 0 y 1 | Build de producción, 21 pruebas unitarias, lint, Prettier y 8 pruebas E2E con Axe en escritorio y 360 px; login real contra backend verificado                                                                     |
-| 2026-10-27 | 2     | Build de producción, 53 pruebas unitarias, lint y Prettier; 10 pruebas E2E con Axe en escritorio y 360 px; aprobación real de un técnico creado vía API y estado verificado con `GET /api/admin/tecnicos`          |
-| 2026-10-27 | 3     | Build de producción, 73 pruebas unitarias, lint y Prettier; 12 pruebas E2E con Axe en escritorio y 360 px; registro real de un técnico, login y perfil `PENDIENTE` verificado desde la interfaz                    |
-| 2026-10-27 | 4     | Build de producción, 128 pruebas unitarias, lint y Prettier; 14 pruebas E2E con Axe en escritorio y 360 px; perfil técnico editable con foto autorizada y solicitud real con foto creada, editada y cancelada      |
-| 2026-10-27 | 5     | Build de producción, 192 pruebas unitarias en 31 archivos, lint y Prettier; 16 pruebas E2E con Axe en escritorio y 360 px; oferta, contraoferta y creación real del servicio verificadas contra la API             |
-| 2026-10-27 | 6     | Build de producción, 270 pruebas unitarias en 42 archivos, lint y Prettier; 18 pruebas E2E con Axe en escritorio y 360 px; aceptación, ejecución, ajuste y conformidad verificados contra la API                   |
-| 2026-10-27 | 7     | Build de producción, 358 pruebas unitarias en 52 archivos, lint y Prettier; 20 pruebas E2E con Axe en escritorio y 360 px; constancias de taller, reseña, moderación, reclamo y cierre verificados contra la API   |
-| 2026-10-27 | 8     | Build de producción, 393 pruebas unitarias en 57 archivos, lint y Prettier; 20 pruebas E2E con Axe en escritorio y 360 px; pago real con comprobante y validación administrativa verificados contra la API         |
-| 2026-10-27 | 9     | Build de producción, 460 pruebas unitarias en 70 archivos, lint y Prettier; 24 pruebas E2E con Axe en escritorio y 360 px; catálogos, parámetros, dashboard, reportes, Excel y auditoría verificados contra la API |
+| Fecha      | Fase  | Evidencia                                                                                                                                                                                                                              |
+| ---------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-27 | 0 y 1 | Build de producción, 21 pruebas unitarias, lint, Prettier y 8 pruebas E2E con Axe en escritorio y 360 px; login real contra backend verificado                                                                                         |
+| 2026-10-27 | 2     | Build de producción, 53 pruebas unitarias, lint y Prettier; 10 pruebas E2E con Axe en escritorio y 360 px; aprobación real de un técnico creado vía API y estado verificado con `GET /api/admin/tecnicos`                              |
+| 2026-10-27 | 3     | Build de producción, 73 pruebas unitarias, lint y Prettier; 12 pruebas E2E con Axe en escritorio y 360 px; registro real de un técnico, login y perfil `PENDIENTE` verificado desde la interfaz                                        |
+| 2026-10-27 | 4     | Build de producción, 128 pruebas unitarias, lint y Prettier; 14 pruebas E2E con Axe en escritorio y 360 px; perfil técnico editable con foto autorizada y solicitud real con foto creada, editada y cancelada                          |
+| 2026-10-27 | 5     | Build de producción, 192 pruebas unitarias en 31 archivos, lint y Prettier; 16 pruebas E2E con Axe en escritorio y 360 px; oferta, contraoferta y creación real del servicio verificadas contra la API                                 |
+| 2026-10-27 | 6     | Build de producción, 270 pruebas unitarias en 42 archivos, lint y Prettier; 18 pruebas E2E con Axe en escritorio y 360 px; aceptación, ejecución, ajuste y conformidad verificados contra la API                                       |
+| 2026-10-27 | 7     | Build de producción, 358 pruebas unitarias en 52 archivos, lint y Prettier; 20 pruebas E2E con Axe en escritorio y 360 px; constancias de taller, reseña, moderación, reclamo y cierre verificados contra la API                       |
+| 2026-10-27 | 8     | Build de producción, 393 pruebas unitarias en 57 archivos, lint y Prettier; 20 pruebas E2E con Axe en escritorio y 360 px; pago real con comprobante y validación administrativa verificados contra la API                             |
+| 2026-10-27 | 9     | Build de producción, 460 pruebas unitarias en 70 archivos, lint y Prettier; 24 pruebas E2E con Axe en escritorio y 360 px; catálogos, parámetros, dashboard, reportes, Excel y auditoría verificados contra la API                     |
+| 2026-10-27 | 10    | Build de producción, 486 pruebas unitarias en 74 archivos, lint y Prettier; 28 pruebas E2E con Axe en escritorio y 360 px; notificaciones, badge, polling, perfil de solo lectura y aviso de sesión expirada verificados contra la API |

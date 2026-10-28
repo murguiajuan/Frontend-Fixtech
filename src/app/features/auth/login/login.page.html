@@ -31,6 +31,16 @@
       </div>
     </div>
 
+    @if (sesionExpirada()) {
+      <div class="ft-alert ft-alert--warning" role="alert">
+        <mat-icon aria-hidden="true">lock_clock</mat-icon>
+        <div>
+          <strong>Tu sesión expiró por seguridad.</strong>
+          <p>Vuelve a iniciar sesión para continuar usando FIXTECH.</p>
+        </div>
+      </div>
+    }
+
     @if (errorServidor(); as mensaje) {
       <div class="ft-alert ft-alert--error" role="alert">
         <mat-icon aria-hidden="true">error_outline</mat-icon>

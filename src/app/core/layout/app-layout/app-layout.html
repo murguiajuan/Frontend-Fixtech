@@ -23,6 +23,12 @@
           >
             <mat-icon aria-hidden="true">{{ item.icono }}</mat-icon>
             <span>{{ item.etiqueta }}</span>
+            @if (item.contador !== undefined && item.contador > 0) {
+              <span class="nav__contador" aria-hidden="true">
+                {{ item.contador > 99 ? '99+' : item.contador }}
+              </span>
+              <span class="ft-sr-only">{{ item.contador }} sin leer</span>
+            }
           </a>
         } @else {
           <span class="nav__enlace nav__enlace--bloqueado" aria-disabled="true">
@@ -65,6 +71,20 @@
       </button>
       <span class="toolbar__titulo">{{ tituloActual() }}</span>
       <span class="toolbar__espaciador"></span>
+      <a
+        mat-icon-button
+        routerLink="/app/notificaciones"
+        class="toolbar__notificaciones"
+        [attr.aria-label]="textoNotificaciones()"
+      >
+        <mat-icon aria-hidden="true">notifications</mat-icon>
+        @if (noLeidas() > 0) {
+          <span class="toolbar__badge" aria-hidden="true">
+            {{ noLeidas() > 99 ? '99+' : noLeidas() }}
+          </span>
+        }
+      </a>
+      <span class="ft-sr-only" aria-live="polite">{{ textoNotificaciones() }}</span>
       @if (perfil(); as p) {
         <button
           mat-button
@@ -83,6 +103,21 @@
             <small>{{ p.correo }}</small>
             <span class="menu__rol">{{ etiquetasRol[p.rol] }}</span>
           </div>
+          <mat-divider />
+          <a mat-menu-item routerLink="/app/perfil">
+            <mat-icon>account_circle</mat-icon>
+            <span>Mi cuenta</span>
+          </a>
+          <a mat-menu-item routerLink="/app/notificaciones">
+            <mat-icon>notifications</mat-icon>
+            <span>Notificaciones</span>
+            @if (noLeidas() > 0) {
+              <span class="menu__contador" aria-hidden="true">
+                {{ noLeidas() > 99 ? '99+' : noLeidas() }}
+              </span>
+              <span class="ft-sr-only">{{ noLeidas() }} sin leer</span>
+            }
+          </a>
           <mat-divider />
           <button mat-menu-item type="button" (click)="cerrarSesion()">
             <mat-icon>logout</mat-icon>

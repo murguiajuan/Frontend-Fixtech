@@ -3,6 +3,7 @@ import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angul
 import { of, throwError } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { PerfilUsuario } from '../../../core/auth/auth.models';
+import { SesionExpiradaService } from '../../../core/auth/sesion-expirada.service';
 import { NotificacionService } from '../../../shared/ui/notificacion.service';
 import { LoginPage } from './login.page';
 
@@ -108,6 +109,37 @@ describe('LoginPage', () => {
     fixture.detectChanges();
 
     expect(compiled.textContent).toContain('Credenciales inválidas');
+  });
+
+  it('muestra el aviso accesible cuando la URL indica que la sesión expiró', () => {
+    TestBed.overrideProvider(ActivatedRoute, {
+      useValue: {
+        snapshot: { queryParamMap: convertToParamMap({ sesion: 'expirada' }) },
+      },
+    });
+    const fixture = TestBed.createComponent(LoginPage);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    const aviso = compiled.querySelector('[role="alert"]');
+    expect(aviso?.textContent).toContain('Tu sesión expiró por seguridad.');
+  });
+
+  it('muestra el aviso cuando el servicio de sesión expirada lo registró', () => {
+    TestBed.inject(SesionExpiradaService).marcarExpirada();
+    const fixture = TestBed.createComponent(LoginPage);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    expect(compiled.textContent).toContain('Tu sesión expiró por seguridad.');
+  });
+
+  it('no muestra el aviso de expiración en un acceso normal', () => {
+    const fixture = TestBed.createComponent(LoginPage);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    expect(compiled.textContent).not.toContain('Tu sesión expiró por seguridad.');
   });
 });
 

@@ -12,6 +12,7 @@ import {
   TokenResponse,
   UsuarioRegistradoResponse,
 } from './auth.models';
+import { SesionExpiradaService } from './sesion-expirada.service';
 import { SessionStore } from './session-store.service';
 
 @Service()
@@ -19,6 +20,7 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly session = inject(SessionStore);
+  private readonly sesionExpirada = inject(SesionExpiradaService);
 
   private readonly perfilState = signal<PerfilUsuario | null>(null);
   private readonly cargandoState = signal(false);
@@ -44,7 +46,10 @@ export class AuthService {
 
   iniciarSesion(credenciales: LoginRequest): Observable<PerfilUsuario> {
     return this.http.post<TokenResponse>(`${environment.apiUrl}/auth/login`, credenciales).pipe(
-      tap((tokens) => this.session.guardar(tokens)),
+      tap((tokens) => {
+        this.session.guardar(tokens);
+        this.sesionExpirada.limpiar();
+      }),
       switchMap(() => this.cargarPerfil()),
     );
   }
@@ -102,6 +107,7 @@ export class AuthService {
   }
 
   cerrarSesion(redirigir = true): void {
+    this.sesionExpirada.limpiar();
     this.limpiarSesion();
     if (redirigir) {
       void this.router.navigate(['/login']);

@@ -4,6 +4,7 @@ import { Observable, throwError } from 'rxjs';
 import { catchError, finalize, map, shareReplay, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { TokenResponse } from './auth.models';
+import { SesionExpiradaService } from './sesion-expirada.service';
 import { SessionStore } from './session-store.service';
 
 /**
@@ -14,11 +15,13 @@ import { SessionStore } from './session-store.service';
 export class TokenRefreshService {
   private readonly backend = inject(HttpBackend);
   private readonly session = inject(SessionStore);
+  private readonly sesionExpirada = inject(SesionExpiradaService);
   private refresco$: Observable<string> | null = null;
 
   refrescar(): Observable<string> {
     const refreshToken = this.session.refreshToken();
     if (refreshToken === null) {
+      this.sesionExpirada.marcarExpirada();
       return throwError(() => new Error('No hay refresh token disponible'));
     }
     if (this.refresco$ === null) {
@@ -29,6 +32,7 @@ export class TokenRefreshService {
           tap((tokens) => this.session.guardar(tokens)),
           map((tokens) => tokens.accessToken),
           catchError((error: unknown) => {
+            this.sesionExpirada.marcarExpirada();
             this.session.limpiar();
             return throwError(() => error);
           }),

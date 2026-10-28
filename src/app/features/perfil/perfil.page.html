@@ -1,0 +1,208 @@
+@if (perfil(); as p) {
+  <div class="perfil ft-page">
+    <header class="perfil__cabecera ft-card">
+      <div class="perfil__avatar" [class.perfil__avatar--foto]="p.fotoUrl !== null">
+        @if (p.fotoUrl) {
+          <app-imagen-autenticada
+            [src]="p.fotoUrl"
+            [alt]="'Foto de perfil de ' + p.nombres + ' ' + p.apellidos"
+          />
+        } @else {
+          <span aria-hidden="true">{{ iniciales() }}</span>
+        }
+      </div>
+
+      <div class="perfil__identidad">
+        <p class="ft-eyebrow">Mi cuenta</p>
+        <h1>{{ p.nombres }} {{ p.apellidos }}</h1>
+        <p class="ft-muted">{{ p.correo }}</p>
+        <div class="perfil__badges">
+          <app-estado-badge [texto]="etiquetasRol[p.rol]" tono="info" />
+          <app-estado-badge
+            [texto]="etiquetasEstadoUsuario[p.estado]"
+            [tono]="tonosEstadoUsuario[p.estado]"
+          />
+          @if (tecnico(); as t) {
+            <app-estado-badge
+              [texto]="etiquetasEstadoVerificacion[t.estadoVerificacion]"
+              [tono]="tonosEstadoVerificacion[t.estadoVerificacion]"
+            />
+          }
+        </div>
+      </div>
+
+      <div class="perfil__acciones">
+        @if (esTecnico()) {
+          <a mat-flat-button routerLink="/app/tecnico/perfil">
+            <mat-icon aria-hidden="true">badge</mat-icon>
+            Gestionar perfil profesional
+          </a>
+        }
+        <a mat-stroked-button routerLink="/app/inicio">
+          <mat-icon aria-hidden="true">arrow_back</mat-icon>
+          Volver al inicio
+        </a>
+      </div>
+    </header>
+
+    <div class="ft-alert ft-alert--info" role="note">
+      <mat-icon aria-hidden="true">lock</mat-icon>
+      <span>
+        Esta vista es de solo lectura. Los datos de la cuenta se gestionan con el equipo de FIXTECH.
+        @if (esTecnico()) {
+          Para actualizar tus datos personales y profesionales, usa “Gestionar perfil profesional”.
+        }
+      </span>
+    </div>
+
+    @if (tecnico(); as t) {
+      @if (t.bloqueadoPorDeuda) {
+        <div class="ft-alert ft-alert--warning" role="alert">
+          <mat-icon aria-hidden="true">account_balance_wallet</mat-icon>
+          <div>
+            <strong>Tienes un bloqueo temporal por deuda de comisiones.</strong>
+            <p>
+              Saldo pendiente:
+              {{ t.saldoComisionPendiente | currency: 'PEN' : 'symbol-narrow' : '1.2-2' }}.
+              <a routerLink="/app/tecnico/comisiones">Regularizar comisiones</a>.
+            </p>
+          </div>
+        </div>
+      }
+    }
+
+    <div class="perfil__columnas">
+      <section class="perfil__panel ft-card" aria-labelledby="titulo-cuenta">
+        <div class="perfil__panel-cabecera">
+          <h2 id="titulo-cuenta">Datos de la cuenta</h2>
+        </div>
+        <dl class="perfil__detalle">
+          <div>
+            <dt>Nombres</dt>
+            <dd>{{ p.nombres }}</dd>
+          </div>
+          <div>
+            <dt>Apellidos</dt>
+            <dd>{{ p.apellidos }}</dd>
+          </div>
+          <div>
+            <dt>Correo electrónico</dt>
+            <dd>{{ p.correo }}</dd>
+          </div>
+          <div>
+            <dt>Rol</dt>
+            <dd>{{ etiquetasRol[p.rol] }}</dd>
+          </div>
+          <div>
+            <dt>Estado</dt>
+            <dd>
+              <app-estado-badge
+                [texto]="etiquetasEstadoUsuario[p.estado]"
+                [tono]="tonosEstadoUsuario[p.estado]"
+              />
+            </dd>
+          </div>
+          <div>
+            <dt>Identificador</dt>
+            <dd>#{{ p.id }}</dd>
+          </div>
+        </dl>
+      </section>
+
+      @if (tecnico(); as t) {
+        <section class="perfil__panel ft-card" aria-labelledby="titulo-profesional">
+          <div class="perfil__panel-cabecera">
+            <h2 id="titulo-profesional">Perfil profesional</h2>
+            <app-estado-badge
+              [texto]="etiquetasEstadoVerificacion[t.estadoVerificacion]"
+              [tono]="tonosEstadoVerificacion[t.estadoVerificacion]"
+            />
+          </div>
+          <dl class="perfil__detalle">
+            <div>
+              <dt>DNI</dt>
+              <dd>{{ t.dni }}</dd>
+            </div>
+            <div>
+              <dt>Celular</dt>
+              <dd>{{ t.celular }}</dd>
+            </div>
+            <div>
+              <dt>Experiencia</dt>
+              <dd>{{ t.aniosExperiencia }} años</dd>
+            </div>
+            <div>
+              <dt>Calificación promedio</dt>
+              <dd>{{ t.calificacionPromedio | number: '1.1-2' }}</dd>
+            </div>
+            <div>
+              <dt>Servicios completados</dt>
+              <dd>{{ t.serviciosCompletados }}</dd>
+            </div>
+            <div>
+              <dt>Modalidades</dt>
+              <dd class="perfil__chips">
+                @if (t.modalidades.length === 0) {
+                  <span class="ft-muted">Sin modalidades configuradas</span>
+                } @else {
+                  <mat-chip-set aria-label="Modalidades de atención">
+                    @for (modalidad of t.modalidades; track modalidad) {
+                      <mat-chip>{{ etiquetasModalidad[modalidad] }}</mat-chip>
+                    }
+                  </mat-chip-set>
+                }
+              </dd>
+            </div>
+            <div>
+              <dt>Especialidades</dt>
+              <dd class="perfil__chips">
+                @if (t.especialidades.length === 0) {
+                  <span class="ft-muted">Sin especialidades configuradas</span>
+                } @else {
+                  <mat-chip-set aria-label="Especialidades registradas">
+                    @for (especialidad of t.especialidades; track especialidad.id) {
+                      <mat-chip>{{ especialidad.nombre }}</mat-chip>
+                    }
+                  </mat-chip-set>
+                }
+              </dd>
+            </div>
+            <div>
+              <dt>Distritos de cobertura</dt>
+              <dd class="perfil__chips">
+                @if (t.distritos.length === 0) {
+                  <span class="ft-muted">Sin distritos configurados</span>
+                } @else {
+                  <mat-chip-set aria-label="Distritos de cobertura">
+                    @for (distrito of t.distritos; track distrito.id) {
+                      <mat-chip>{{ distrito.nombre }}</mat-chip>
+                    }
+                  </mat-chip-set>
+                }
+              </dd>
+            </div>
+          </dl>
+          <a mat-stroked-button routerLink="/app/tecnico/perfil" class="perfil__panel-accion">
+            <mat-icon aria-hidden="true">edit</mat-icon>
+            Editar perfil profesional
+          </a>
+        </section>
+      } @else {
+        <section class="perfil__panel ft-card" aria-labelledby="titulo-sin-perfil-profesional">
+          <div class="perfil__panel-cabecera">
+            <h2 id="titulo-sin-perfil-profesional">Perfil profesional</h2>
+          </div>
+          <p class="ft-muted perfil__nota-panel">
+            Tu cuenta no requiere un perfil profesional. Si necesitas cambiar tus datos, contacta al
+            equipo de FIXTECH.
+          </p>
+        </section>
+      }
+    </div>
+  </div>
+} @else {
+  <div class="perfil perfil--cargando">
+    <mat-spinner diameter="36" aria-label="Cargando tu cuenta" />
+    <p class="ft-muted">Cargando tu cuenta…</p>
+  </div>
+}

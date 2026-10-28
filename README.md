@@ -6,16 +6,17 @@ FIXTECH en `http://localhost:8082/api`.
 
 ## Estado actual
 
-Fases 0 a 9 completadas: base técnica, autenticación JWT, sesión, guards, interceptores, layouts
+Fases 0 a 10 completadas: base técnica, autenticación JWT, sesión, guards, interceptores, layouts
 por rol, panel inicial, administración de técnicos y usuarios, registro y perfil editable del
 técnico con foto autorizada, solicitudes del cliente con fotos, listado, detalle, edición y
 cancelación, solicitudes disponibles y ofertas del técnico, negociación, servicios con aceptación,
 avances, mensajería, ajustes de precio, finalización y conformidad, constancias de taller con
 fotos, reseñas con respuesta y moderación, reclamos con seguimiento administrativo, comisiones del
-técnico con pagos, comprobantes y validación administrativa, y administración de catálogos,
-parámetros del sistema, dashboard, reportes con exportación Excel y auditoría. Las demás pantallas
-de negocio se incorporan en las siguientes fases. El plan completo y el progreso están en
-[`PLAN_FRONTEND.md`](./PLAN_FRONTEND.md).
+técnico con pagos, comprobantes y validación administrativa, administración de catálogos,
+parámetros del sistema, dashboard, reportes con exportación Excel y auditoría, y centro de
+notificaciones con badge, polling, perfil de cuenta de solo lectura y cierre de sesión por
+expiración con aviso accesible. Las demás pantallas de negocio se incorporan en las siguientes
+fases. El plan completo y el progreso están en [`PLAN_FRONTEND.md`](./PLAN_FRONTEND.md).
 
 ## Stack
 
@@ -90,9 +91,11 @@ verifica constancias de recepción y entrega, finalización, reseña del cliente
 del técnico, moderación administrativa, reclamo con foto, respuesta técnica y el seguimiento
 `ABIERTO → EN_REVISION → RESUELTO → CERRADO`. La prueba de catálogos crea, edita, desactiva,
 oculta, reactiva y crea un distrito real; el smoke administrativo recorre parámetros, reportes y
-auditoría. Requiere el backend y MySQL locales. Sin `E2E_BACKEND=1` esas pruebas se omiten y solo
-corren las públicas. No existe un endpoint para limpiar las cuentas, solicitudes y catálogos creados
-por las pruebas.
+auditoría. La prueba de notificaciones y perfil consulta la bandeja real, aplica el filtro de no
+leídas, revisa el badge y la cuenta de solo lectura, y verifica el aviso de sesión expirada; todo
+con Axe en escritorio y 360 px. Requiere el backend y MySQL locales. Sin `E2E_BACKEND=1` esas
+pruebas se omiten y solo corren las públicas. No existe un endpoint para limpiar las cuentas,
+solicitudes y catálogos creados por las pruebas.
 
 ## Estructura
 
@@ -104,7 +107,8 @@ src/
 │   │   ├── catalogos/     # Catálogos públicos de especialidades y distritos
 │   │   ├── http/          # Normalización de errores y descarga autenticada de archivos
 │   │   ├── layout/        # Layout público y layout privado con sidenav
-│   │   └── models/        # Etiquetas, fechas y tipos compartidos
+│   │   ├── models/        # Etiquetas, fechas y tipos compartidos
+│   │   └── notificaciones/ # Estado, carga, marcado y polling de notificaciones
 │   ├── features/
 │   │   ├── admin/         # Técnicos, usuarios, reseñas, reclamos, catálogos, parámetros,
 │   │   │                  # reportes y auditoría
@@ -112,7 +116,9 @@ src/
 │   │   ├── cliente/       # Solicitudes: creación, listado, detalle, edición y cancelación
 │   │   ├── dashboard/     # Panel inicial por rol
 │   │   ├── errors/        # Páginas 403 y 404
+│   │   ├── notificaciones/ # Centro de notificaciones con filtro y “leer todas”
 │   │   ├── ofertas/       # Ofertas, negociación, comparación y aceptación
+│   │   ├── perfil/        # Perfil general de la cuenta, solo lectura
 │   │   ├── servicios/     # Ejecución, constancias, reseñas, reclamos y conformidad
 │   │   └── tecnico/       # Perfil editable del técnico, foto y estado de verificación
 │   ├── shared/ui/         # Marca, badges, iconos, notificaciones e imágenes autenticadas
@@ -126,11 +132,11 @@ e2e/                       # Pruebas Playwright y Axe
 
 ## Roles y navegación
 
-| Rol       | Acceso inicial | Navegación habilitada                                                                                                |
-| --------- | -------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `CLIENTE` | `/app/inicio`  | Inicio, nueva solicitud, mis solicitudes y mis servicios; ofertas y negociación en el detalle                        |
-| `TECNICO` | `/app/inicio`  | Inicio, mi perfil, solicitudes disponibles, mis ofertas y mis servicios; bloqueado si no está aprobado o tiene deuda |
-| `ADMIN`   | `/app/inicio`  | Inicio, técnicos, usuarios, reseñas, reclamos, comisiones y pagos, reportes, catálogos, parámetros y auditoría       |
+| Rol       | Acceso inicial | Navegación habilitada                                                                                                                                       |
+| --------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CLIENTE` | `/app/inicio`  | Inicio, notificaciones, mi cuenta, nueva solicitud, mis solicitudes y mis servicios; ofertas y negociación en el detalle                                    |
+| `TECNICO` | `/app/inicio`  | Inicio, notificaciones, mi cuenta, mi perfil profesional, solicitudes disponibles, mis ofertas y mis servicios; bloqueado si no está aprobado o tiene deuda |
+| `ADMIN`   | `/app/inicio`  | Inicio, notificaciones, mi cuenta, técnicos, usuarios, reseñas, reclamos, comisiones y pagos, reportes, catálogos, parámetros y auditoría                   |
 
 Los guards protegen las rutas privadas:
 
@@ -333,6 +339,28 @@ CERRADO` con `PATCH /api/admin/reclamos/{id}/estado`. Resolver o cerrar exige un
 - Los cuatro módulos incluyen estados de carga, error con reintento y vacío, y son accesibles desde
   la navegación lateral y el panel inicial del administrador.
 
+## Notificaciones y cuenta
+
+- `/app/notificaciones` está disponible para todos los roles y consume
+  `GET /api/notificaciones?soloNoLeidas=`. La respuesta incluye `notificaciones` y `noLeidas`; no
+  hay paginación, por lo que la bandeja se muestra completa con estados de carga, error con
+  reintento y vacío.
+- Cada notificación muestra título, mensaje, fecha, tipo y referencia. “Marcar como leída” usa
+  `PATCH /api/notificaciones/{id}/leer` y “Marcar todas como leídas” usa
+  `PATCH /api/notificaciones/leer-todas`.
+- El layout muestra el contador de no leídas en la barra superior, la navegación lateral y el menú
+  de usuario. El contador se refresca cada 60 segundos; los fallos del polling se silencian con
+  `SILENCIAR_ERROR` para no repetir avisos globales.
+- `/app/perfil` muestra la cuenta de solo lectura desde `GET /api/auth/me`: identidad, correo, rol,
+  estado e identificador. Los técnicos ven además su resumen profesional y un enlace al perfil
+  editable de `/app/tecnico/perfil`.
+- Si el refresh de tokens falla, se limpia la sesión y se redirige a `/login?sesion=expirada` con
+  un aviso accesible. El login consume el aviso una sola vez, tanto por el query param como por
+  `SesionExpiradaService`.
+
+> Brecha: no existen endpoints para editar el perfil general ni para cambiar o recuperar la
+> contraseña. La vista de cuenta no ofrece esas acciones.
+
 ## Autenticación
 
 1. `POST /api/auth/login` devuelve `accessToken`, `refreshToken` y `expiraEnSegundos`.
@@ -341,7 +369,8 @@ CERRADO` con `PATCH /api/admin/reclamos/{id}/estado`. Resolver o cerrar exige un
    el bloqueo por deuda, el saldo pendiente y las modalidades.
 4. `authInterceptor` agrega `Authorization: Bearer <token>` a las llamadas a la API.
 5. Ante un `401`, se renueva el token una sola vez con `POST /api/auth/refresh` y se reintenta
-   la solicitud. Si el refresh falla, se limpia la sesión.
+   la solicitud. Si el refresh falla, se limpia la sesión, se marca la expiración y se redirige al
+   login con un aviso accesible.
 6. `errorInterceptor` normaliza los errores del backend en `ApiError` y muestra notificaciones
    para fallos de red o de servidor.
 

@@ -4,6 +4,7 @@ import { throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { normalizarError } from './api-error';
+import { SILENCIAR_ERROR } from './silenciar-error';
 import { NotificacionService } from '../../shared/ui/notificacion.service';
 
 export const errorInterceptor: HttpInterceptorFn = (request, next) => {
@@ -12,7 +13,11 @@ export const errorInterceptor: HttpInterceptorFn = (request, next) => {
     catchError((error: unknown) => {
       const apiError = normalizarError(error);
       const esRutaDeAutenticacion = request.url.startsWith(`${environment.apiUrl}/auth/`);
-      if (!esRutaDeAutenticacion && (apiError.estado === 0 || apiError.estado >= 500)) {
+      if (
+        !request.context.get(SILENCIAR_ERROR) &&
+        !esRutaDeAutenticacion &&
+        (apiError.estado === 0 || apiError.estado >= 500)
+      ) {
         notificaciones.error(apiError.mensaje);
       }
       return throwError(() => apiError);
