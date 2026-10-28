@@ -1,0 +1,450 @@
+@if (cargando()) {
+  <div class="detalle detalle--cargando">
+    <mat-spinner diameter="36" aria-label="Cargando el servicio" />
+    <p class="ft-muted">Cargando el servicio…</p>
+  </div>
+} @else if (error(); as fallo) {
+  <div class="detalle ft-page">
+    <div class="ft-alert ft-alert--error" role="alert">
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <div class="detalle__error">
+        <strong>No pudimos cargar el servicio</strong>
+        <p>{{ fallo.mensaje }}</p>
+        @if (fallo.detalles.length > 0) {
+          <ul class="detalle__error-detalles">
+            @for (detalle of fallo.detalles; track detalle) {
+              <li>{{ detalle }}</li>
+            }
+          </ul>
+        }
+        <div class="detalle__error-acciones">
+          <button mat-stroked-button type="button" (click)="reintentarCarga()">
+            <mat-icon aria-hidden="true">refresh</mat-icon>
+            Reintentar
+          </button>
+          <a mat-button [routerLink]="rutaBase()">Volver a mis servicios</a>
+        </div>
+      </div>
+    </div>
+  </div>
+} @else if (servicio(); as s) {
+  <div class="detalle ft-page">
+    <header class="detalle__cabecera">
+      <div class="detalle__cabecera-texto">
+        <a class="detalle__volver" [routerLink]="rutaBase()">
+          <mat-icon aria-hidden="true">arrow_back</mat-icon>
+          Volver a mis servicios
+        </a>
+        <p class="ft-eyebrow">Servicio #{{ s.id }}</p>
+        <h1>{{ titulo() }}</h1>
+        <div class="detalle__badges">
+          <app-estado-badge [texto]="etiquetasEstado[s.estado]" [tono]="tonosEstado[s.estado]" />
+          <app-estado-badge [texto]="etiquetasModalidad[s.modalidad]" tono="info" />
+          <app-estado-badge [texto]="s.garantiaDias + ' días de garantía'" tono="neutral" />
+        </div>
+      </div>
+
+      <div class="detalle__acciones" role="group" aria-label="Acciones del servicio">
+        @for (accion of accionesTecnico(); track accion.estado) {
+          <button
+            mat-flat-button
+            type="button"
+            [disabled]="accionEnCurso() !== null"
+            (click)="accionar(accion)"
+          >
+            <mat-icon aria-hidden="true">{{ accion.icono }}</mat-icon>
+            {{ accionEnCurso() === accion.estado ? 'Actualizando…' : accion.etiqueta }}
+          </button>
+        }
+        @if (puedeFinalizar()) {
+          <button
+            mat-flat-button
+            type="button"
+            [disabled]="accionEnCurso() !== null"
+            (click)="finalizar()"
+          >
+            <mat-icon aria-hidden="true">task_alt</mat-icon>
+            {{ accionEnCurso() === 'finalizar' ? 'Finalizando…' : 'Finalizar servicio' }}
+          </button>
+        }
+        @if (puedeConfirmar()) {
+          <button
+            mat-flat-button
+            type="button"
+            [disabled]="accionEnCurso() !== null"
+            (click)="confirmarConformidad()"
+          >
+            <mat-icon aria-hidden="true">verified</mat-icon>
+            {{ accionEnCurso() === 'conformidad' ? 'Confirmando…' : 'Confirmar conformidad' }}
+          </button>
+        }
+        @if (puedeCancelar()) {
+          <button
+            mat-stroked-button
+            type="button"
+            class="detalle__cancelar"
+            [disabled]="accionEnCurso() !== null"
+            (click)="cancelar()"
+          >
+            <mat-icon aria-hidden="true">cancel</mat-icon>
+            Cancelar servicio
+          </button>
+        }
+      </div>
+    </header>
+
+    @if (s.estado === 'CANCELADO') {
+      <div class="ft-alert ft-alert--error" role="alert">
+        <mat-icon aria-hidden="true">cancel</mat-icon>
+        <div>
+          <strong>
+            Servicio cancelado
+            @if (s.canceladoPor) {
+              por {{ etiquetasCanceladoPor[s.canceladoPor].toLowerCase() }}
+            }
+          </strong>
+          <p>{{ s.motivoCancelacion ?? 'No se registró un motivo de cancelación.' }}</p>
+        </div>
+      </div>
+    } @else if (s.estado === 'FINALIZADO') {
+      <div class="ft-alert ft-alert--warning" role="status">
+        <mat-icon aria-hidden="true">pending_actions</mat-icon>
+        <div>
+          <strong>Servicio finalizado; falta la conformidad del cliente.</strong>
+          @if (s.fechaLimiteConformidad) {
+            <p>
+              Plazo para confirmar:
+              {{ s.fechaLimiteConformidad | date: 'dd MMM yyyy, HH:mm' }}. Si no se confirma, se
+              registrará automáticamente.
+            </p>
+          }
+        </div>
+      </div>
+    } @else if (s.estado === 'CONFIRMADO' || s.estado === 'CALIFICADO') {
+      <div class="ft-alert ft-alert--success" role="status">
+        <mat-icon aria-hidden="true">verified</mat-icon>
+        <div>
+          <strong>Servicio confirmado.</strong>
+          <p>
+            @if (s.confirmadoAutomaticamente) {
+              La conformidad se registró automáticamente al vencer el plazo.
+            } @else {
+              El cliente confirmó la conformidad del servicio.
+            }
+            @if (s.fechaConfirmacion) {
+              Fecha: {{ s.fechaConfirmacion | date: 'dd MMM yyyy, HH:mm' }}.
+            }
+          </p>
+        </div>
+      </div>
+    } @else if (s.estado === 'PENDIENTE_AJUSTE') {
+      <div class="ft-alert ft-alert--warning" role="alert">
+        <mat-icon aria-hidden="true">price_change</mat-icon>
+        <div>
+          <strong>Hay un ajuste de precio pendiente.</strong>
+          <p>
+            @if (esCliente()) {
+              Revisa la propuesta y responde para que el técnico pueda continuar. Si la rechazas, el
+              servicio se cancelará.
+            } @else {
+              El servicio está detenido hasta que el cliente responda el ajuste de precio.
+            }
+          </p>
+        </div>
+      </div>
+    } @else if (s.estado === 'TECNICO_EN_CAMINO' && esCliente()) {
+      <div class="ft-alert ft-alert--info" role="status">
+        <mat-icon aria-hidden="true">directions_car</mat-icon>
+        <div>
+          <strong>El técnico está en camino.</strong>
+          <p>Comparte tu PIN de inicio cuando llegue para que pueda comenzar el trabajo.</p>
+        </div>
+      </div>
+    }
+
+    @if (recepcionTallerPendiente()) {
+      <div class="ft-alert ft-alert--warning" role="note">
+        <mat-icon aria-hidden="true">inventory_2</mat-icon>
+        <div>
+          <strong>Falta la constancia de recepción del equipo.</strong>
+          <p>
+            El servicio en taller se inicia cuando se registra la constancia de recepción. La
+            gestión de constancias se habilitará en la siguiente fase; por ahora este servicio no
+            puede avanzar.
+          </p>
+        </div>
+      </div>
+    }
+
+    @if (entregaTallerPendiente()) {
+      <div class="ft-alert ft-alert--warning" role="note">
+        <mat-icon aria-hidden="true">assignment_return</mat-icon>
+        <div>
+          <strong>Falta la constancia de entrega del equipo.</strong>
+          <p>
+            Antes de finalizar el servicio en taller debe registrarse la constancia de entrega. La
+            gestión de constancias se habilitará en la siguiente fase.
+          </p>
+        </div>
+      </div>
+    }
+
+    <div class="detalle__layout">
+      <div class="detalle__principal">
+        <section class="detalle__panel ft-card" aria-labelledby="titulo-solicitud-servicio">
+          <h2 id="titulo-solicitud-servicio">Datos del servicio</h2>
+          <p class="detalle__descripcion">{{ s.solicitud.descripcion }}</p>
+          <dl class="detalle__lista">
+            <div>
+              <dt>Tipo de equipo</dt>
+              <dd>{{ s.solicitud.tipoEquipo ?? 'No indicado' }}</dd>
+            </div>
+            <div>
+              <dt>Tipo de servicio</dt>
+              <dd>{{ s.solicitud.tipoServicio ?? 'No indicado' }}</dd>
+            </div>
+            <div>
+              <dt>Marca</dt>
+              <dd>{{ s.solicitud.marca ?? 'No indicada' }}</dd>
+            </div>
+            <div>
+              <dt>Modelo</dt>
+              <dd>{{ s.solicitud.modelo ?? 'No indicado' }}</dd>
+            </div>
+            <div>
+              <dt>Urgencia</dt>
+              <dd>{{ etiquetasUrgencia[s.solicitud.urgencia] }}</dd>
+            </div>
+            <div>
+              <dt>Distrito</dt>
+              <dd>{{ s.solicitud.distrito ?? 'No indicado' }}</dd>
+            </div>
+            @if (s.solicitud.direccion) {
+              <div>
+                <dt>Dirección</dt>
+                <dd>{{ s.solicitud.direccion }}</dd>
+              </div>
+            }
+            @if (s.solicitud.referencia) {
+              <div>
+                <dt>Referencia</dt>
+                <dd>{{ s.solicitud.referencia }}</dd>
+              </div>
+            }
+            <div>
+              <dt>Fecha preferida</dt>
+              <dd>
+                @if (s.solicitud.fechaPreferida) {
+                  {{ s.solicitud.fechaPreferida | date: 'dd MMM yyyy' }}
+                } @else {
+                  Sin preferencia
+                }
+              </dd>
+            </div>
+            <div>
+              <dt>Horario preferido</dt>
+              <dd>{{ s.solicitud.horarioPreferido ?? 'Sin preferencia' }}</dd>
+            </div>
+          </dl>
+        </section>
+
+        <app-avances-servicio
+          [servicioId]="s.id"
+          [estado]="s.estado"
+          [avances]="s.avances"
+          [esTecnico]="esTecnico()"
+          (actualizado)="recargar()"
+        />
+
+        <app-ajustes-servicio [servicio]="s" [esCliente]="esCliente()" (actualizado)="recargar()" />
+
+        <app-mensajes-servicio [servicioId]="s.id" [contraparteNombre]="nombreContraparte()" />
+      </div>
+
+      <aside class="detalle__lateral">
+        <section class="detalle__panel ft-card" aria-labelledby="titulo-montos">
+          <h2 id="titulo-montos">Resumen de pago</h2>
+          <dl class="detalle__montos">
+            <div>
+              <dt>Precio del servicio</dt>
+              <dd>S/ {{ s.precioServicio | number: '1.2-2' }}</dd>
+            </div>
+            <div>
+              <dt>Movilidad</dt>
+              <dd>S/ {{ s.costoMovilidad | number: '1.2-2' }}</dd>
+            </div>
+            <div class="detalle__monto-total">
+              <dt>Total del servicio</dt>
+              <dd>S/ {{ s.montoTotal | number: '1.2-2' }}</dd>
+            </div>
+            <div>
+              <dt>Diagnóstico</dt>
+              <dd>S/ {{ s.costoDiagnostico | number: '1.2-2' }}</dd>
+            </div>
+            @if (s.montoFinal !== null) {
+              <div class="detalle__monto-final">
+                <dt>Monto final</dt>
+                <dd>S/ {{ s.montoFinal | number: '1.2-2' }}</dd>
+              </div>
+            }
+            @if (s.metodoPago) {
+              <div>
+                <dt>Método de pago</dt>
+                <dd>{{ etiquetasMetodoPago[s.metodoPago] }}</dd>
+              </div>
+            }
+          </dl>
+          <p class="detalle__nota">
+            El total del servicio suma el precio y la movilidad. El costo de diagnóstico se muestra
+            aparte y no forma parte del total.
+          </p>
+        </section>
+
+        <section class="detalle__panel ft-card" aria-labelledby="titulo-contacto">
+          <h2 id="titulo-contacto">Contacto</h2>
+          @if (esCliente()) {
+            <div class="detalle__contacto">
+              <strong>{{ s.tecnico.nombres }} {{ s.tecnico.apellidos }}</strong>
+              @if (s.tecnico.calificacionPromedio !== null) {
+                <p class="ft-muted">
+                  {{ s.tecnico.calificacionPromedio | number: '1.1-2' }} de calificación ·
+                  {{ s.tecnico.totalResenas }}
+                  {{ s.tecnico.totalResenas === 1 ? 'reseña' : 'reseñas' }}
+                </p>
+              }
+              <a [href]="'tel:' + s.tecnico.celular">
+                <mat-icon aria-hidden="true">phone</mat-icon>
+                {{ s.tecnico.celular }}
+              </a>
+              <a [href]="'mailto:' + s.tecnico.correo">
+                <mat-icon aria-hidden="true">mail</mat-icon>
+                {{ s.tecnico.correo }}
+              </a>
+              @if (s.modalidad === 'TALLER' && s.tecnico.direccionTaller) {
+                <div class="detalle__taller">
+                  <p class="ft-muted">Taller</p>
+                  <p>{{ s.tecnico.direccionTaller }}</p>
+                  @if (s.tecnico.referenciaTaller) {
+                    <p class="ft-muted">{{ s.tecnico.referenciaTaller }}</p>
+                  }
+                  @if (s.tecnico.horarioTaller) {
+                    <p class="ft-muted">Horario: {{ s.tecnico.horarioTaller }}</p>
+                  }
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="detalle__contacto">
+              <strong>{{ s.cliente.nombres }} {{ s.cliente.apellidos }}</strong>
+              <a [href]="'tel:' + s.cliente.celular">
+                <mat-icon aria-hidden="true">phone</mat-icon>
+                {{ s.cliente.celular }}
+              </a>
+              <a [href]="'mailto:' + s.cliente.correo">
+                <mat-icon aria-hidden="true">mail</mat-icon>
+                {{ s.cliente.correo }}
+              </a>
+            </div>
+          }
+        </section>
+
+        @if (s.modalidad === 'DOMICILIO') {
+          <section class="detalle__panel ft-card" aria-labelledby="titulo-pin">
+            <h2 id="titulo-pin">PIN de inicio</h2>
+            @if (s.pinInicio) {
+              @if (s.pinValidado) {
+                <div class="ft-alert ft-alert--success" role="status">
+                  <mat-icon aria-hidden="true">check_circle</mat-icon>
+                  <span>PIN validado. El servicio ya inició.</span>
+                </div>
+              } @else {
+                <p class="detalle__nota">
+                  Comparte este PIN con el técnico cuando llegue al domicilio. No lo envíes por
+                  mensajería si no estás seguro de la identidad del técnico.
+                </p>
+                <div
+                  class="detalle__pin"
+                  role="group"
+                  [attr.aria-label]="'PIN de inicio: ' + s.pinInicio"
+                >
+                  @for (digito of digitosPin(); track $index) {
+                    <span aria-hidden="true">{{ digito }}</span>
+                  }
+                </div>
+              }
+            } @else if (s.pinValidado) {
+              <div class="ft-alert ft-alert--success" role="status">
+                <mat-icon aria-hidden="true">check_circle</mat-icon>
+                <span>PIN validado. El servicio ya inició.</span>
+              </div>
+            } @else if (esTecnico() && s.estado === 'TECNICO_EN_CAMINO') {
+              <p class="detalle__nota">
+                Solicita al cliente el PIN de 4 dígitos para validar el inicio del trabajo.
+              </p>
+            } @else {
+              <p class="detalle__nota">El PIN se habilita cuando el técnico está en camino.</p>
+            }
+          </section>
+        }
+
+        <section class="detalle__panel ft-card" aria-labelledby="titulo-historial">
+          <h2 id="titulo-historial">Historial de estados</h2>
+          <ol class="detalle__historial">
+            @for (registro of s.historial; track registro.id) {
+              <li>
+                <span class="detalle__historial-punto" aria-hidden="true"></span>
+                <div>
+                  <strong>{{ etiquetasEstado[registro.estadoNuevo] }}</strong>
+                  <p class="ft-muted">
+                    @if (registro.estadoAnterior) {
+                      Desde {{ etiquetasEstado[registro.estadoAnterior] }} ·
+                    } @else {
+                      Servicio creado ·
+                    }
+                    {{ registro.creadoEn | date: 'dd MMM yyyy, HH:mm' }}
+                  </p>
+                  @if (registro.cambiadoPorNombre) {
+                    <p class="ft-muted">Por {{ registro.cambiadoPorNombre }}</p>
+                  }
+                  @if (registro.comentario) {
+                    <p class="detalle__historial-comentario">{{ registro.comentario }}</p>
+                  }
+                </div>
+              </li>
+            }
+          </ol>
+        </section>
+
+        <section class="detalle__panel ft-card" aria-labelledby="titulo-constancias">
+          <h2 id="titulo-constancias">Constancias</h2>
+          @if (s.constancias.length === 0) {
+            <p class="detalle__nota">
+              Aún no hay constancias registradas. La recepción y entrega del equipo en taller se
+              gestionarán en la siguiente fase.
+            </p>
+          } @else {
+            <ul class="detalle__constancias">
+              @for (constancia of s.constancias; track constancia.id) {
+                <li>
+                  <strong>{{ etiquetasConstancia[constancia.tipo] }}</strong>
+                  <p class="ft-muted">
+                    {{ constancia.creadoEn | date: 'dd MMM yyyy, HH:mm' }}
+                    @if (constancia.confirmadaPorCliente) {
+                      · Confirmada por el cliente
+                    }
+                  </p>
+                  @if (constancia.accesorios) {
+                    <p>Accesorios: {{ constancia.accesorios }}</p>
+                  }
+                  @if (constancia.observaciones) {
+                    <p>{{ constancia.observaciones }}</p>
+                  }
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      </aside>
+    </div>
+  </div>
+}

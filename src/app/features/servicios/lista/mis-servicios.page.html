@@ -1,0 +1,160 @@
+<div class="servicios ft-page">
+  <header class="servicios__cabecera">
+    <div>
+      <p class="ft-eyebrow">{{ esCliente() ? 'Cliente' : 'Técnico' }}</p>
+      <h1>Mis servicios</h1>
+      <p class="ft-muted">
+        @if (esCliente()) {
+          Sigue el estado de tus servicios, revisa los avances, conversa con el técnico y confirma
+          la conformidad al finalizar.
+        } @else {
+          Revisa los servicios que tienes asignados, registra avances y coordina con el cliente.
+        }
+      </p>
+    </div>
+    <a mat-stroked-button [routerLink]="rutaVolver()" class="servicios__volver">
+      <mat-icon aria-hidden="true">arrow_back</mat-icon>
+      {{ etiquetaVolver() }}
+    </a>
+  </header>
+
+  <section class="servicios__filtros ft-card" aria-labelledby="titulo-filtros-servicios">
+    <div class="servicios__filtros-cabecera">
+      <h2 id="titulo-filtros-servicios">Filtrar por estado</h2>
+      @if (!cargando() && error() === null) {
+        <span class="ft-muted" role="status">
+          {{ serviciosFiltrados().length }}
+          {{ serviciosFiltrados().length === 1 ? 'servicio' : 'servicios' }}
+        </span>
+      }
+    </div>
+    <div class="servicios__opciones" role="group" aria-label="Filtrar servicios por estado">
+      @for (opcion of opcionesFiltro; track opcion.valor) {
+        <button
+          mat-stroked-button
+          type="button"
+          class="servicios__opcion"
+          [class.servicios__opcion--activa]="filtro() === opcion.valor"
+          [attr.aria-pressed]="filtro() === opcion.valor"
+          (click)="seleccionarFiltro(opcion.valor)"
+        >
+          {{ opcion.etiqueta }}
+          <span class="servicios__conteo">{{ contar(opcion.valor) }}</span>
+        </button>
+      }
+    </div>
+  </section>
+
+  @if (error(); as fallo) {
+    <div class="ft-alert ft-alert--error" role="alert">
+      <mat-icon aria-hidden="true">cloud_off</mat-icon>
+      <div class="servicios__error">
+        <strong>No pudimos cargar tus servicios</strong>
+        <p>{{ fallo.mensaje }}</p>
+        @if (fallo.detalles.length > 0) {
+          <ul>
+            @for (detalle of fallo.detalles; track detalle) {
+              <li>{{ detalle }}</li>
+            }
+          </ul>
+        }
+        <button mat-stroked-button type="button" (click)="cargar()">
+          <mat-icon aria-hidden="true">refresh</mat-icon>
+          Reintentar
+        </button>
+      </div>
+    </div>
+  } @else if (cargando()) {
+    <div class="servicios__cargando" role="status">
+      <mat-spinner diameter="36" aria-label="Cargando tus servicios" />
+      <p class="ft-muted">Cargando tus servicios…</p>
+    </div>
+  } @else if (servicios().length === 0) {
+    <section class="servicios__vacio ft-card" aria-labelledby="titulo-sin-servicios">
+      <mat-icon aria-hidden="true">build_circle</mat-icon>
+      <h2 id="titulo-sin-servicios">Aún no tienes servicios</h2>
+      <p class="ft-muted">
+        @if (esCliente()) {
+          Cuando aceptes la oferta de un técnico, el servicio aparecerá aquí para que sigas su
+          ejecución.
+        } @else {
+          Cuando un cliente acepte una de tus ofertas, el servicio aparecerá aquí.
+        }
+      </p>
+      <a mat-flat-button [routerLink]="rutaVolver()">
+        <mat-icon aria-hidden="true">{{ esCliente() ? 'assignment' : 'request_quote' }}</mat-icon>
+        {{ etiquetaVolver() }}
+      </a>
+    </section>
+  } @else if (serviciosFiltrados().length === 0) {
+    <section class="servicios__vacio ft-card" aria-labelledby="titulo-sin-resultados">
+      <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
+      <h2 id="titulo-sin-resultados">No hay servicios en este filtro</h2>
+      <p class="ft-muted">Prueba con otro estado para ver tus servicios.</p>
+      <button mat-stroked-button type="button" (click)="seleccionarFiltro('TODOS')">
+        Ver todos
+      </button>
+    </section>
+  } @else {
+    <ul class="servicios__lista" aria-label="Listado de servicios">
+      @for (servicio of serviciosFiltrados(); track servicio.id) {
+        <li>
+          <article class="servicio ft-card">
+            <div class="servicio__cabecera">
+              <div class="servicio__identidad">
+                <p class="servicio__referencia">Servicio #{{ servicio.id }}</p>
+                <h2>
+                  {{ servicio.tipoEquipo ?? 'Equipo' }}
+                  <span aria-hidden="true">·</span>
+                  {{ servicio.tipoServicio ?? 'Servicio técnico' }}
+                </h2>
+                <p class="ft-muted">
+                  {{ etiquetaContraparte() }}: {{ servicio.contraparteNombre }}
+                </p>
+              </div>
+              <app-estado-badge
+                [texto]="etiquetasEstado[servicio.estado]"
+                [tono]="tonosEstado[servicio.estado]"
+              />
+            </div>
+
+            <dl class="servicio__datos">
+              <div>
+                <dt>Modalidad</dt>
+                <dd>{{ etiquetasModalidad[servicio.modalidad] }}</dd>
+              </div>
+              <div>
+                <dt>{{ servicio.montoFinal === null ? 'Total' : 'Monto final' }}</dt>
+                <dd>
+                  S/
+                  {{ servicio.montoFinal ?? servicio.montoTotal | number: '1.2-2' }}
+                </dd>
+              </div>
+              <div>
+                <dt>Fecha programada</dt>
+                <dd>
+                  @if (servicio.fechaProgramada) {
+                    {{ servicio.fechaProgramada | date: 'dd MMM yyyy' }}
+                  } @else {
+                    Por coordinar
+                  }
+                </dd>
+              </div>
+              <div>
+                <dt>Registrado</dt>
+                <dd>{{ servicio.creadoEn | date: 'dd MMM yyyy' }}</dd>
+              </div>
+            </dl>
+
+            <div class="servicio__acciones">
+              <a mat-flat-button [routerLink]="[rutaBase(), servicio.id]">
+                <mat-icon aria-hidden="true">visibility</mat-icon>
+                Ver detalle
+              </a>
+            </div>
+          </article>
+        </li>
+      }
+    </ul>
+  }
+</div>

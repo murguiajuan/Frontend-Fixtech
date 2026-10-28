@@ -92,7 +92,7 @@
 }
 
 .recibidas__orden-boton--activo {
-  --mat-button-outlined-container-color: var(--ft-primary-800);
+  background-color: var(--ft-primary-800);
   --mat-button-outlined-label-text-color: #fff;
   --mat-button-outlined-outline-color: var(--ft-primary-800);
 }

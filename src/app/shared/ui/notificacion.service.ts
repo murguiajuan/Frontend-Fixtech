@@ -18,7 +18,7 @@ export class NotificacionService {
   }
 
   private mostrar(mensaje: string, panelClass: string): void {
-    this.snackBar.open(mensaje, 'Cerrar', {
+    this.snackBar.open(mensaje, undefined, {
       duration: 5000,
       horizontalPosition: 'center',
       verticalPosition: 'bottom',

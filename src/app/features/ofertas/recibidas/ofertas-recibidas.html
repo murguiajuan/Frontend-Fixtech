@@ -292,6 +292,17 @@
             </details>
 
             <div class="oferta-recibida__acciones">
+              @if (puedeAceptar(oferta)) {
+                <button
+                  mat-flat-button
+                  type="button"
+                  [disabled]="aceptandoId() === oferta.id"
+                  (click)="aceptar(oferta)"
+                >
+                  <mat-icon aria-hidden="true">handshake</mat-icon>
+                  {{ aceptandoId() === oferta.id ? 'Aceptando…' : 'Aceptar oferta' }}
+                </button>
+              }
               @if (puedeIniciar(oferta)) {
                 <button mat-flat-button type="button" (click)="negociar(oferta)">
                   <mat-icon aria-hidden="true">swap_horiz</mat-icon>

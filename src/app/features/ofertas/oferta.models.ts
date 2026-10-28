@@ -1,4 +1,5 @@
 import { Modalidad } from '../../core/auth/auth.models';
+import { EstadoServicio } from '../servicios/servicio.models';
 
 export type ModalidadOferta = Exclude<Modalidad, 'INDISTINTO'>;
 
@@ -78,7 +79,7 @@ export interface ServicioResumen {
   readonly clienteId: number;
   readonly tecnicoId: number;
   readonly modalidad: Modalidad;
-  readonly estado: string;
+  readonly estado: EstadoServicio;
   readonly precioServicio: number;
   readonly costoMovilidad: number;
   readonly costoDiagnostico: number;

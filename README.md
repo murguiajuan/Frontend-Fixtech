@@ -6,11 +6,13 @@ FIXTECH en `http://localhost:8082/api`.
 
 ## Estado actual
 
-Fases 0, 1, 2, 3 y 4 completadas: base técnica, autenticación JWT, sesión, guards, interceptores,
-layouts por rol, panel inicial, administración de técnicos y usuarios, registro y perfil editable
-del técnico con foto autorizada, y solicitudes del cliente con fotos, listado, detalle, edición y
-cancelación. Las demás pantallas de negocio se incorporan en las siguientes fases. El plan completo
-y el progreso están en [`PLAN_FRONTEND.md`](./PLAN_FRONTEND.md).
+Fases 0, 1, 2, 3, 4, 5 y 6 completadas: base técnica, autenticación JWT, sesión, guards,
+interceptores, layouts por rol, panel inicial, administración de técnicos y usuarios, registro y
+perfil editable del técnico con foto autorizada, solicitudes del cliente con fotos, listado,
+detalle, edición y cancelación, solicitudes disponibles y ofertas del técnico, negociación, y
+servicios con aceptación, avances, mensajería, ajustes de precio, finalización y conformidad. Las
+demás pantallas de negocio se incorporan en las siguientes fases. El plan completo y el progreso
+están en [`PLAN_FRONTEND.md`](./PLAN_FRONTEND.md).
 
 ## Stack
 
@@ -78,9 +80,11 @@ sesión como administrador, aprueba el perfil y comprueba el estado con
 `GET /api/admin/tecnicos`. La prueba de registro de técnico crea otra cuenta única desde la
 interfaz, inicia sesión, verifica el perfil en estado `PENDIENTE` y comprueba la edición y la foto.
 La prueba de solicitudes registra un cliente único, publica una solicitud con foto, la edita, la
-cancela y la busca en “Mis solicitudes”. Requiere el backend y MySQL locales. Sin `E2E_BACKEND=1`
-esas pruebas se omiten y solo corren las pruebas públicas. No existe un endpoint para limpiar las
-cuentas y solicitudes creadas por las pruebas.
+cancela y la busca en “Mis solicitudes”. La prueba de servicios recorre el flujo completo:
+aceptación directa de una oferta, PIN de inicio, diagnóstico con foto, mensajería, ajuste de precio,
+finalización y conformidad. Requiere el backend y MySQL locales. Sin `E2E_BACKEND=1` esas pruebas
+se omiten y solo corren las públicas. No existe un endpoint para limpiar las cuentas y solicitudes
+creadas por las pruebas.
 
 ## Estructura
 
@@ -99,6 +103,8 @@ src/
 │   │   ├── cliente/       # Solicitudes: creación, listado, detalle, edición y cancelación
 │   │   ├── dashboard/     # Panel inicial por rol
 │   │   ├── errors/        # Páginas 403 y 404
+│   │   ├── ofertas/       # Ofertas, negociación, comparación y aceptación
+│   │   ├── servicios/     # Ejecución: avances, mensajes, ajustes y conformidad
 │   │   └── tecnico/       # Perfil editable del técnico, foto y estado de verificación
 │   ├── shared/ui/         # Marca, badges, iconos, notificaciones e imágenes autenticadas
 │   ├── app.config.ts      # Locale es-PE, router y HttpClient con interceptores
@@ -113,8 +119,8 @@ e2e/                       # Pruebas Playwright y Axe
 
 | Rol       | Acceso inicial | Navegación habilitada                                                                                 |
 | --------- | -------------- | ----------------------------------------------------------------------------------------------------- |
-| `CLIENTE` | `/app/inicio`  | Inicio, nueva solicitud y mis solicitudes; ofertas y negociación en el detalle                        |
-| `TECNICO` | `/app/inicio`  | Inicio, mi perfil, solicitudes disponibles y mis ofertas; bloqueado si no está aprobado o tiene deuda |
+| `CLIENTE` | `/app/inicio`  | Inicio, nueva solicitud, mis solicitudes y mis servicios; ofertas y negociación en el detalle   |
+| `TECNICO` | `/app/inicio`  | Inicio, mi perfil, solicitudes disponibles, mis ofertas y mis servicios; bloqueado si no está aprobado o tiene deuda |
 | `ADMIN`   | `/app/inicio`  | Inicio, técnicos y usuarios; reportes y catálogos como “Próximamente”                                 |
 
 Los guards protegen las rutas privadas:
@@ -208,12 +214,36 @@ Los guards protegen las rutas privadas:
   permite ordenar por precio, calificación o tiempo; `GET .../ofertas/comparar?ids=` compara hasta
   tres; y `POST /api/ofertas/{id}/contraoferta` registra contraofertas, aceptaciones o rechazos.
 - Aceptar una contraoferta del técnico desde el cliente crea el servicio y cierra el resto de
-  ofertas. La aceptación directa de una oferta normal (`POST /api/ofertas/{id}/aceptar`) queda para
-  la Fase 6.
+  ofertas. La aceptación directa de una oferta normal usa `POST /api/ofertas/{id}/aceptar`, muestra
+  una confirmación y navega al detalle del servicio creado.
 - `precioTotal` y `montoTotal` ya excluyen `costoDiagnostico`; la interfaz muestra el diagnóstico
   por separado y nunca lo suma al total.
 - Todas las rutas del técnico usan `roleGuard` y `tecnicoAprobadoGuard`, con estados de carga,
   error con reintento y vacío.
+
+## Servicios
+
+- `/app/cliente/servicios` y `/app/tecnico/servicios` listan `GET /api/servicios/mios` con filtros
+  por estado (en curso, por confirmar, cerrados, cancelados), contadores, carga, error y vacío.
+- `/app/{rol}/servicios/{id}` muestra `GET /api/servicios/{id}`: estado, modalidad, fechas, montos,
+  datos de contacto, PIN de inicio en domicilio, historial de estados y constancias.
+- El técnico cambia el estado con `PATCH /api/servicios/{id}/estado`: inicia el traslado, valida el
+  PIN de 4 dígitos para pasar a `EN_PROCESO`, registra el diagnóstico y reanuda el trabajo.
+- Los avances se registran con `POST /api/servicios/{id}/avances` (multipart, foto opcional
+  JPG/PNG de hasta 5 MB) y se muestran con `GET .../avances` y `GET .../avances/{avanceId}/foto`.
+- La mensajería usa `GET/POST /api/servicios/{id}/mensajes`; la conversación se carga al abrir el
+  detalle y se actualiza con el botón “Actualizar”, sin polling ni tiempo real.
+- El técnico propone un ajuste con `POST /api/servicios/{id}/ajuste-precio` (justificación y
+  evidencia opcional); el cliente aprueba o rechaza con `PATCH /api/ajustes/{id}/respuesta`.
+  Aprobar actualiza el monto y devuelve el servicio a `EN_DIAGNOSTICO`; rechazar lo cancela.
+- La finalización usa `POST /api/servicios/{id}/finalizar` con el `montoTotal` exacto y el método
+  de pago elegido. El cliente confirma con `POST /api/servicios/{id}/conformidad`.
+- El total y el monto final excluyen `costoDiagnostico`; el diagnóstico se muestra aparte.
+- El flujo de taller queda bloqueado hasta la Fase 7: sin constancia de recepción no se inicia y
+  sin constancia de entrega no se finaliza. El detalle muestra avisos y no ofrece esas acciones.
+
+> Brecha: la API permite registrar constancias de recepción y entrega, pero sus pantallas
+> pertenecen a la Fase 7. La mensajería no tiene actualización en tiempo real.
 
 ## Autenticación
 

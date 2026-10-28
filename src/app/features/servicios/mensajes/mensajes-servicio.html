@@ -1,0 +1,74 @@
+<section class="mensajes ft-card" aria-labelledby="titulo-mensajes">
+  <header class="mensajes__cabecera">
+    <div>
+      <h2 id="titulo-mensajes">Mensajes</h2>
+      <p class="ft-muted">Conversación con {{ contraparteNombre() }}.</p>
+    </div>
+    <button mat-stroked-button type="button" [disabled]="cargando()" (click)="cargar()">
+      <mat-icon aria-hidden="true">refresh</mat-icon>
+      {{ cargando() ? 'Actualizando…' : 'Actualizar' }}
+    </button>
+  </header>
+
+  @if (error(); as fallo) {
+    <div class="ft-alert ft-alert--error" role="alert">
+      <mat-icon aria-hidden="true">cloud_off</mat-icon>
+      <div class="mensajes__error">
+        <p>{{ fallo.mensaje }}</p>
+        <button mat-stroked-button type="button" (click)="cargar()">
+          <mat-icon aria-hidden="true">refresh</mat-icon>
+          Reintentar
+        </button>
+      </div>
+    </div>
+  } @else if (cargando()) {
+    <div class="mensajes__cargando" role="status">
+      <mat-spinner diameter="28" aria-label="Cargando los mensajes" />
+      <span class="ft-muted">Cargando la conversación…</span>
+    </div>
+  } @else if (mensajes().length === 0) {
+    <div class="mensajes__vacio">
+      <mat-icon aria-hidden="true">forum</mat-icon>
+      <p>Aún no hay mensajes. Escribe el primero para coordinar el servicio.</p>
+    </div>
+  } @else {
+    <ul class="mensajes__lista" aria-label="Mensajes del servicio">
+      @for (mensaje of mensajes(); track mensaje.id) {
+        <li class="mensaje" [class.mensaje--mio]="mensaje.mio">
+          <article [attr.aria-label]="'Mensaje de ' + (mensaje.mio ? 'ti' : mensaje.emisorNombre)">
+            <div class="mensaje__cabecera">
+              <strong>{{ mensaje.mio ? 'Tú' : mensaje.emisorNombre }}</strong>
+              <span>{{ mensaje.creadoEn | date: 'dd MMM, HH:mm' }}</span>
+            </div>
+            <p>{{ mensaje.contenido }}</p>
+          </article>
+        </li>
+      }
+    </ul>
+  }
+
+  <form class="mensajes__formulario" [formGroup]="formulario" (ngSubmit)="enviar()">
+    <mat-form-field appearance="outline">
+      <mat-label>Nuevo mensaje</mat-label>
+      <textarea
+        matInput
+        formControlName="contenido"
+        rows="2"
+        maxlength="1000"
+        placeholder="Escribe un mensaje para coordinar el servicio."
+      ></textarea>
+      <mat-hint>Máximo 1000 caracteres. {{ contarCaracteres() }}/1000</mat-hint>
+      @if (formulario.controls.contenido.hasError('required')) {
+        <mat-error>Escribe un mensaje antes de enviarlo.</mat-error>
+      }
+    </mat-form-field>
+    <button mat-flat-button type="submit" [disabled]="enviando() || cargando()">
+      <mat-icon aria-hidden="true">send</mat-icon>
+      {{ enviando() ? 'Enviando…' : 'Enviar' }}
+    </button>
+  </form>
+
+  <p class="mensajes__nota">
+    La conversación no se actualiza en tiempo real. Usa “Actualizar” para ver mensajes nuevos.
+  </p>
+</section>

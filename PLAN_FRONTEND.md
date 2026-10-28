@@ -53,8 +53,8 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
 | 2    | Panel admin: técnicos y usuarios                       | ✅ Completada |
 | 3    | Registro y perfil de técnico                           | ✅ Completada |
 | 4    | Cliente: solicitudes y adjuntos                        | ✅ Completada |
-| 5    | Técnico: solicitudes disponibles y ofertas             | ⏳ Pendiente  |
-| 6    | Negociación y ejecución del servicio                   | ⏳ Pendiente  |
+| 5    | Técnico: solicitudes disponibles y ofertas             | ✅ Completada |
+| 6    | Servicios: aceptación y ejecución del servicio         | ✅ Completada |
 | 7    | Cierre, constancias, reseñas y reclamos                | ⏳ Pendiente  |
 | 8    | Comisiones y pagos del técnico                         | ⏳ Pendiente  |
 | 9    | Administración de catálogos, parámetros y reportes     | ⏳ Pendiente  |
@@ -314,7 +314,7 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
 > Brechas: `OfertaResponse` solo incluye `solicitudId`; el detalle disponible responde `403` cuando
 > la solicitud deja de ser compatible; no hay consulta directa de la oferta propia por solicitud y
 > el listado de disponibles no valida aprobación ni deuda (lo hace el guard del frontend). La
-> aceptación directa de una oferta normal queda para la Fase 6.
+> aceptación directa de una oferta normal se completó en la Fase 6.
 
 ### Criterios de cierre
 
@@ -324,15 +324,58 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
 - [x] Axe sin violaciones en listado, detalle, formulario y diálogos de la fase.
 - [x] Flujo real de oferta, contraoferta y creación del servicio verificado contra la API.
 
-## 10. Fase 6 — Negociación y ejecución ⏳
+## 10. Fase 6 — Servicios: aceptación y ejecución ✅
 
-- [ ] Bandeja de negociación cliente/técnico con contraofertas y aceptación.
-- [ ] Detalle del servicio con estado, fechas, pin de inicio y contacto.
-- [ ] Avances con fotos y descripción.
-- [ ] Mensajería del servicio.
-- [ ] Ajustes de precio con evidencia y respuesta.
-- [ ] Finalización y conformidad del cliente.
-- [ ] Pruebas de estados y E2E del flujo completo.
+### Endpoints usados
+
+- `POST /api/ofertas/{id}/aceptar` para la aceptación directa de una oferta desde el cliente.
+- `GET /api/servicios/mios?estado=`, `GET /api/servicios/{id}` y
+  `PATCH /api/servicios/{id}/estado` para el listado, el detalle y los cambios de estado.
+- `POST /api/servicios/{id}/finalizar` y `POST /api/servicios/{id}/conformidad` para el cierre.
+- `GET/POST /api/servicios/{id}/avances` y `GET /api/servicios/{id}/avances/{avanceId}/foto` para
+  los avances con foto.
+- `GET/POST /api/servicios/{id}/mensajes` para la conversación del servicio.
+- `POST /api/servicios/{id}/ajuste-precio` (multipart), `PATCH /api/ajustes/{id}/respuesta` y
+  `GET /api/ajustes/{id}/evidencia` para los ajustes de precio.
+
+### Frontend
+
+- [x] Aceptación directa de una oferta con confirmación accesible; crea el servicio y navega a su
+      detalle. La aceptación de contraofertas desde el cliente conserva el comportamiento de Fase 5.
+- [x] “Mis servicios” para cliente y técnico, con filtros por estado y contadores.
+- [x] Detalle del servicio con estado, fechas, modalidad, montos, contacto, PIN de inicio, historial
+      y constancias.
+- [x] Flujo de domicilio: iniciar traslado, validar PIN de 4 dígitos, registrar diagnóstico,
+      reanudar el trabajo y finalizar con método de pago.
+- [x] Avances con descripción y foto opcional (JPG/PNG de hasta 5 MB).
+- [x] Mensajería con carga inicial, envío y botón “Actualizar”; sin tiempo real ni polling.
+- [x] Ajustes de precio: propuesta del técnico con justificación y evidencia, aprobación o rechazo
+      del cliente con confirmación y actualización del monto.
+- [x] Confirmación de conformidad del cliente y visualización del monto final.
+- [x] Rutas `/app/cliente/servicios`, `/app/cliente/servicios/:id`,
+      `/app/tecnico/servicios` y `/app/tecnico/servicios/:id` con lazy loading y `roleGuard`.
+- [x] Navegación y paneles de ambos roles con acceso a “Mis servicios”.
+- [x] Pruebas unitarias de servicios HTTP, etiquetas y transiciones, listado, detalle, diálogos,
+      avances, mensajes y ajustes.
+- [x] E2E real: aceptación directa, PIN, diagnóstico con foto, mensajería, ajuste aprobado,
+      finalización y conformidad, con auditoría Axe.
+
+> Importante: `montoTotal`, `montoFinal` y `precioTotal` excluyen `costoDiagnostico`. El frontend
+> muestra el diagnóstico por separado y nunca lo suma al total. Al finalizar se envía exactamente
+> `montoTotal` como `montoFinal`; el diálogo solo permite elegir el método de pago.
+
+> Dependencia de Fase 7: el flujo de taller queda bloqueado hasta que existan las pantallas de
+> constancias de recepción y entrega. El detalle muestra avisos y no ofrece acciones que la API
+> rechazaría; no se crearon pantallas de constancias en esta fase.
+
+### Criterios de cierre
+
+- [x] Build de producción, lint y formato sin errores.
+- [x] 270 pruebas unitarias en 42 archivos, todas en verde.
+- [x] 18 pruebas E2E en verde en Chromium y móvil de 360 px con el backend local.
+- [x] Axe sin violaciones en listado, detalle, diálogos, avances y mensajería.
+- [x] Flujo real de aceptación, ejecución, ajuste, finalización y conformidad verificado contra la
+      API.
 
 ## 11. Fase 7 — Cierre, constancias, reseñas y reclamos ⏳
 
@@ -398,7 +441,8 @@ El registro completo, con impacto y decisión provisional, está en
 [`BRECHAS_PENDIENTES.md`](./BRECHAS_PENDIENTES.md). Se resolverán al final del proyecto. Entre las
 principales están los documentos de verificación sin controlador, la recuperación/cambio de
 contraseña, la búsqueda pública de técnicos, las fotos no reemplazables en la edición de
-solicitudes, la edición del perfil de usuario general y la ausencia de seed/limpieza para E2E.
+solicitudes, la edición del perfil de usuario general, la ausencia de seed/limpieza para E2E, las
+constancias de taller de la Fase 7 y la mensajería sin tiempo real.
 
 | Necesidad                          | Situación                                                    | Decisión                                                                                  |
 | ---------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |

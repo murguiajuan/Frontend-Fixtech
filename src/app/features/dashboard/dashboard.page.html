@@ -163,7 +163,7 @@
             <span class="pasos__numero">3</span>
             <div>
               <strong>Confirma el servicio</strong>
-              <p class="ft-muted">Coordina, revisa los avances y descarga tu constancia.</p>
+              <p class="ft-muted">Coordina, revisa los avances y confirma tu conformidad.</p>
             </div>
           </li>
         </ol>
@@ -175,6 +175,10 @@
           <a mat-stroked-button routerLink="/app/cliente/solicitudes">
             <mat-icon aria-hidden="true">assignment</mat-icon>
             Mis solicitudes
+          </a>
+          <a mat-stroked-button routerLink="/app/cliente/servicios">
+            <mat-icon aria-hidden="true">build_circle</mat-icon>
+            Mis servicios
           </a>
         </div>
       </section>
@@ -235,12 +239,12 @@
             <p class="ft-muted">Sigue el estado de tus publicaciones activas.</p>
             <span class="modulo__estado">Disponible</span>
           </a>
-          <article class="modulo ft-card">
+          <a class="modulo ft-card modulo--enlace" routerLink="/app/cliente/servicios">
             <mat-icon aria-hidden="true">build_circle</mat-icon>
             <h3>Mis servicios</h3>
-            <p class="ft-muted">Consulta avances, mensajes y constancias.</p>
-            <span class="modulo__estado">Próximamente</span>
-          </article>
+            <p class="ft-muted">Consulta avances, mensajes y confirma la conformidad.</p>
+            <span class="modulo__estado">Disponible</span>
+          </a>
         } @else if (esTecnico()) {
           @if (aprobado() && !bloqueado()) {
             <a class="modulo ft-card modulo--enlace" routerLink="/app/tecnico/solicitudes">
@@ -273,6 +277,12 @@
               </span>
             </article>
           }
+          <a class="modulo ft-card modulo--enlace" routerLink="/app/tecnico/servicios">
+            <mat-icon aria-hidden="true">build_circle</mat-icon>
+            <h3>Mis servicios</h3>
+            <p class="ft-muted">Gestiona los servicios asignados y registra avances.</p>
+            <span class="modulo__estado">Disponible</span>
+          </a>
           <article class="modulo ft-card">
             <mat-icon aria-hidden="true">payments</mat-icon>
             <h3>Comisiones</h3>

@@ -5,8 +5,14 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { Router } from '@angular/router';
 import { ApiError, normalizarError } from '../../../core/http/api-error';
 import { ETIQUETAS_MODALIDAD } from '../../../core/models/etiquetas';
+import {
+  ConfirmarAccionData,
+  ConfirmarAccionDialog,
+  ConfirmarAccionResultado,
+} from '../../../shared/ui/confirmar-accion-dialog';
 import { EstadoBadge } from '../../../shared/ui/estado-badge';
 import { ImagenAutenticada } from '../../../shared/ui/imagen-autenticada';
 import { NotificacionService } from '../../../shared/ui/notificacion.service';
@@ -48,6 +54,7 @@ export class OfertasRecibidas implements OnInit {
   private readonly ofertasService = inject(OfertasService);
   private readonly dialog = inject(MatDialog);
   private readonly notificaciones = inject(NotificacionService);
+  private readonly router = inject(Router);
 
   readonly solicitudId = input.required<number>();
   readonly estadoSolicitud = input.required<EstadoSolicitud>();
@@ -60,6 +67,7 @@ export class OfertasRecibidas implements OnInit {
   protected readonly seleccionadas = signal<readonly number[]>([]);
   protected readonly comparando = signal(false);
   protected readonly respondiendoId = signal<number | null>(null);
+  protected readonly aceptandoId = signal<number | null>(null);
 
   protected readonly opcionesOrden = ORDENES_OFERTA;
   protected readonly etiquetasOrden = ETIQUETAS_ORDEN;
@@ -165,6 +173,12 @@ export class OfertasRecibidas implements OnInit {
     return this.puedeNegociar() && puedeResponderContraoferta(oferta, 'CLIENTE');
   }
 
+  protected puedeAceptar(oferta: Oferta): boolean {
+    return (
+      this.puedeNegociar() && estaActiva(oferta.estado) && contraofertaPendiente(oferta) === null
+    );
+  }
+
   protected esperaRespuesta(oferta: Oferta): boolean {
     return esperaRespuestaDeLaOtraParte(oferta, 'CLIENTE');
   }
@@ -209,6 +223,49 @@ export class OfertasRecibidas implements OnInit {
         },
         error: (error: unknown) => {
           this.respondiendoId.set(null);
+          this.notificaciones.error(normalizarError(error).mensaje);
+          this.cargar();
+        },
+      });
+    });
+  }
+
+  protected aceptar(oferta: Oferta): void {
+    if (!this.puedeAceptar(oferta) || this.aceptandoId() !== null) {
+      return;
+    }
+    const datos: ConfirmarAccionData = {
+      titulo: 'Aceptar oferta',
+      mensaje: `¿Aceptas la oferta de ${oferta.tecnico.nombres} ${oferta.tecnico.apellidos} por S/ ${oferta.precioTotal.toFixed(2)}?`,
+      detalle:
+        'Se creará el servicio con este técnico y las demás ofertas de la solicitud se cerrarán. El costo de diagnóstico no forma parte de este total.',
+      icono: 'handshake',
+      etiquetaConfirmar: 'Aceptar y crear servicio',
+    };
+    const referencia: MatDialogRef<ConfirmarAccionDialog, ConfirmarAccionResultado | undefined> =
+      this.dialog.open<ConfirmarAccionDialog, ConfirmarAccionData>(ConfirmarAccionDialog, {
+        data: datos,
+        width: 'min(92vw, 32rem)',
+        autoFocus: 'first-tabbable',
+        restoreFocus: true,
+      });
+
+    referencia.afterClosed().subscribe((resultado) => {
+      if (resultado === undefined) {
+        return;
+      }
+      this.aceptandoId.set(oferta.id);
+      this.ofertasService.aceptar(oferta.id).subscribe({
+        next: (servicio) => {
+          this.aceptandoId.set(null);
+          this.notificaciones.exito(
+            'Oferta aceptada. El servicio fue creado y el técnico fue notificado.',
+          );
+          this.servicioCreado.emit(servicio.id);
+          void this.router.navigate(['/app/cliente/servicios', servicio.id]);
+        },
+        error: (error: unknown) => {
+          this.aceptandoId.set(null);
           this.notificaciones.error(normalizarError(error).mensaje);
           this.cargar();
         },

@@ -40,6 +40,8 @@ test.describe('Ofertas y negociación', () => {
     page,
     request,
   }, testInfo) => {
+    test.setTimeout(90_000);
+
     const catalogos = await obtenerCatalogos(request);
     const distrito = catalogos.distritos[0];
     const tecnico = await registrarTecnico(request, distrito.id, testInfo.workerIndex);

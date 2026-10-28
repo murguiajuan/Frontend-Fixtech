@@ -94,6 +94,42 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'cliente/servicios',
+        title: 'Mis servicios | FIXTECH',
+        canActivate: [roleGuard],
+        data: { roles: ['CLIENTE'] },
+        loadComponent: () =>
+          import('./features/servicios/lista/mis-servicios.page').then((m) => m.MisServiciosPage),
+      },
+      {
+        path: 'cliente/servicios/:id',
+        title: 'Detalle del servicio | FIXTECH',
+        canActivate: [roleGuard],
+        data: { roles: ['CLIENTE'] },
+        loadComponent: () =>
+          import('./features/servicios/detalle/servicio-detalle.page').then(
+            (m) => m.ServicioDetallePage,
+          ),
+      },
+      {
+        path: 'tecnico/servicios',
+        title: 'Mis servicios | FIXTECH',
+        canActivate: [roleGuard],
+        data: { roles: ['TECNICO'] },
+        loadComponent: () =>
+          import('./features/servicios/lista/mis-servicios.page').then((m) => m.MisServiciosPage),
+      },
+      {
+        path: 'tecnico/servicios/:id',
+        title: 'Detalle del servicio | FIXTECH',
+        canActivate: [roleGuard],
+        data: { roles: ['TECNICO'] },
+        loadComponent: () =>
+          import('./features/servicios/detalle/servicio-detalle.page').then(
+            (m) => m.ServicioDetallePage,
+          ),
+      },
+      {
         path: 'tecnico/perfil',
         title: 'Mi perfil | FIXTECH',
         canActivate: [roleGuard],

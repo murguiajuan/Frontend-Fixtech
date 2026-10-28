@@ -1,0 +1,132 @@
+<section class="avances ft-card" aria-labelledby="titulo-avances">
+  <header class="avances__cabecera">
+    <div>
+      <h2 id="titulo-avances">Avances del servicio</h2>
+      <p class="ft-muted">
+        @if (esTecnico()) {
+          Registra diagnósticos y avances con una descripción y, si corresponde, una foto.
+        } @else {
+          Sigue el diagnóstico y los avances que registre el técnico.
+        }
+      </p>
+    </div>
+    @if (avances().length > 0) {
+      <span class="ft-muted" role="status">
+        {{ avances().length }} {{ avances().length === 1 ? 'registro' : 'registros' }}
+      </span>
+    }
+  </header>
+
+  @if (puedeRegistrar()) {
+    <form class="avances__formulario" [formGroup]="formulario" (ngSubmit)="registrar()">
+      <div class="avances__fila">
+        <mat-form-field appearance="outline">
+          <mat-label>Tipo de registro</mat-label>
+          <mat-select formControlName="tipo">
+            @for (tipo of tiposDisponibles(); track tipo) {
+              <mat-option [value]="tipo">{{ etiquetasTipo[tipo] }}</mat-option>
+            }
+          </mat-select>
+          @if (formulario.controls.tipo.hasError('required')) {
+            <mat-error>Selecciona el tipo de registro.</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Descripción</mat-label>
+        <textarea
+          matInput
+          formControlName="descripcion"
+          rows="3"
+          maxlength="1000"
+          placeholder="Describe el diagnóstico o el trabajo realizado."
+        ></textarea>
+        <mat-hint>Máximo 1000 caracteres. El cliente verá este texto.</mat-hint>
+        @if (formulario.controls.descripcion.hasError('required')) {
+          <mat-error>La descripción es obligatoria.</mat-error>
+        }
+      </mat-form-field>
+
+      <div class="avances__archivo">
+        <label class="avances__archivo-boton" for="foto-avance">
+          <mat-icon aria-hidden="true">add_photo_alternate</mat-icon>
+          Adjuntar foto (opcional)
+        </label>
+        <input
+          id="foto-avance"
+          class="avances__archivo-input"
+          type="file"
+          accept="image/jpeg,image/png"
+          (change)="seleccionarArchivo($event)"
+        />
+        <p class="avances__ayuda">Imagen JPG o PNG de hasta 5 MB.</p>
+        @if (errorArchivo(); as error) {
+          <p class="avances__error" role="alert">{{ error }}</p>
+        }
+        @if (archivo(); as seleccionado) {
+          <div class="avances__archivo-seleccionado">
+            <mat-icon aria-hidden="true">image</mat-icon>
+            <span>{{ seleccionado.name }} · {{ formatearBytes(seleccionado.size) }}</span>
+            <button
+              mat-icon-button
+              type="button"
+              [attr.aria-label]="'Quitar ' + seleccionado.name"
+              (click)="quitarArchivo()"
+            >
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+        }
+      </div>
+
+      <button mat-flat-button type="submit" class="avances__enviar" [disabled]="enviando()">
+        <mat-icon aria-hidden="true">add_task</mat-icon>
+        {{ enviando() ? 'Registrando…' : 'Registrar avance' }}
+      </button>
+    </form>
+  }
+
+  @if (avances().length === 0) {
+    <div class="avances__vacio">
+      <mat-icon aria-hidden="true">timeline</mat-icon>
+      <p>
+        @if (esTecnico()) {
+          Aún no has registrado avances en este servicio.
+        } @else {
+          El técnico aún no registró avances en este servicio.
+        }
+      </p>
+    </div>
+  } @else {
+    <ol class="avances__lista" aria-label="Registros de avance">
+      @for (avance of avances(); track avance.id) {
+        <li class="avance">
+          <div class="avance__marcador" aria-hidden="true">
+            <mat-icon>{{
+              avance.tipo === 'DIAGNOSTICO' ? 'troubleshoot' : 'construction'
+            }}</mat-icon>
+          </div>
+          <div class="avance__contenido">
+            <div class="avance__cabecera">
+              <app-estado-badge
+                [texto]="etiquetasTipo[avance.tipo]"
+                [tono]="avance.tipo === 'DIAGNOSTICO' ? 'info' : 'ok'"
+              />
+              <span class="avance__fecha">{{ avance.creadoEn | date: 'dd MMM yyyy, HH:mm' }}</span>
+            </div>
+            <p class="avance__descripcion">{{ avance.descripcion }}</p>
+            @if (urlFoto(avance); as url) {
+              <figure class="avance__foto">
+                <app-imagen-autenticada
+                  [src]="url"
+                  [alt]="'Foto del avance registrado el ' + (avance.creadoEn | date: 'dd MMM yyyy')"
+                />
+              </figure>
+            }
+          </div>
+        </li>
+      }
+    </ol>
+  }
+</section>

@@ -8,6 +8,7 @@ import {
   OfertaOrden,
   OfertaRequest,
   RespuestaNegociacion,
+  ServicioResumen,
 } from './oferta.models';
 
 @Service()
@@ -55,6 +56,13 @@ export class OfertasService {
     return this.http.post<RespuestaNegociacion>(
       `${environment.apiUrl}/ofertas/${ofertaId}/contraoferta`,
       request,
+    );
+  }
+
+  aceptar(ofertaId: number): Observable<ServicioResumen> {
+    return this.http.post<ServicioResumen>(
+      `${environment.apiUrl}/ofertas/${ofertaId}/aceptar`,
+      null,
     );
   }
 }

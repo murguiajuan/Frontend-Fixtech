@@ -19,6 +19,8 @@ contrario.
 | 10  | `SolicitudDisponibleResponse` no trae `imagenPrincipalUrl`    | El listado de solicitudes disponibles no tiene un campo directo para la miniatura.                                                      | Se usa la primera imagen de `imagenes`; si no hay, se muestra un marcador.                                                      |
 | 11  | Aprobación y deuda no se validan en el listado de disponibles | `GET /api/solicitudes/disponibles` no valida aprobación ni bloqueo por deuda; `POST` de oferta sí.                                      | El frontend aplica `tecnicoAprobadoGuard` y oculta las rutas si el técnico no puede ofertar.                                    |
 | 12  | Sin endpoints de notificaciones en la SPA                     | El backend genera notificaciones, pero el centro de notificaciones pertenece a la Fase 10.                                              | No se muestran badges ni bandejas de notificaciones todavía.                                                                    |
+| 13  | Constancias de taller sin pantalla (Fase 7)                   | La API permite registrar constancias, pero la Fase 6 no incluye su gestión. Sin recepción el taller no avanza y sin entrega no finaliza. | El detalle muestra avisos y bloquea las acciones de taller; las pantallas de constancias se implementarán en la Fase 7.        |
+| 14  | Mensajería sin actualización en tiempo real                   | No hay WebSocket ni SSE para mensajes; la conversación solo se actualiza al abrir el detalle o pulsar “Actualizar”.                      | Se mantiene la actualización manual y se informa en la interfaz; no se simula tiempo real.                                      |
 
 ## Brechas cerradas
 

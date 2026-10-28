@@ -1,0 +1,118 @@
+<section class="ajustes ft-card" aria-labelledby="titulo-ajustes">
+  <header class="ajustes__cabecera">
+    <div>
+      <h2 id="titulo-ajustes">Ajustes de precio</h2>
+      <p class="ft-muted">
+        @if (esCliente()) {
+          Revisa las propuestas del técnico y aprueba o rechaza los cambios de monto.
+        } @else {
+          Si el trabajo requiere un monto mayor, propón un ajuste con su justificación.
+        }
+      </p>
+    </div>
+    @if (puedeProponer()) {
+      <button mat-flat-button type="button" [disabled]="guardando()" (click)="proponer()">
+        <mat-icon aria-hidden="true">price_change</mat-icon>
+        {{ guardando() ? 'Enviando…' : 'Proponer ajuste' }}
+      </button>
+    }
+  </header>
+
+  @if (pendiente(); as ajuste) {
+    <div class="ajuste-pendiente" role="status" aria-labelledby="titulo-ajuste-pendiente">
+      <div class="ajuste-pendiente__cabecera">
+        <h3 id="titulo-ajuste-pendiente">Ajuste pendiente de respuesta</h3>
+        <app-estado-badge texto="Pendiente" tono="alerta" />
+      </div>
+
+      <dl class="ajuste-pendiente__montos">
+        <div>
+          <dt>Monto actual</dt>
+          <dd>S/ {{ ajuste.montoAnterior | number: '1.2-2' }}</dd>
+        </div>
+        <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+        <div>
+          <dt>Monto propuesto</dt>
+          <dd class="ajuste-pendiente__nuevo">S/ {{ ajuste.montoNuevo | number: '1.2-2' }}</dd>
+        </div>
+      </dl>
+
+      <div class="ajuste-pendiente__detalle">
+        <h4>Justificación del técnico</h4>
+        <p>{{ ajuste.justificacion }}</p>
+        <p class="ft-muted">Propuesto el {{ ajuste.creadoEn | date: 'dd MMM yyyy, HH:mm' }}</p>
+      </div>
+
+      @if (urlEvidencia(ajuste); as url) {
+        <figure class="ajuste-pendiente__evidencia">
+          <app-imagen-autenticada
+            [src]="url"
+            [alt]="'Evidencia del ajuste de precio #' + ajuste.id"
+          />
+          <figcaption>Evidencia adjunta por el técnico.</figcaption>
+        </figure>
+      }
+
+      @if (esCliente()) {
+        <div class="ajuste-pendiente__acciones">
+          <button mat-flat-button type="button" [disabled]="guardando()" (click)="aprobar(ajuste)">
+            <mat-icon aria-hidden="true">price_check</mat-icon>
+            Aprobar ajuste
+          </button>
+          <button
+            mat-stroked-button
+            type="button"
+            class="ajuste-pendiente__rechazar"
+            [disabled]="guardando()"
+            (click)="rechazar(ajuste)"
+          >
+            <mat-icon aria-hidden="true">cancel</mat-icon>
+            Rechazar ajuste
+          </button>
+        </div>
+        <p class="ajuste-pendiente__nota">
+          Si rechazas el ajuste, el servicio se cancelará automáticamente.
+        </p>
+      } @else {
+        <div class="ft-alert ft-alert--info" role="note">
+          <mat-icon aria-hidden="true">hourglass_top</mat-icon>
+          <span>Esperando la respuesta del cliente. El servicio continuará cuando responda.</span>
+        </div>
+      }
+    </div>
+  }
+
+  @if (historicos().length === 0) {
+    @if (pendiente() === null) {
+      <p class="ajustes__vacio">No se han registrado ajustes de precio en este servicio.</p>
+    }
+  } @else {
+    <div class="ajustes__historial">
+      <h3>Historial de ajustes</h3>
+      <ul>
+        @for (ajuste of historicos(); track ajuste.id) {
+          <li class="ajuste">
+            <div class="ajuste__cabecera">
+              <span class="ajuste__fecha">{{ ajuste.creadoEn | date: 'dd MMM yyyy, HH:mm' }}</span>
+              <app-estado-badge
+                [texto]="etiquetasAjuste[ajuste.estado]"
+                [tono]="tonosAjuste[ajuste.estado]"
+              />
+            </div>
+            <p class="ajuste__montos">
+              <span>S/ {{ ajuste.montoAnterior | number: '1.2-2' }}</span>
+              <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+              <strong>S/ {{ ajuste.montoNuevo | number: '1.2-2' }}</strong>
+            </p>
+            <p class="ajuste__justificacion">{{ ajuste.justificacion }}</p>
+            @if (ajuste.fechaRespuesta) {
+              <p class="ft-muted ajuste__respuesta">
+                Respondido el {{ ajuste.fechaRespuesta | date: 'dd MMM yyyy, HH:mm' }}
+              </p>
+            }
+          </li>
+        }
+      </ul>
+    </div>
+  }
+</section>

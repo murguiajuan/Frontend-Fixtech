@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
+import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { NotificacionService } from '../../../shared/ui/notificacion.service';
 import { EstadoSolicitud } from '../../cliente/solicitudes/solicitud.models';
@@ -30,15 +31,18 @@ describe('OfertasRecibidas', () => {
     listarDelCliente: vi.fn(),
     comparar: vi.fn(),
     responder: vi.fn(),
+    aceptar: vi.fn(),
   };
   const dialogo = { open: vi.fn() };
   const notificaciones = { exito: vi.fn(), error: vi.fn() };
+  let router: Router;
 
   beforeEach(async () => {
     ofertasService.listarDelCliente.mockReset();
     ofertasService.listarDelCliente.mockReturnValue(of([]));
     ofertasService.comparar.mockReset();
     ofertasService.responder.mockReset();
+    ofertasService.aceptar.mockReset();
     dialogo.open.mockReset();
     dialogo.open.mockReturnValue({ afterClosed: () => of(undefined) });
     notificaciones.exito.mockReset();
@@ -47,11 +51,15 @@ describe('OfertasRecibidas', () => {
     await TestBed.configureTestingModule({
       imports: [OfertasRecibidas],
       providers: [
+        provideRouter([]),
         { provide: OfertasService, useValue: ofertasService },
         { provide: MatDialog, useValue: dialogo },
         { provide: NotificacionService, useValue: notificaciones },
       ],
     }).compileComponents();
+
+    router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
   });
 
   it('lista las ofertas recibidas con la información del técnico', () => {
@@ -193,6 +201,46 @@ describe('OfertasRecibidas', () => {
       'Servicio creado. El técnico fue notificado y el resto de ofertas se cerró.',
     );
     expect(contenido(fixture)).toContain('El servicio ya fue confirmado');
+  });
+
+  it('acepta una oferta directamente y navega al servicio creado', () => {
+    ofertasService.listarDelCliente.mockReturnValue(of([crearOferta({ id: 7 })]));
+    ofertasService.aceptar.mockReturnValue(of(SERVICIO));
+    dialogo.open.mockReturnValue({ afterClosed: () => of({ motivo: null }) });
+
+    const fixture = crear('PUBLICADA');
+    const emitidos: number[] = [];
+    fixture.componentInstance.servicioCreado.subscribe((id) => emitidos.push(id));
+
+    pulsarBoton(fixture, 'Aceptar oferta');
+
+    expect(ofertasService.aceptar).toHaveBeenCalledWith(7);
+    expect(emitidos).toEqual([21]);
+    expect(notificaciones.exito).toHaveBeenCalledWith(
+      'Oferta aceptada. El servicio fue creado y el técnico fue notificado.',
+    );
+    expect(router.navigate).toHaveBeenCalledWith(['/app/cliente/servicios', 21]);
+  });
+
+  it('no muestra el botón de aceptar si hay una contraoferta pendiente', () => {
+    ofertasService.listarDelCliente.mockReturnValue(
+      of([
+        crearOferta({
+          id: 7,
+          estado: 'CONTRAOFERTADA',
+          contraofertas: [crearContraoferta({ emisor: 'TECNICO', montoPropuesto: 140 })],
+        }),
+      ]),
+    );
+
+    const fixture = crear('PUBLICADA');
+
+    expect(contenido(fixture)).toContain('Responder contraoferta');
+    expect(
+      Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button')).some((boton) =>
+        boton.textContent?.includes('Aceptar oferta'),
+      ),
+    ).toBe(false);
   });
 
   it('avisa que la solicitud ya no admite negociación', () => {

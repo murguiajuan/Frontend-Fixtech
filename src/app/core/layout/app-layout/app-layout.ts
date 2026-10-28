@@ -89,7 +89,7 @@ export class AppLayout {
           etiqueta: 'Mis servicios',
           icono: 'build_circle',
           ruta: '/app/cliente/servicios',
-          disponible: false,
+          disponible: true,
         },
       );
     } else if (rol === 'TECNICO') {
@@ -117,7 +117,7 @@ export class AppLayout {
           etiqueta: 'Mis servicios',
           icono: 'build_circle',
           ruta: '/app/tecnico/servicios',
-          disponible: false,
+          disponible: true,
         },
       );
     } else {
