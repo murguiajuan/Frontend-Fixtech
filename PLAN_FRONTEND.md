@@ -207,8 +207,8 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
       escritorio y 360 px.
 
 > Brechas: los documentos de verificación siguen sin flujo administrativo porque
-> `documento_tecnico` no tiene controlador expuesto. No hay endpoints de cambio o recuperación de
-> contraseña. El E2E crea cuentas reales y no hay endpoint de limpieza.
+> `documento_tecnico` no tiene controlador expuesto. La recuperación de contraseña mediante OTP se
+> agregó en la Fase 1 de cierre de brechas.
 
 ### Criterios de cierre
 
@@ -581,8 +581,9 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
 - [x] Bandeja, filtro, badge y perfil verificados contra la API real.
 
 > Brecha: no hay endpoints de edición del perfil de usuario general (el perfil profesional del
-> técnico sí es editable en Fase 4), cambio de contraseña ni recuperación de contraseña. La vista
-> de cuenta es de solo lectura y no promete esas funciones.
+> técnico sí es editable en Fase 4). La vista de cuenta es de solo lectura y no promete esas
+> funciones. La recuperación de contraseña mediante OTP se agregó en la Fase 1 de cierre de
+> brechas.
 
 ## 15. Fase 11 — Endurecimiento UX, rendimiento y seguridad ✅
 
@@ -682,9 +683,10 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
 El registro completo, con impacto y decisión provisional, está en
 [`BRECHAS_PENDIENTES.md`](./BRECHAS_PENDIENTES.md). Las brechas abiertas quedan registradas para
 una siguiente iteración. Entre las principales están los documentos de verificación sin
-controlador, la recuperación/cambio de contraseña, la búsqueda pública de técnicos, las fotos no
+controlador, la búsqueda pública de técnicos, las fotos no
 reemplazables en la edición de solicitudes, la edición del perfil de usuario general, la limpieza
-automática de datos E2E y la mensajería sin tiempo real.
+automática de datos E2E y la mensajería sin tiempo real. La recuperación de contraseña mediante
+OTP ya fue completada en la Fase 1 de cierre de brechas.
 
 | Necesidad                          | Situación                                                    | Decisión                                                                                                               |
 | ---------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |

@@ -49,6 +49,7 @@ function esRutaDeAutenticacionPublica(url: string): boolean {
   return (
     url.startsWith(`${environment.apiUrl}/auth/login`) ||
     url.startsWith(`${environment.apiUrl}/auth/refresh`) ||
-    url.startsWith(`${environment.apiUrl}/auth/register/`)
+    url.startsWith(`${environment.apiUrl}/auth/register/`) ||
+    url.startsWith(`${environment.apiUrl}/auth/recuperacion/`)
   );
 }

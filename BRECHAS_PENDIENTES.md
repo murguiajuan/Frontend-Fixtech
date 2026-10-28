@@ -8,7 +8,8 @@ cerradas se listan al final del documento.
 | #   | Brecha                                                        | Impacto actual                                                                                                                          | Decisión provisional                                                                                                                         |
 | --- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | Documentos de verificación del técnico sin controlador        | La tabla `documento_tecnico` existe, pero no hay endpoints para cargarlos, listarlos ni revisarlos. El panel admin no puede mostrarlos. | El detalle administrativo y el perfil indican que no hay documentos disponibles; no se inventan campos.                                      |
-| 2   | Cambio y recuperación de contraseña sin endpoints             | No hay forma de recuperar la cuenta ni cambiar la contraseña desde la SPA.                                                              | No se muestran enlaces “Olvidé mi contraseña” ni acciones de cambio.                                                                         |
+| 2   | Cambio y recuperación de contraseña sin endpoints             | ~~No hay forma de recuperar la cuenta ni cambiar la contraseña desde la SPA.~~                                                          | ~~No se muestran enlaces “Olvidé mi contraseña” ni acciones de cambio.~~                                                                     |
+|     |                                                               | **Cerrada:** OTP de 6 dígitos, `/recuperar-password` con tres pasos, enlace en login.                                                   |
 | 3   | Búsqueda y perfil público de técnicos sin endpoint            | El cliente solo ve al técnico dentro de las ofertas recibidas; no puede buscar técnicos por especialidad o distrito.                    | Se pospone hasta que exista un contrato público.                                                                                             |
 | 4   | Fotos no reemplazables en `PUT /api/solicitudes/{id}`         | La edición de una solicitud solo actualiza datos; no permite agregar ni quitar fotos.                                                   | Las fotos se adjuntan únicamente al crear. La interfaz lo advierte y no simula la edición de archivos.                                       |
 | 5   | Edición del perfil de usuario general sin endpoint            | El cliente y el administrador no pueden actualizar nombres, apellidos, celular, DNI ni foto de cuenta.                                  | Solo el perfil profesional del técnico es editable (`PUT /api/perfil/tecnico` y `POST /api/perfil/foto`).                                    |
@@ -37,6 +38,9 @@ cerradas se listan al final del documento.
 - Datos semilla E2E: `e2e/seed/seed-e2e.mjs` y `npm run e2e:seed` crean o reutilizan administrador,
   cliente y técnico aprobado de forma idempotente (Fase 12). La limpieza automática sigue
   registrada en la brecha 6.
+- Recuperación de contraseña mediante OTP: código de 6 dígitos, `/recuperar-password` con tres
+  pasos (correo → código → opciones), enlace en login, aviso `recuperado=1` y soporte completo
+  en `authInterceptor` (Fase 1 de cierre de brechas).
 
 ## Regla de trabajo
 

@@ -16,7 +16,8 @@ técnico con pagos, comprobantes y validación administrativa, administración d
 parámetros del sistema, dashboard, reportes con exportación Excel y auditoría, centro de
 notificaciones con badge, polling, perfil de cuenta de solo lectura y cierre de sesión por
 expiración con aviso accesible, endurecimiento de UX, rendimiento y seguridad, y cierre de calidad
-con despliegue verificado y documentación de aceptación. El plan completo y el progreso están en
+con despliegue verificado y documentación de aceptación. La Fase 1 de cierre de brechas agrega la
+recuperación de contraseña mediante código OTP. El plan completo y el progreso están en
 [`PLAN_FRONTEND.md`](./PLAN_FRONTEND.md).
 
 ## Stack
@@ -163,7 +164,7 @@ src/
 │   ├── features/
 │   │   ├── admin/         # Técnicos, usuarios, reseñas, reclamos, catálogos, parámetros,
 │   │   │                  # reportes y auditoría
-│   │   ├── auth/          # Login, registro de cliente y registro de técnico
+│   │   ├── auth/          # Login, registro de cliente, registro de técnico y recuperación de contraseña
 │   │   ├── cliente/       # Solicitudes: creación, listado, detalle, edición y cancelación
 │   │   ├── dashboard/     # Panel inicial por rol
 │   │   ├── errors/        # Páginas 403 y 404
@@ -249,8 +250,8 @@ CERRADO` con `PATCH /api/admin/reclamos/{id}/estado`. Resolver o cerrar exige un
   modalidad y los datos del taller cuando corresponde.
 
 > Brecha: los documentos de verificación siguen sin flujo administrativo porque
-> `documento_tecnico` no tiene controlador expuesto. El perfil no inventa documentos. Tampoco
-> existen endpoints de cambio o recuperación de contraseña.
+> `documento_tecnico` no tiene controlador expuesto. El perfil no inventa documentos. La
+> recuperación de contraseña mediante OTP ya está disponible en `/recuperar-password`.
 
 ## Solicitudes del cliente
 
@@ -410,8 +411,8 @@ CERRADO` con `PATCH /api/admin/reclamos/{id}/estado`. Resolver o cerrar exige un
   un aviso accesible. El login consume el aviso una sola vez, tanto por el query param como por
   `SesionExpiradaService`.
 
-> Brecha: no existen endpoints para editar el perfil general ni para cambiar o recuperar la
-> contraseña. La vista de cuenta no ofrece esas acciones.
+> Brecha: no existen endpoints para editar el perfil general. La recuperación de contraseña
+> mediante OTP ya está disponible en `/recuperar-password` (ver sección de autenticación).
 
 ## Autenticación
 
@@ -419,12 +420,27 @@ CERRADO` con `PATCH /api/admin/reclamos/{id}/estado`. Resolver o cerrar exige un
 2. Los tokens se guardan en `sessionStorage` mediante `SessionStore`.
 3. `GET /api/auth/me` carga el perfil y, para técnicos, el estado de verificación, el motivo,
    el bloqueo por deuda, el saldo pendiente y las modalidades.
-4. `authInterceptor` agrega `Authorization: Bearer <token>` a las llamadas a la API.
+4. `authInterceptor` agrega `Authorization: Bearer <token>` a las llamadas a la API, excepto
+   las rutas públicas: login, refresh, registro y `/auth/recuperacion/*`.
 5. Ante un `401`, se renueva el token una sola vez con `POST /api/auth/refresh` y se reintenta
    la solicitud. Si el refresh falla, se limpia la sesión, se marca la expiración y se redirige al
    login con un aviso accesible.
 6. `errorInterceptor` normaliza los errores del backend en `ApiError` y muestra notificaciones
    para fallos de red o de servidor.
+
+### Recuperación de contraseña
+
+La ruta `/recuperar-password` permite restablecer la contraseña sin sesión mediante un código
+OTP de seis dígitos:
+
+1. El usuario ingresa su correo y recibe un código de seis dígitos (o un mensaje genérico si no
+   está registrado, sin revelar la existencia de la cuenta).
+2. Verifica el código y el backend devuelve un ticket temporal de un solo uso.
+3. Con el ticket puede crear una nueva contraseña o acceder directamente sin cambiarla.
+
+El enlace "¿Olvidaste tu contraseña?" aparece en el login. Tras restablecer, la aplicación
+redirige al login con el aviso `recuperado=1`. Si el usuario elige acceder sin cambiar la
+contraseña, ingresa directamente al panel. El ticket expira y no puede reutilizarse.
 
 ### Limitación conocida
 
@@ -444,9 +460,10 @@ CSRF. Esta limitación debe revisarse antes del despliegue.
 
 ### Brechas de API
 
-No existen todavía endpoints para carga de documentos de verificación, recuperación/cambio de
-contraseña ni búsqueda pública de técnicos. La edición de perfil y la foto del técnico ya están
-cubiertas por `PUT /api/perfil/tecnico`, `POST /api/perfil/foto` y `GET /api/tecnicos/{id}/foto`.
+No existen todavía endpoints para carga de documentos de verificación ni búsqueda pública de
+técnicos. La recuperación de contraseña mediante OTP ya está implementada (ver sección de
+autenticación). La edición de perfil y la foto del técnico ya están cubiertas por
+`PUT /api/perfil/tecnico`, `POST /api/perfil/foto` y `GET /api/tecnicos/{id}/foto`.
 Para clientes no existe un endpoint de limpieza de solicitudes creadas por pruebas. El contrato de
 ofertas tampoco incluye el resumen de la solicitud en `OfertaResponse` ni una consulta directa de
 la oferta propia por solicitud, y el detalle disponible deja de responder cuando la solicitud deja

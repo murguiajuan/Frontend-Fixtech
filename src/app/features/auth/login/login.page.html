@@ -115,6 +115,12 @@
       </button>
     </form>
 
+    <p class="acceso__olvido">
+      <a routerLink="/recuperar-password" [queryParams]="parametrosRecuperacion()">
+        ¿Olvidaste tu contraseña?
+      </a>
+    </p>
+
     <p class="acceso__alternativa">
       ¿Aún no tienes cuenta?
       <a routerLink="/registro">Crea tu cuenta de cliente</a>

@@ -20,6 +20,14 @@ export const routes: Routes = [
         loadComponent: () => import('./features/auth/login/login.page').then((m) => m.LoginPage),
       },
       {
+        path: 'recuperar-password',
+        title: 'Recuperar contraseña | FIXTECH',
+        loadComponent: () =>
+          import('./features/auth/recuperar-password/recuperar-password.page').then(
+            (m) => m.RecuperarPasswordPage,
+          ),
+      },
+      {
         path: 'registro',
         title: 'Crear cuenta | FIXTECH',
         loadComponent: () =>

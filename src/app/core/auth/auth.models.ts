@@ -17,6 +17,33 @@ export interface TokenResponse {
   readonly expiraEnSegundos: number;
 }
 
+export interface SolicitudRecuperacionRequest {
+  readonly correo: string;
+}
+
+export interface VerificacionRecuperacionRequest {
+  readonly correo: string;
+  readonly codigo: string;
+}
+
+export interface RestablecerPasswordRequest {
+  readonly ticket: string;
+  readonly password: string;
+}
+
+export interface AccesoRecuperacionRequest {
+  readonly ticket: string;
+}
+
+export interface RecuperacionVerificadaResponse {
+  readonly ticket: string;
+  readonly expiraEnSegundos: number;
+}
+
+export interface MensajeGenericoResponse {
+  readonly mensaje: string;
+}
+
 export interface RegistroClienteRequest {
   readonly nombres: string;
   readonly apellidos: string;

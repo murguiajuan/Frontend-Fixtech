@@ -6,7 +6,9 @@ import { catchError, finalize, map, shareReplay, switchMap, tap } from 'rxjs/ope
 import { environment } from '../../../environments/environment';
 import {
   LoginRequest,
+  MensajeGenericoResponse,
   PerfilUsuario,
+  RecuperacionVerificadaResponse,
   RegistroClienteRequest,
   RegistroTecnicoRequest,
   TokenResponse,
@@ -52,6 +54,42 @@ export class AuthService {
       }),
       switchMap(() => this.cargarPerfil()),
     );
+  }
+
+  solicitarRecuperacion(correo: string): Observable<MensajeGenericoResponse> {
+    return this.http.post<MensajeGenericoResponse>(
+      `${environment.apiUrl}/auth/recuperacion/solicitar`,
+      { correo },
+    );
+  }
+
+  verificarRecuperacion(
+    correo: string,
+    codigo: string,
+  ): Observable<RecuperacionVerificadaResponse> {
+    return this.http.post<RecuperacionVerificadaResponse>(
+      `${environment.apiUrl}/auth/recuperacion/verificar`,
+      { correo, codigo },
+    );
+  }
+
+  restablecerPassword(ticket: string, password: string): Observable<void> {
+    return this.http.post<void>(`${environment.apiUrl}/auth/recuperacion/restablecer`, {
+      ticket,
+      password,
+    });
+  }
+
+  accederConRecuperacion(ticket: string): Observable<PerfilUsuario> {
+    return this.http
+      .post<TokenResponse>(`${environment.apiUrl}/auth/recuperacion/acceder`, { ticket })
+      .pipe(
+        tap((tokens) => {
+          this.session.guardar(tokens);
+          this.sesionExpirada.limpiar();
+        }),
+        switchMap(() => this.cargarPerfil()),
+      );
   }
 
   registrarCliente(request: RegistroClienteRequest): Observable<UsuarioRegistradoResponse> {

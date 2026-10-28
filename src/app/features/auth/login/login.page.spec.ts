@@ -187,6 +187,45 @@ describe('LoginPage', () => {
 
     expect(compiled.textContent).not.toContain('Tu sesión expiró por seguridad.');
   });
+
+  it('ofrece recuperar la contraseña desde el acceso', () => {
+    const fixture = TestBed.createComponent(LoginPage);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    const enlace = compiled.querySelector<HTMLAnchorElement>('a[href^="/recuperar-password"]');
+    expect(enlace?.textContent).toContain('¿Olvidaste tu contraseña?');
+  });
+
+  it('conserva el returnUrl al ofrecer la recuperación', () => {
+    TestBed.overrideProvider(ActivatedRoute, {
+      useValue: {
+        snapshot: {
+          queryParamMap: convertToParamMap({ returnUrl: '/app/cliente/solicitudes' }),
+        },
+      },
+    });
+    const fixture = TestBed.createComponent(LoginPage);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    const enlace = compiled.querySelector<HTMLAnchorElement>('a[href^="/recuperar-password"]');
+    expect(enlace?.getAttribute('href')).toContain('returnUrl=');
+  });
+
+  it('avisa cuando la contraseña fue restablecida', () => {
+    TestBed.overrideProvider(ActivatedRoute, {
+      useValue: {
+        snapshot: { queryParamMap: convertToParamMap({ recuperado: '1' }) },
+      },
+    });
+    const fixture = TestBed.createComponent(LoginPage);
+    fixture.detectChanges();
+
+    expect(notificacionesStub.exito).toHaveBeenCalledWith(
+      'Contraseña actualizada. Inicia sesión con tu nueva contraseña.',
+    );
+  });
 });
 
 function escribir(contenedor: HTMLElement, selector: string, valor: string): void {

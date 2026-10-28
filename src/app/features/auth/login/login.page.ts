@@ -60,6 +60,10 @@ export class LoginPage {
         'Cuenta de técnico creada. Tu perfil quedó en revisión; ya puedes iniciar sesión.',
       );
     }
+
+    if (this.route.snapshot.queryParamMap.get('recuperado') === '1') {
+      this.notificaciones.exito('Contraseña actualizada. Inicia sesión con tu nueva contraseña.');
+    }
   }
 
   protected enviar(): void {
@@ -91,6 +95,11 @@ export class LoginPage {
   protected mostrarError(campo: 'correo' | 'password'): boolean {
     const control = this.formulario.controls[campo];
     return control.invalid && (control.touched || this.enviado());
+  }
+
+  protected parametrosRecuperacion(): Record<string, string> | null {
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+    return returnUrl === null ? null : { returnUrl };
   }
 
   private urlRetorno(): string {
