@@ -1,7 +1,10 @@
 import {
   AjustePrecio,
   Avance,
+  Constancia,
   Mensaje,
+  Reclamo,
+  Resena,
   ServicioDetalle,
   ServicioListado,
 } from '../servicio.models';
@@ -60,6 +63,60 @@ export function crearMensaje(overrides: Partial<Mensaje> = {}): Mensaje {
     leido: false,
     mio: false,
     creadoEn: '2026-10-27T15:00:00',
+    ...overrides,
+  };
+}
+
+export function crearConstancia(overrides: Partial<Constancia> = {}): Constancia {
+  return {
+    id: 31,
+    tipo: 'RECEPCION',
+    observaciones: 'Equipo con rayones en la tapa.',
+    accesorios: 'Cargador original',
+    confirmadaPorCliente: false,
+    fechaConfirmacion: null,
+    creadoEn: '2026-10-27T12:30:00',
+    fotoIds: [101],
+    ...overrides,
+  };
+}
+
+export function crearResena(overrides: Partial<Resena> = {}): Resena {
+  return {
+    id: 41,
+    servicioId: 21,
+    tecnicoId: 9,
+    tecnicoNombre: 'María Quispe',
+    clienteNombre: 'Cliente E2E',
+    estrellas: 5,
+    puntualidad: 5,
+    trato: 4,
+    calidad: 5,
+    precioJusto: 4,
+    comentario: 'Excelente atención y explicación del problema.',
+    respuestaTecnico: null,
+    fechaRespuesta: null,
+    estado: 'VISIBLE',
+    motivoReporte: null,
+    creadoEn: '2026-10-27T16:00:00',
+    ...overrides,
+  };
+}
+
+export function crearReclamo(overrides: Partial<Reclamo> = {}): Reclamo {
+  return {
+    id: 51,
+    servicioId: 21,
+    clienteId: 2,
+    clienteNombre: 'Cliente E2E',
+    descripcion: 'El equipo regresó con la misma falla al día siguiente.',
+    estado: 'ABIERTO',
+    respuestaTecnico: null,
+    resolucion: null,
+    resueltoPorId: null,
+    creadoEn: '2026-10-27T17:00:00',
+    fechaResolucion: null,
+    fotoIds: [201],
     ...overrides,
   };
 }

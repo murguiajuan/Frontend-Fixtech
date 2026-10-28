@@ -1,0 +1,270 @@
+:host {
+  display: block;
+}
+
+.resena {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1.1rem;
+}
+
+.resena__cabecera h2 {
+  font-size: 1.08rem;
+}
+
+.resena__cabecera p {
+  max-width: 42rem;
+  margin-top: 0.2rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.resena__cargando {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.8rem;
+  border-radius: var(--ft-radius-sm);
+  background: var(--ft-surface);
+}
+
+.resena__error {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: start;
+}
+
+.resena__detalle {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.9rem;
+  border: 1px solid var(--ft-border);
+  border-radius: var(--ft-radius-md);
+  background: #fff;
+}
+
+.resena__detalle-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.resena__detalle-cabecera h3 {
+  font-size: 0.98rem;
+}
+
+.resena__detalle-cabecera p {
+  margin-top: 0.1rem;
+  font-size: 0.74rem;
+}
+
+.resena__puntaje {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.resena__estrellas {
+  display: inline-flex;
+  color: #f5a623;
+}
+
+.resena__estrellas mat-icon {
+  width: 1.3rem;
+  height: 1.3rem;
+  font-size: 1.3rem;
+}
+
+.resena__puntaje strong {
+  font-size: 0.85rem;
+}
+
+.resena__criterios {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.resena__criterios div {
+  padding: 0.45rem 0.55rem;
+  border-radius: var(--ft-radius-sm);
+  background: var(--ft-surface);
+}
+
+.resena__criterios dt {
+  color: var(--ft-on-surface-muted);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.resena__criterios dd {
+  margin: 0.1rem 0 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.resena__comentario {
+  font-size: 0.86rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.resena__respuesta {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.65rem 0.75rem;
+  border-left: 3px solid var(--ft-primary-500);
+  border-radius: 0 var(--ft-radius-sm) var(--ft-radius-sm) 0;
+  background: var(--ft-primary-50);
+}
+
+.resena__respuesta h4 {
+  display: flex;
+  gap: 0.3rem;
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.resena__respuesta h4 mat-icon {
+  width: 1rem;
+  height: 1rem;
+  font-size: 1rem;
+}
+
+.resena__respuesta p {
+  font-size: 0.84rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.resena__fecha-respuesta {
+  font-size: 0.7rem !important;
+}
+
+.resena__nota {
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+.resena__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.resena__reportar {
+  --mat-button-outlined-label-text-color: var(--ft-danger);
+  --mat-button-outlined-outline-color: var(--ft-danger);
+}
+
+.resena__formulario {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.85rem;
+  border-radius: var(--ft-radius-md);
+  background: var(--ft-surface);
+}
+
+.resena__puntaje-campo {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.resena__puntaje-campo legend {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.resena__selector {
+  display: flex;
+  gap: 0.15rem;
+  margin-top: 0.3rem;
+}
+
+.resena__estrella {
+  display: grid;
+  width: 2.6rem;
+  height: 2.6rem;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--ft-border);
+  border-radius: var(--ft-radius-sm);
+  background: #fff;
+  color: var(--ft-on-surface-muted);
+  cursor: pointer;
+}
+
+.resena__estrella mat-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  font-size: 1.5rem;
+}
+
+.resena__estrella--activa {
+  border-color: #f5a623;
+  background: #fff7e6;
+  color: #a86400;
+}
+
+.resena__estrella:focus-visible {
+  outline: 2px solid var(--ft-primary-600);
+  outline-offset: 2px;
+}
+
+.resena__error-campo {
+  margin-top: 0.3rem;
+  color: var(--ft-danger);
+  font-size: 0.78rem;
+}
+
+.resena__criterios-formulario {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.resena__enviar {
+  justify-self: start;
+}
+
+.resena__vacio {
+  display: grid;
+  gap: 0.4rem;
+  justify-items: center;
+  padding: 1.2rem 0.9rem;
+  border-radius: var(--ft-radius-md);
+  background: var(--ft-surface);
+  color: var(--ft-on-surface-muted);
+  text-align: center;
+}
+
+.resena__vacio mat-icon {
+  color: var(--ft-primary-500);
+}
+
+.resena__vacio p {
+  max-width: 30rem;
+  font-size: 0.82rem;
+}
+
+@media (min-width: 48rem) {
+  .resena {
+    padding: 1.35rem;
+  }
+
+  .resena__criterios {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .resena__criterios-formulario {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

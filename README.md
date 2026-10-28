@@ -6,13 +6,14 @@ FIXTECH en `http://localhost:8082/api`.
 
 ## Estado actual
 
-Fases 0, 1, 2, 3, 4, 5 y 6 completadas: base técnica, autenticación JWT, sesión, guards,
-interceptores, layouts por rol, panel inicial, administración de técnicos y usuarios, registro y
-perfil editable del técnico con foto autorizada, solicitudes del cliente con fotos, listado,
-detalle, edición y cancelación, solicitudes disponibles y ofertas del técnico, negociación, y
-servicios con aceptación, avances, mensajería, ajustes de precio, finalización y conformidad. Las
-demás pantallas de negocio se incorporan en las siguientes fases. El plan completo y el progreso
-están en [`PLAN_FRONTEND.md`](./PLAN_FRONTEND.md).
+Fases 0 a 7 completadas: base técnica, autenticación JWT, sesión, guards, interceptores, layouts
+por rol, panel inicial, administración de técnicos y usuarios, registro y perfil editable del
+técnico con foto autorizada, solicitudes del cliente con fotos, listado, detalle, edición y
+cancelación, solicitudes disponibles y ofertas del técnico, negociación, servicios con aceptación,
+avances, mensajería, ajustes de precio, finalización y conformidad, constancias de taller con
+fotos, reseñas con respuesta y moderación, y reclamos con seguimiento administrativo. Las demás
+pantallas de negocio se incorporan en las siguientes fases. El plan completo y el progreso están
+en [`PLAN_FRONTEND.md`](./PLAN_FRONTEND.md).
 
 ## Stack
 
@@ -82,9 +83,12 @@ interfaz, inicia sesión, verifica el perfil en estado `PENDIENTE` y comprueba l
 La prueba de solicitudes registra un cliente único, publica una solicitud con foto, la edita, la
 cancela y la busca en “Mis solicitudes”. La prueba de servicios recorre el flujo completo:
 aceptación directa de una oferta, PIN de inicio, diagnóstico con foto, mensajería, ajuste de precio,
-finalización y conformidad. Requiere el backend y MySQL locales. Sin `E2E_BACKEND=1` esas pruebas
-se omiten y solo corren las públicas. No existe un endpoint para limpiar las cuentas y solicitudes
-creadas por las pruebas.
+finalización y conformidad. La prueba de taller crea un técnico que solo atiende en taller y
+verifica constancias de recepción y entrega, finalización, reseña del cliente, respuesta y reporte
+del técnico, moderación administrativa, reclamo con foto, respuesta técnica y el seguimiento
+`ABIERTO → EN_REVISION → RESUELTO → CERRADO`. Requiere el backend y MySQL locales. Sin
+`E2E_BACKEND=1` esas pruebas se omiten y solo corren las públicas. No existe un endpoint para
+limpiar las cuentas y solicitudes creadas por las pruebas.
 
 ## Estructura
 
@@ -98,13 +102,13 @@ src/
 │   │   ├── layout/        # Layout público y layout privado con sidenav
 │   │   └── models/        # Etiquetas y tipos compartidos
 │   ├── features/
-│   │   ├── admin/         # Verificación de técnicos y gestión de usuarios
+│   │   ├── admin/         # Técnicos, usuarios, reseñas y reclamos
 │   │   ├── auth/          # Login, registro de cliente y registro de técnico
 │   │   ├── cliente/       # Solicitudes: creación, listado, detalle, edición y cancelación
 │   │   ├── dashboard/     # Panel inicial por rol
 │   │   ├── errors/        # Páginas 403 y 404
 │   │   ├── ofertas/       # Ofertas, negociación, comparación y aceptación
-│   │   ├── servicios/     # Ejecución: avances, mensajes, ajustes y conformidad
+│   │   ├── servicios/     # Ejecución, constancias, reseñas, reclamos y conformidad
 │   │   └── tecnico/       # Perfil editable del técnico, foto y estado de verificación
 │   ├── shared/ui/         # Marca, badges, iconos, notificaciones e imágenes autenticadas
 │   ├── app.config.ts      # Locale es-PE, router y HttpClient con interceptores
@@ -117,11 +121,11 @@ e2e/                       # Pruebas Playwright y Axe
 
 ## Roles y navegación
 
-| Rol       | Acceso inicial | Navegación habilitada                                                                                 |
-| --------- | -------------- | ----------------------------------------------------------------------------------------------------- |
-| `CLIENTE` | `/app/inicio`  | Inicio, nueva solicitud, mis solicitudes y mis servicios; ofertas y negociación en el detalle   |
+| Rol       | Acceso inicial | Navegación habilitada                                                                                                |
+| --------- | -------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `CLIENTE` | `/app/inicio`  | Inicio, nueva solicitud, mis solicitudes y mis servicios; ofertas y negociación en el detalle                        |
 | `TECNICO` | `/app/inicio`  | Inicio, mi perfil, solicitudes disponibles, mis ofertas y mis servicios; bloqueado si no está aprobado o tiene deuda |
-| `ADMIN`   | `/app/inicio`  | Inicio, técnicos y usuarios; reportes y catálogos como “Próximamente”                                 |
+| `ADMIN`   | `/app/inicio`  | Inicio, técnicos, usuarios, reseñas y reclamos; reportes y catálogos como “Próximamente”                             |
 
 Los guards protegen las rutas privadas:
 
@@ -141,6 +145,14 @@ Los guards protegen las rutas privadas:
   reactivar cuentas con `PATCH /api/admin/usuarios/{id}/estado`. Suspender exige motivo y
   confirmación; reactivar no. Las cuentas `ADMIN` y la cuenta propia están protegidas en la
   interfaz y el backend responde `403` si se intenta cambiar su estado.
+- `/app/admin/resenas`: lista `GET /api/admin/resenas?estado=` con filtro por estado. Solo las
+  reseñas `REPORTADA` muestran las acciones de moderación; `PATCH
+/api/admin/resenas/{id}/moderacion` permite volver a `VISIBLE` u `OCULTA` con confirmación.
+- `/app/admin/reclamos`: lista `GET /api/admin/reclamos?estado=` y consulta `GET
+/api/admin/reclamos/{id}` al expandir el detalle. Muestra las fotos autenticadas, la respuesta
+  del técnico y las transiciones `ABIERTO → EN_REVISION → RESUELTO|CERRADO` y `RESUELTO →
+CERRADO` con `PATCH /api/admin/reclamos/{id}/estado`. Resolver o cerrar exige una resolución de
+  hasta 1000 caracteres.
 - Los errores `409` y `403` se muestran dentro del diálogo y el listado se recarga tras cada
   cambio exitoso.
 
@@ -226,7 +238,8 @@ Los guards protegen las rutas privadas:
 - `/app/cliente/servicios` y `/app/tecnico/servicios` listan `GET /api/servicios/mios` con filtros
   por estado (en curso, por confirmar, cerrados, cancelados), contadores, carga, error y vacío.
 - `/app/{rol}/servicios/{id}` muestra `GET /api/servicios/{id}`: estado, modalidad, fechas, montos,
-  datos de contacto, PIN de inicio en domicilio, historial de estados y constancias.
+  datos de contacto, PIN de inicio en domicilio, historial de estados, constancias de taller,
+  reseña y reclamos.
 - El técnico cambia el estado con `PATCH /api/servicios/{id}/estado`: inicia el traslado, valida el
   PIN de 4 dígitos para pasar a `EN_PROCESO`, registra el diagnóstico y reanuda el trabajo.
 - Los avances se registran con `POST /api/servicios/{id}/avances` (multipart, foto opcional
@@ -239,11 +252,32 @@ Los guards protegen las rutas privadas:
 - La finalización usa `POST /api/servicios/{id}/finalizar` con el `montoTotal` exacto y el método
   de pago elegido. El cliente confirma con `POST /api/servicios/{id}/conformidad`.
 - El total y el monto final excluyen `costoDiagnostico`; el diagnóstico se muestra aparte.
-- El flujo de taller queda bloqueado hasta la Fase 7: sin constancia de recepción no se inicia y
-  sin constancia de entrega no se finaliza. El detalle muestra avisos y no ofrece esas acciones.
+- En taller, la constancia de recepción se registra en `PROGRAMADO` o `EQUIPO_RECIBIDO` y provoca
+  la transición automática a `EQUIPO_RECIBIDO`; la constancia de entrega se registra en
+  `LISTO_PARA_RECOGER`. Sin constancia de entrega el botón de finalización no aparece. El detalle
+  muestra avisos mientras falte cada constancia.
 
-> Brecha: la API permite registrar constancias de recepción y entrega, pero sus pantallas
-> pertenecen a la Fase 7. La mensajería no tiene actualización en tiempo real.
+> Brecha: la mensajería no tiene actualización en tiempo real.
+
+## Constancias, reseñas y reclamos
+
+- Las constancias de taller usan `POST /api/servicios/{id}/constancias` (multipart: `tipo`,
+  `observaciones`, `accesorios` y 1 a 5 fotos JPG/PNG de hasta 5 MB), `POST
+/api/servicios/{id}/constancias/{constanciaId}/confirmar` y `GET
+.../constancias/{constanciaId}/fotos/{fotoId}`. Solo el cliente confirma; las fotos se descargan
+  como blob autenticado.
+- La reseña se crea con `POST /api/servicios/{id}/resenas` cuando el servicio está `CONFIRMADO` y
+  pasa al estado `CALIFICADO`. Admite 1 a 5 estrellas, criterios opcionales y un comentario de
+  hasta 1000 caracteres; solo existe una reseña por servicio y el plazo lo define el backend.
+- El técnico responde una sola vez con `PATCH /api/servicios/{id}/resenas/{resenaId}/respuesta` y
+  puede reportar una reseña `VISIBLE` con `POST .../reporte`. Administración modera únicamente las
+  reseñas `REPORTADA` desde `/app/admin/resenas`.
+- Los reclamos se crean con `POST /api/servicios/{id}/reclamos` (multipart: `descripcion` y 1 a 5
+  fotos) solo en `CONFIRMADO` o `CALIFICADO` y solo si no hay otro reclamo activo. El técnico
+  responde una vez mientras el reclamo esté `ABIERTO` o `EN_REVISION`; el cliente y el técnico ven
+  la resolución administrativa y el estado del seguimiento.
+- Las constancias, reseñas y reclamos tienen estados de carga, error con reintento y vacío. Los
+  conflictos `409` se muestran con el mensaje del backend sin ocultar el estado actual.
 
 ## Autenticación
 
@@ -300,7 +334,7 @@ npm run e2e
 
 Las pruebas E2E incluyen Axe con las reglas WCAG 2.0/2.1 A y AA en escritorio y en un viewport
 móvil de 360 px. La interfaz es mobile-first, con foco visible, etiquetas explícitas y mensajes
-de error anunciados. Las pantallas y diálogos de las fases 2 a 5 también se auditan; los iconos
+de error anunciados. Las pantallas y diálogos de las fases 2 a 7 también se auditan; los iconos
 de los botones con `aria-label` se renderizan como SVG decorativos para no mezclar ligaduras de
 fuentes con el nombre accesible.
 

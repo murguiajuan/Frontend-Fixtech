@@ -18,20 +18,20 @@ import { NotificacionService } from '../../../shared/ui/notificacion.service';
 import { ETIQUETAS_URGENCIA } from '../../cliente/solicitudes/solicitud-etiquetas';
 import { AjustesServicio } from '../ajustes/ajustes-servicio';
 import { AvancesServicio } from '../avances/avances-servicio';
+import { ConstanciasServicio } from '../constancias/constancias-servicio';
 import { MensajesServicio } from '../mensajes/mensajes-servicio';
+import { ReclamosServicio } from '../reclamos/reclamos-servicio';
+import { ResenaServicio } from '../resenas/resena-servicio';
 import { ServicioDetalle } from '../servicio.models';
 import {
   AccionEstado,
   ETIQUETAS_CANCELADO_POR,
   ETIQUETAS_ESTADO_SERVICIO,
   ETIQUETAS_METODO_PAGO,
-  ETIQUETAS_TIPO_CONSTANCIA,
   TONOS_ESTADO_SERVICIO,
   esCancelableServicio,
   puedeConfirmarConformidad,
   puedeFinalizarServicio,
-  requiereConstanciaEntrega,
-  requiereConstanciaRecepcion,
   transicionesTecnico,
 } from '../servicio-etiquetas';
 import { ServiciosService } from '../servicios.service';
@@ -54,6 +54,9 @@ import { PinInicioData, PinInicioDialog, PinInicioResultado } from './pin-inicio
     EstadoBadge,
     AvancesServicio,
     AjustesServicio,
+    ConstanciasServicio,
+    ResenaServicio,
+    ReclamosServicio,
     MensajesServicio,
   ],
   templateUrl: './servicio-detalle.page.html',
@@ -78,7 +81,6 @@ export class ServicioDetallePage implements OnInit {
   protected readonly etiquetasMetodoPago = ETIQUETAS_METODO_PAGO;
   protected readonly etiquetasCanceladoPor = ETIQUETAS_CANCELADO_POR;
   protected readonly etiquetasUrgencia = ETIQUETAS_URGENCIA;
-  protected readonly etiquetasConstancia = ETIQUETAS_TIPO_CONSTANCIA;
 
   protected readonly esCliente = computed(() => this.auth.rol() === 'CLIENTE');
   protected readonly esTecnico = computed(() => this.auth.rol() === 'TECNICO');
@@ -121,14 +123,6 @@ export class ServicioDetallePage implements OnInit {
   protected readonly puedeConfirmar = computed(() => {
     const actual = this.servicio();
     return actual !== null && this.esCliente() && puedeConfirmarConformidad(actual.estado);
-  });
-  protected readonly recepcionTallerPendiente = computed(() => {
-    const actual = this.servicio();
-    return actual !== null && this.esTecnico() && requiereConstanciaRecepcion(actual);
-  });
-  protected readonly entregaTallerPendiente = computed(() => {
-    const actual = this.servicio();
-    return actual !== null && this.esTecnico() && requiereConstanciaEntrega(actual);
   });
   protected readonly ajustePendiente = computed(() => this.servicio()?.ajustePendiente ?? null);
   protected readonly digitosPin = computed(() => this.servicio()?.pinInicio?.split('') ?? []);

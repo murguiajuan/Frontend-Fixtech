@@ -162,33 +162,6 @@
       </div>
     }
 
-    @if (recepcionTallerPendiente()) {
-      <div class="ft-alert ft-alert--warning" role="note">
-        <mat-icon aria-hidden="true">inventory_2</mat-icon>
-        <div>
-          <strong>Falta la constancia de recepción del equipo.</strong>
-          <p>
-            El servicio en taller se inicia cuando se registra la constancia de recepción. La
-            gestión de constancias se habilitará en la siguiente fase; por ahora este servicio no
-            puede avanzar.
-          </p>
-        </div>
-      </div>
-    }
-
-    @if (entregaTallerPendiente()) {
-      <div class="ft-alert ft-alert--warning" role="note">
-        <mat-icon aria-hidden="true">assignment_return</mat-icon>
-        <div>
-          <strong>Falta la constancia de entrega del equipo.</strong>
-          <p>
-            Antes de finalizar el servicio en taller debe registrarse la constancia de entrega. La
-            gestión de constancias se habilitará en la siguiente fase.
-          </p>
-        </div>
-      </div>
-    }
-
     <div class="detalle__layout">
       <div class="detalle__principal">
         <section class="detalle__panel ft-card" aria-labelledby="titulo-solicitud-servicio">
@@ -257,6 +230,28 @@
         />
 
         <app-ajustes-servicio [servicio]="s" [esCliente]="esCliente()" (actualizado)="recargar()" />
+
+        @if (s.modalidad === 'TALLER') {
+          <app-constancias-servicio
+            [servicio]="s"
+            [esCliente]="esCliente()"
+            (actualizado)="recargar()"
+          />
+        }
+
+        <app-resena-servicio
+          [servicio]="s"
+          [esCliente]="esCliente()"
+          [esTecnico]="esTecnico()"
+          (actualizado)="recargar()"
+        />
+
+        <app-reclamos-servicio
+          [servicio]="s"
+          [esCliente]="esCliente()"
+          [esTecnico]="esTecnico()"
+          (actualizado)="recargar()"
+        />
 
         <app-mensajes-servicio [servicioId]="s.id" [contraparteNombre]="nombreContraparte()" />
       </div>
@@ -413,36 +408,6 @@
               </li>
             }
           </ol>
-        </section>
-
-        <section class="detalle__panel ft-card" aria-labelledby="titulo-constancias">
-          <h2 id="titulo-constancias">Constancias</h2>
-          @if (s.constancias.length === 0) {
-            <p class="detalle__nota">
-              Aún no hay constancias registradas. La recepción y entrega del equipo en taller se
-              gestionarán en la siguiente fase.
-            </p>
-          } @else {
-            <ul class="detalle__constancias">
-              @for (constancia of s.constancias; track constancia.id) {
-                <li>
-                  <strong>{{ etiquetasConstancia[constancia.tipo] }}</strong>
-                  <p class="ft-muted">
-                    {{ constancia.creadoEn | date: 'dd MMM yyyy, HH:mm' }}
-                    @if (constancia.confirmadaPorCliente) {
-                      · Confirmada por el cliente
-                    }
-                  </p>
-                  @if (constancia.accesorios) {
-                    <p>Accesorios: {{ constancia.accesorios }}</p>
-                  }
-                  @if (constancia.observaciones) {
-                    <p>{{ constancia.observaciones }}</p>
-                  }
-                </li>
-              }
-            </ul>
-          }
         </section>
       </aside>
     </div>

@@ -156,4 +156,152 @@ describe('ServiciosService', () => {
     expect(servicio.urlEvidenciaAjuste(5)).toBe('/api/ajustes/5/evidencia');
     peticion.flush({});
   });
+
+  it('registra una constancia con fotos y campos opcionales', () => {
+    const foto = new File(['imagen'], 'recepcion.png', { type: 'image/png' });
+    servicio
+      .registrarConstancia(
+        12,
+        {
+          tipo: 'RECEPCION',
+          observaciones: '  Equipo con rayones.  ',
+          accesorios: '  Cargador original  ',
+        },
+        [foto],
+      )
+      .subscribe();
+
+    const peticion = http.expectOne(`${environment.apiUrl}/servicios/12/constancias`);
+    expect(peticion.request.method).toBe('POST');
+    const datos = peticion.request.body as FormData;
+    expect(datos.get('tipo')).toBe('RECEPCION');
+    expect(datos.get('observaciones')).toBe('Equipo con rayones.');
+    expect(datos.get('accesorios')).toBe('Cargador original');
+    expect(datos.get('fotos')).toBe(foto);
+    peticion.flush({});
+  });
+
+  it('omite observaciones y accesorios vacíos al registrar la constancia', () => {
+    const foto = new File(['imagen'], 'entrega.png', { type: 'image/png' });
+    servicio
+      .registrarConstancia(12, { tipo: 'ENTREGA', observaciones: '   ', accesorios: null }, [foto])
+      .subscribe();
+
+    const peticion = http.expectOne(`${environment.apiUrl}/servicios/12/constancias`);
+    const datos = peticion.request.body as FormData;
+    expect(datos.has('observaciones')).toBe(false);
+    expect(datos.has('accesorios')).toBe(false);
+    peticion.flush({});
+  });
+
+  it('confirma una constancia y construye la URL de sus fotos', () => {
+    servicio.confirmarConstancia(12, 31).subscribe();
+
+    const peticion = http.expectOne(`${environment.apiUrl}/servicios/12/constancias/31/confirmar`);
+    expect(peticion.request.method).toBe('POST');
+    expect(peticion.request.body).toBeNull();
+    expect(servicio.urlFotoConstancia(12, 31, 101)).toBe(
+      '/api/servicios/12/constancias/31/fotos/101',
+    );
+    peticion.flush({});
+  });
+
+  it('obtiene la reseña del servicio', () => {
+    servicio.obtenerResena(12).subscribe();
+
+    const peticion = http.expectOne(`${environment.apiUrl}/servicios/12/resenas`);
+    expect(peticion.request.method).toBe('GET');
+    peticion.flush({ id: 41 });
+  });
+
+  it('devuelve null cuando el servicio todavía no tiene reseña', () => {
+    let resultado: unknown = undefined;
+    servicio.obtenerResena(12).subscribe((resena) => {
+      resultado = resena;
+    });
+
+    const peticion = http.expectOne(`${environment.apiUrl}/servicios/12/resenas`);
+    peticion.flush(
+      { mensaje: 'No existe una reseña para el servicio' },
+      { status: 404, statusText: 'Not Found' },
+    );
+
+    expect(resultado).toBeNull();
+  });
+
+  it('propaga los errores distintos de 404 al obtener la reseña', () => {
+    let mensaje: string | undefined;
+    servicio.obtenerResena(12).subscribe({
+      error: (error: unknown) => {
+        mensaje = (error as { mensaje: string }).mensaje;
+      },
+    });
+
+    const peticion = http.expectOne(`${environment.apiUrl}/servicios/12/resenas`);
+    peticion.flush(
+      { mensaje: 'No se pudo consultar la reseña' },
+      { status: 500, statusText: 'Server Error' },
+    );
+
+    expect(mensaje).toBe('No se pudo consultar la reseña');
+  });
+
+  it('registra, responde y reporta una reseña', () => {
+    const request = {
+      estrellas: 5,
+      puntualidad: 5,
+      trato: 4,
+      calidad: 5,
+      precioJusto: 4,
+      comentario: 'Muy buen servicio.',
+    };
+    servicio.registrarResena(12, request).subscribe();
+
+    const registro = http.expectOne(`${environment.apiUrl}/servicios/12/resenas`);
+    expect(registro.request.method).toBe('POST');
+    expect(registro.request.body).toEqual(request);
+    registro.flush({});
+
+    servicio.responderResena(12, 41, 'Gracias por tu comentario.').subscribe();
+
+    const respuesta = http.expectOne(`${environment.apiUrl}/servicios/12/resenas/41/respuesta`);
+    expect(respuesta.request.method).toBe('PATCH');
+    expect(respuesta.request.body).toEqual({ respuesta: 'Gracias por tu comentario.' });
+    respuesta.flush({});
+
+    servicio.reportarResena(12, 41, 'Contiene datos personales.').subscribe();
+
+    const reporte = http.expectOne(`${environment.apiUrl}/servicios/12/resenas/41/reporte`);
+    expect(reporte.request.method).toBe('POST');
+    expect(reporte.request.body).toEqual({ motivo: 'Contiene datos personales.' });
+    reporte.flush({});
+  });
+
+  it('lista, obtiene, crea y responde reclamos', () => {
+    servicio.listarReclamos(12).subscribe();
+    const listado = http.expectOne(`${environment.apiUrl}/servicios/12/reclamos`);
+    expect(listado.request.method).toBe('GET');
+    listado.flush([]);
+
+    servicio.obtenerReclamo(12, 51).subscribe();
+    const detalle = http.expectOne(`${environment.apiUrl}/servicios/12/reclamos/51`);
+    expect(detalle.request.method).toBe('GET');
+    detalle.flush({});
+
+    const foto = new File(['imagen'], 'reclamo.jpg', { type: 'image/jpeg' });
+    servicio.crearReclamo(12, 'El equipo volvió a fallar.', [foto]).subscribe();
+    const creacion = http.expectOne(`${environment.apiUrl}/servicios/12/reclamos`);
+    expect(creacion.request.method).toBe('POST');
+    const datos = creacion.request.body as FormData;
+    expect(datos.get('descripcion')).toBe('El equipo volvió a fallar.');
+    expect(datos.get('fotos')).toBe(foto);
+    creacion.flush({});
+
+    servicio.responderReclamo(12, 51, 'Revisamos el equipo sin costo.').subscribe();
+    const respuesta = http.expectOne(`${environment.apiUrl}/servicios/12/reclamos/51/respuesta`);
+    expect(respuesta.request.method).toBe('PATCH');
+    expect(respuesta.request.body).toEqual({ respuesta: 'Revisamos el equipo sin costo.' });
+    expect(servicio.urlFotoReclamo(12, 51, 201)).toBe('/api/servicios/12/reclamos/51/fotos/201');
+    respuesta.flush({});
+  });
 });

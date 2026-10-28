@@ -1,0 +1,96 @@
+<h2 mat-dialog-title>Registrar reclamo</h2>
+
+<mat-dialog-content class="reclamo__contenido">
+  <p class="reclamo__intro">
+    Describe el problema con el servicio y adjunta entre 1 y 5 fotos como evidencia. El técnico y
+    administración podrán revisar el reclamo.
+  </p>
+
+  @if (errorServidor(); as mensaje) {
+    <div class="ft-alert ft-alert--error" role="alert">
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <div>
+        <p>{{ mensaje }}</p>
+        @if (detallesError().length > 0) {
+          <ul class="reclamo__detalles">
+            @for (detalle of detallesError(); track detalle) {
+              <li>{{ detalle }}</li>
+            }
+          </ul>
+        }
+      </div>
+    </div>
+  }
+
+  <form id="form-reclamo" [formGroup]="formulario" (ngSubmit)="enviar()" novalidate>
+    <mat-form-field appearance="outline">
+      <mat-label>Descripción del reclamo</mat-label>
+      <textarea
+        matInput
+        formControlName="descripcion"
+        rows="5"
+        maxlength="2000"
+        placeholder="Explica qué ocurrió con el servicio y qué solución esperas."
+      ></textarea>
+      <mat-hint>Máximo 2000 caracteres.</mat-hint>
+      @if (formulario.controls.descripcion.hasError('required')) {
+        <mat-error>La descripción es obligatoria.</mat-error>
+      }
+      @if (formulario.controls.descripcion.hasError('maxlength')) {
+        <mat-error>La descripción no puede superar los 2000 caracteres.</mat-error>
+      }
+    </mat-form-field>
+
+    <fieldset class="reclamo__fotos">
+      <legend>Fotos del reclamo</legend>
+      <label class="reclamo__archivo-boton" for="fotos-reclamo">
+        <mat-icon aria-hidden="true">add_photo_alternate</mat-icon>
+        Adjuntar fotos
+      </label>
+      <input
+        id="fotos-reclamo"
+        class="reclamo__archivo-input"
+        type="file"
+        accept="image/jpeg,image/png"
+        multiple
+        (change)="seleccionarFotos($event)"
+      />
+      <p class="reclamo__ayuda">
+        {{ fotos().length }} de {{ maxFotos }} fotos seleccionadas. JPG o PNG de hasta 5 MB.
+      </p>
+      @if (errorArchivo(); as error) {
+        <p class="reclamo__error" role="alert">{{ error }}</p>
+      }
+      @if (fotos().length > 0) {
+        <ul class="reclamo__lista" aria-label="Fotos seleccionadas">
+          @for (foto of fotos(); track $index) {
+            <li>
+              <mat-icon aria-hidden="true">image</mat-icon>
+              <span>{{ foto.name }} · {{ formatearBytes(foto.size) }}</span>
+              <button
+                mat-icon-button
+                type="button"
+                [attr.aria-label]="'Quitar ' + foto.name"
+                (click)="quitarFoto($index)"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </fieldset>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" [disabled]="enviando()" (click)="cancelar()">Cancelar</button>
+  <button mat-flat-button type="submit" form="form-reclamo" [disabled]="enviando()">
+    @if (enviando()) {
+      <mat-spinner diameter="18" aria-label="Registrando reclamo" />
+    } @else {
+      <mat-icon aria-hidden="true">report_problem</mat-icon>
+    }
+    {{ enviando() ? 'Registrando…' : 'Registrar reclamo' }}
+  </button>
+</mat-dialog-actions>

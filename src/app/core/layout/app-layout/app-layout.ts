@@ -134,6 +134,18 @@ export class AppLayout {
           ruta: '/app/admin/usuarios',
           disponible: true,
         },
+        {
+          etiqueta: 'Reseñas',
+          icono: 'reviews',
+          ruta: '/app/admin/resenas',
+          disponible: true,
+        },
+        {
+          etiqueta: 'Reclamos',
+          icono: 'support_agent',
+          ruta: '/app/admin/reclamos',
+          disponible: true,
+        },
       );
     }
     return items;

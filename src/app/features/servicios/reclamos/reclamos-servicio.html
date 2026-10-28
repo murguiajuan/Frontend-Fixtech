@@ -1,0 +1,143 @@
+<section class="reclamos ft-card" aria-labelledby="titulo-reclamos">
+  <header class="reclamos__cabecera">
+    <div>
+      <h2 id="titulo-reclamos">Reclamos del servicio</h2>
+      <p class="ft-muted">
+        @if (esCliente()) {
+          Si algo no salió como esperabas, registra un reclamo con fotos. Administración hará el
+          seguimiento.
+        } @else {
+          Revisa los reclamos del cliente, responde una vez y sigue el estado de la revisión.
+        }
+      </p>
+    </div>
+    @if (puedeCrear()) {
+      <button mat-flat-button type="button" [disabled]="creando()" (click)="abrirReclamo()">
+        <mat-icon aria-hidden="true">report_problem</mat-icon>
+        {{ creando() ? 'Registrando…' : 'Registrar reclamo' }}
+      </button>
+    }
+  </header>
+
+  @if (cargando()) {
+    <div class="reclamos__cargando" role="status">
+      <mat-spinner diameter="28" aria-label="Cargando los reclamos" />
+      <span class="ft-muted">Cargando los reclamos…</span>
+    </div>
+  } @else if (error(); as fallo) {
+    <div class="ft-alert ft-alert--error" role="alert">
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <div class="reclamos__error">
+        <p>{{ fallo.mensaje }}</p>
+        <button mat-stroked-button type="button" (click)="cargar()">
+          <mat-icon aria-hidden="true">refresh</mat-icon>
+          Reintentar
+        </button>
+      </div>
+    </div>
+  } @else if (reclamos().length === 0) {
+    <div class="reclamos__vacio">
+      <mat-icon aria-hidden="true">sentiment_satisfied</mat-icon>
+      @if (esCliente()) {
+        @if (servicio().estado === 'CONFIRMADO' || servicio().estado === 'CALIFICADO') {
+          <p>No registraste reclamos para este servicio. Puedes hacerlo si detectas un problema.</p>
+        } @else {
+          <p>Los reclamos se habilitan cuando el servicio está confirmado.</p>
+        }
+      } @else {
+        <p>El cliente no registró reclamos para este servicio.</p>
+      }
+    </div>
+  } @else {
+    @if (esCliente() && hayActivo()) {
+      <div class="ft-alert ft-alert--info" role="note">
+        <mat-icon aria-hidden="true">hourglass_top</mat-icon>
+        <span>
+          Ya tienes un reclamo activo. Podrás registrar otro cuando el actual sea resuelto o
+          cerrado.
+        </span>
+      </div>
+    }
+
+    <ul class="reclamos__lista" aria-label="Reclamos registrados">
+      @for (reclamo of reclamos(); track reclamo.id) {
+        <li class="reclamo">
+          <header class="reclamo__cabecera">
+            <div>
+              <h3>Reclamo #{{ reclamo.id }}</h3>
+              <p class="ft-muted">
+                Registrado el {{ reclamo.creadoEn | date: 'dd MMM yyyy, HH:mm' }}
+              </p>
+            </div>
+            <app-estado-badge
+              [texto]="etiquetasEstado[reclamo.estado]"
+              [tono]="tonosEstado[reclamo.estado]"
+            />
+          </header>
+
+          <p class="reclamo__descripcion">{{ reclamo.descripcion }}</p>
+
+          @if (reclamo.fotoIds.length > 0) {
+            <ul class="reclamo__fotos" [attr.aria-label]="'Fotos del reclamo ' + reclamo.id">
+              @for (fotoId of reclamo.fotoIds; track fotoId) {
+                <li>
+                  <app-imagen-autenticada
+                    [src]="urlFoto(reclamo, fotoId)"
+                    [alt]="'Foto del reclamo ' + reclamo.id"
+                  />
+                </li>
+              }
+            </ul>
+          }
+
+          @if (reclamo.respuestaTecnico) {
+            <div class="reclamo__bloque" role="note">
+              <h4>
+                <mat-icon aria-hidden="true">reply</mat-icon>
+                Respuesta del técnico
+              </h4>
+              <p>{{ reclamo.respuestaTecnico }}</p>
+            </div>
+          } @else if (esTecnico() && puedeResponder(reclamo)) {
+            <div class="reclamo__acciones">
+              <button
+                mat-flat-button
+                type="button"
+                [disabled]="respondiendo() === reclamo.id"
+                (click)="responder(reclamo)"
+              >
+                <mat-icon aria-hidden="true">reply</mat-icon>
+                {{ respondiendo() === reclamo.id ? 'Publicando…' : 'Responder reclamo' }}
+              </button>
+            </div>
+          } @else if (esTecnico() && esReclamoActivo(reclamo.estado)) {
+            <p class="ft-muted reclamo__nota">
+              Ya respondiste este reclamo. Administración continúa con la revisión.
+            </p>
+          }
+
+          @if (reclamo.resolucion) {
+            <div class="reclamo__bloque reclamo__bloque--resolucion">
+              <h4>
+                <mat-icon aria-hidden="true">task_alt</mat-icon>
+                Resolución de administración
+              </h4>
+              <p>{{ reclamo.resolucion }}</p>
+              @if (reclamo.fechaResolucion) {
+                <p class="ft-muted reclamo__fecha">
+                  {{ reclamo.fechaResolucion | date: 'dd MMM yyyy, HH:mm' }}
+                </p>
+              }
+            </div>
+          }
+
+          @if (esCliente() && esReclamoActivo(reclamo.estado)) {
+            <p class="ft-muted reclamo__nota">
+              Administración está revisando el reclamo. Te avisaremos cuando haya una resolución.
+            </p>
+          }
+        </li>
+      }
+    </ul>
+  }
+</section>

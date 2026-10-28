@@ -1,10 +1,13 @@
 import { EstadoUsuario, EstadoVerificacion, Modalidad, Rol } from '../../core/auth/auth.models';
+import { EstadoReclamo, EstadoResena } from '../servicios/servicio.models';
 
 export const FILTRO_TODOS = 'TODOS' as const;
 
 export type FiltroEstadoVerificacion = EstadoVerificacion | typeof FILTRO_TODOS;
 export type FiltroEstadoUsuario = EstadoUsuario | typeof FILTRO_TODOS;
 export type FiltroRol = Rol | typeof FILTRO_TODOS;
+export type FiltroEstadoResena = EstadoResena | typeof FILTRO_TODOS;
+export type FiltroEstadoReclamo = EstadoReclamo | typeof FILTRO_TODOS;
 
 export type EstadoVerificacionAccion = Exclude<EstadoVerificacion, 'PENDIENTE'>;
 export type EstadoAccionUsuario = Extract<EstadoUsuario, 'ACTIVO' | 'SUSPENDIDO'>;
@@ -24,6 +27,13 @@ export const ESTADOS_VERIFICACION_ACCION: readonly EstadoVerificacionAccion[] = 
 
 export const ESTADOS_USUARIO: readonly EstadoUsuario[] = ['ACTIVO', 'SUSPENDIDO', 'INACTIVO'];
 export const ROLES: readonly Rol[] = ['CLIENTE', 'TECNICO', 'ADMIN'];
+export const ESTADOS_RESENA: readonly EstadoResena[] = ['VISIBLE', 'REPORTADA', 'OCULTA'];
+export const ESTADOS_RECLAMO: readonly EstadoReclamo[] = [
+  'ABIERTO',
+  'EN_REVISION',
+  'RESUELTO',
+  'CERRADO',
+];
 
 export interface FiltrosTecnicos {
   readonly estadoVerificacion: FiltroEstadoVerificacion;
@@ -34,6 +44,14 @@ export interface FiltrosUsuarios {
   readonly rol: FiltroRol;
   readonly estado: FiltroEstadoUsuario;
   readonly busqueda: string;
+}
+
+export interface FiltrosResenas {
+  readonly estado: FiltroEstadoResena;
+}
+
+export interface FiltrosReclamos {
+  readonly estado: FiltroEstadoReclamo;
 }
 
 export interface TecnicoAdmin {

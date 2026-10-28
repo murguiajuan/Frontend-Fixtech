@@ -1,0 +1,108 @@
+<h2 mat-dialog-title>Constancia de {{ etiquetaTipo.toLowerCase() }}</h2>
+
+<mat-dialog-content class="constancia__contenido">
+  <p class="constancia__intro">
+    Registra el estado del equipo y adjunta entre 1 y 5 fotos como evidencia. Las fotos deben ser
+    JPG o PNG de hasta 5 MB.
+  </p>
+
+  @if (errorServidor(); as mensaje) {
+    <div class="ft-alert ft-alert--error" role="alert">
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <div>
+        <p>{{ mensaje }}</p>
+        @if (detallesError().length > 0) {
+          <ul class="constancia__detalles">
+            @for (detalle of detallesError(); track detalle) {
+              <li>{{ detalle }}</li>
+            }
+          </ul>
+        }
+      </div>
+    </div>
+  }
+
+  <form id="form-constancia" [formGroup]="formulario" (ngSubmit)="enviar()" novalidate>
+    <mat-form-field appearance="outline">
+      <mat-label>Accesorios entregados (opcional)</mat-label>
+      <input
+        matInput
+        type="text"
+        formControlName="accesorios"
+        maxlength="300"
+        placeholder="Cargador, funda, cable de poder"
+      />
+      <mat-hint>Máximo 300 caracteres.</mat-hint>
+      @if (formulario.controls.accesorios.hasError('maxlength')) {
+        <mat-error>Los accesorios no pueden superar los 300 caracteres.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Observaciones (opcional)</mat-label>
+      <textarea
+        matInput
+        formControlName="observaciones"
+        rows="3"
+        maxlength="1000"
+        placeholder="Describe el estado del equipo al recibirlo o entregarlo."
+      ></textarea>
+      <mat-hint>Máximo 1000 caracteres.</mat-hint>
+      @if (formulario.controls.observaciones.hasError('maxlength')) {
+        <mat-error>Las observaciones no pueden superar los 1000 caracteres.</mat-error>
+      }
+    </mat-form-field>
+
+    <fieldset class="constancia__fotos">
+      <legend>Fotos de la constancia</legend>
+      <label class="constancia__archivo-boton" for="fotos-constancia">
+        <mat-icon aria-hidden="true">add_photo_alternate</mat-icon>
+        Adjuntar fotos
+      </label>
+      <input
+        id="fotos-constancia"
+        class="constancia__archivo-input"
+        type="file"
+        accept="image/jpeg,image/png"
+        multiple
+        (change)="seleccionarFotos($event)"
+      />
+      <p class="constancia__ayuda">
+        {{ fotos().length }} de {{ maxFotos }} fotos seleccionadas. JPG o PNG de hasta 5 MB.
+      </p>
+      @if (errorArchivo(); as error) {
+        <p class="constancia__error" role="alert">{{ error }}</p>
+      }
+      @if (fotos().length > 0) {
+        <ul class="constancia__lista" aria-label="Fotos seleccionadas">
+          @for (foto of fotos(); track $index) {
+            <li>
+              <mat-icon aria-hidden="true">image</mat-icon>
+              <span>{{ foto.name }} · {{ formatearBytes(foto.size) }}</span>
+              <button
+                mat-icon-button
+                type="button"
+                [attr.aria-label]="'Quitar ' + foto.name"
+                (click)="quitarFoto($index)"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </fieldset>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" [disabled]="enviando()" (click)="cancelar()">Cancelar</button>
+  <button mat-flat-button type="submit" form="form-constancia" [disabled]="enviando()">
+    @if (enviando()) {
+      <mat-spinner diameter="18" aria-label="Registrando constancia" />
+    } @else {
+      <mat-icon aria-hidden="true">assignment_turned_in</mat-icon>
+    }
+    {{ enviando() ? 'Registrando…' : 'Registrar constancia' }}
+  </button>
+</mat-dialog-actions>

@@ -3,9 +3,14 @@ import { TonoBadge } from '../../core/models/etiquetas';
 import {
   Avance,
   CanceladoPor,
+  Constancia,
   EstadoAjuste,
+  EstadoReclamo,
+  EstadoResena,
   EstadoServicio,
   MetodoPago,
+  Reclamo,
+  Resena,
   ServicioDetalle,
   TipoAvance,
   TipoConstancia,
@@ -59,6 +64,39 @@ export const ETIQUETAS_TIPO_CONSTANCIA: Record<TipoConstancia, string> = {
   RECEPCION: 'Recepción del equipo',
   ENTREGA: 'Entrega del equipo',
 };
+
+export const ETIQUETAS_ESTADO_RESENA: Record<EstadoResena, string> = {
+  VISIBLE: 'Visible',
+  OCULTA: 'Oculta',
+  REPORTADA: 'Reportada',
+};
+
+export const TONOS_ESTADO_RESENA: Record<EstadoResena, TonoBadge> = {
+  VISIBLE: 'ok',
+  OCULTA: 'neutral',
+  REPORTADA: 'alerta',
+};
+
+export const ETIQUETAS_ESTADO_RECLAMO: Record<EstadoReclamo, string> = {
+  ABIERTO: 'Abierto',
+  EN_REVISION: 'En revisión',
+  RESUELTO: 'Resuelto',
+  CERRADO: 'Cerrado',
+};
+
+export const TONOS_ESTADO_RECLAMO: Record<EstadoReclamo, TonoBadge> = {
+  ABIERTO: 'alerta',
+  EN_REVISION: 'info',
+  RESUELTO: 'ok',
+  CERRADO: 'neutral',
+};
+
+export const ETIQUETAS_CRITERIOS_RESENA = {
+  puntualidad: 'Puntualidad',
+  trato: 'Trato',
+  calidad: 'Calidad',
+  precioJusto: 'Precio justo',
+} as const;
 
 export const ETIQUETAS_AJUSTE: Record<EstadoAjuste, string> = {
   PENDIENTE: 'Pendiente',
@@ -139,6 +177,12 @@ export interface AccionEstado {
   readonly icono: string;
 }
 
+export interface AccionEstadoReclamo {
+  readonly estado: EstadoReclamo;
+  readonly etiqueta: string;
+  readonly icono: string;
+}
+
 export function esServicioEnCurso(estado: EstadoServicio): boolean {
   return ESTADOS_EN_CURSO.includes(estado);
 }
@@ -172,6 +216,8 @@ export function transicionesTecnico(
         : [];
     case 'TECNICO_EN_CAMINO':
       return [{ estado: 'EN_PROCESO', etiqueta: 'Validar PIN e iniciar', icono: 'pin' }];
+    case 'EQUIPO_RECIBIDO':
+      return [{ estado: 'EN_DIAGNOSTICO', etiqueta: 'Iniciar diagnóstico', icono: 'troubleshoot' }];
     case 'EN_PROCESO':
       return [
         { estado: 'EN_DIAGNOSTICO', etiqueta: 'Registrar diagnóstico', icono: 'troubleshoot' },
@@ -194,23 +240,106 @@ export function transicionesTecnico(
 }
 
 export function puedeFinalizarServicio(
-  servicio: Pick<ServicioDetalle, 'estado' | 'modalidad' | 'pinValidado'>,
+  servicio: Pick<ServicioDetalle, 'estado' | 'modalidad' | 'pinValidado' | 'constancias'>,
 ): boolean {
+  if (servicio.modalidad === 'DOMICILIO') {
+    return servicio.estado === 'EN_PROCESO' && servicio.pinValidado;
+  }
   return (
-    servicio.modalidad === 'DOMICILIO' && servicio.estado === 'EN_PROCESO' && servicio.pinValidado
+    servicio.modalidad === 'TALLER' &&
+    servicio.estado === 'LISTO_PARA_RECOGER' &&
+    tieneConstancia(servicio, 'ENTREGA')
   );
 }
 
-export function requiereConstanciaRecepcion(
-  servicio: Pick<ServicioDetalle, 'estado' | 'modalidad'>,
+export function tieneConstancia(
+  servicio: Pick<ServicioDetalle, 'constancias'>,
+  tipo: TipoConstancia,
 ): boolean {
-  return servicio.modalidad === 'TALLER' && servicio.estado === 'PROGRAMADO';
+  return servicio.constancias.some((constancia) => constancia.tipo === tipo);
+}
+
+export function puedeRegistrarConstancia(
+  servicio: Pick<ServicioDetalle, 'estado' | 'modalidad' | 'constancias'>,
+  tipo: TipoConstancia,
+): boolean {
+  if (servicio.modalidad !== 'TALLER' || tieneConstancia(servicio, tipo)) {
+    return false;
+  }
+  if (tipo === 'RECEPCION') {
+    return servicio.estado === 'PROGRAMADO' || servicio.estado === 'EQUIPO_RECIBIDO';
+  }
+  return servicio.estado === 'LISTO_PARA_RECOGER';
+}
+
+export function puedeConfirmarConstancia(
+  esCliente: boolean,
+  constancia: Pick<Constancia, 'confirmadaPorCliente'>,
+): boolean {
+  return esCliente && !constancia.confirmadaPorCliente;
+}
+
+export function requiereConstanciaRecepcion(
+  servicio: Pick<ServicioDetalle, 'estado' | 'modalidad' | 'constancias'>,
+): boolean {
+  return (
+    servicio.modalidad === 'TALLER' &&
+    !tieneConstancia(servicio, 'RECEPCION') &&
+    (servicio.estado === 'PROGRAMADO' || servicio.estado === 'EQUIPO_RECIBIDO')
+  );
 }
 
 export function requiereConstanciaEntrega(
-  servicio: Pick<ServicioDetalle, 'estado' | 'modalidad'>,
+  servicio: Pick<ServicioDetalle, 'estado' | 'modalidad' | 'constancias'>,
 ): boolean {
-  return servicio.modalidad === 'TALLER' && servicio.estado === 'LISTO_PARA_RECOGER';
+  return (
+    servicio.modalidad === 'TALLER' &&
+    servicio.estado === 'LISTO_PARA_RECOGER' &&
+    !tieneConstancia(servicio, 'ENTREGA')
+  );
+}
+
+export function puedeCrearResena(estado: EstadoServicio): boolean {
+  return estado === 'CONFIRMADO';
+}
+
+export function puedeResponderResena(resena: Resena, esTecnico: boolean): boolean {
+  return esTecnico && resena.estado === 'VISIBLE' && resena.respuestaTecnico === null;
+}
+
+export function puedeReportarResena(resena: Resena, esTecnico: boolean): boolean {
+  return esTecnico && resena.estado === 'VISIBLE';
+}
+
+export function esReclamoActivo(estado: EstadoReclamo): boolean {
+  return estado === 'ABIERTO' || estado === 'EN_REVISION';
+}
+
+export function puedeCrearReclamo(estado: EstadoServicio, reclamos: readonly Reclamo[]): boolean {
+  return (
+    (estado === 'CONFIRMADO' || estado === 'CALIFICADO') &&
+    !reclamos.some((reclamo) => esReclamoActivo(reclamo.estado))
+  );
+}
+
+export function puedeResponderReclamo(reclamo: Reclamo, esTecnico: boolean): boolean {
+  return esTecnico && esReclamoActivo(reclamo.estado) && reclamo.respuestaTecnico === null;
+}
+
+export function transicionesReclamo(estado: EstadoReclamo): readonly AccionEstadoReclamo[] {
+  switch (estado) {
+    case 'ABIERTO':
+      return [{ estado: 'EN_REVISION', etiqueta: 'Iniciar revisión', icono: 'manage_search' }];
+    case 'EN_REVISION':
+      return [
+        { estado: 'RESUELTO', etiqueta: 'Resolver reclamo', icono: 'task_alt' },
+        { estado: 'CERRADO', etiqueta: 'Cerrar reclamo', icono: 'lock' },
+      ];
+    case 'RESUELTO':
+      return [{ estado: 'CERRADO', etiqueta: 'Cerrar reclamo', icono: 'lock' }];
+    case 'CERRADO':
+      return [];
+  }
 }
 
 export function puedeConfirmarConformidad(estado: EstadoServicio): boolean {

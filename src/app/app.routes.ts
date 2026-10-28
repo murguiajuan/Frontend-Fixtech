@@ -201,6 +201,22 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/admin/usuarios/usuarios.page').then((m) => m.AdminUsuariosPage),
       },
+      {
+        path: 'admin/resenas',
+        title: 'Moderación de reseñas | FIXTECH',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./features/admin/resenas/resenas.page').then((m) => m.AdminResenasPage),
+      },
+      {
+        path: 'admin/reclamos',
+        title: 'Seguimiento de reclamos | FIXTECH',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./features/admin/reclamos/reclamos.page').then((m) => m.AdminReclamosPage),
+      },
     ],
   },
   {

@@ -1,17 +1,27 @@
 import {
   coincideFiltroServicio,
   esCancelableServicio,
+  esReclamoActivo,
   esServicioEnCurso,
   permiteAvances,
   permiteProponerAjuste,
   puedeConfirmarConformidad,
+  puedeConfirmarConstancia,
+  puedeCrearReclamo,
+  puedeCrearResena,
   puedeFinalizarServicio,
+  puedeRegistrarConstancia,
+  puedeReportarResena,
+  puedeResponderReclamo,
+  puedeResponderResena,
   requiereConstanciaEntrega,
   requiereConstanciaRecepcion,
   tiposAvanceDisponibles,
+  transicionesReclamo,
   transicionesTecnico,
 } from './servicio-etiquetas';
 import { EstadoServicio } from './servicio.models';
+import { crearConstancia, crearReclamo, crearResena } from './testing/servicio.fixtures';
 
 describe('servicio-etiquetas', () => {
   it('define las transiciones del técnico para domicilio', () => {
@@ -26,6 +36,9 @@ describe('servicio-etiquetas', () => {
     ]);
     expect(transicionesTecnico({ estado: 'EN_DIAGNOSTICO', modalidad: 'DOMICILIO' })).toEqual([
       { estado: 'EN_PROCESO', etiqueta: 'Reanudar trabajo', icono: 'play_arrow' },
+    ]);
+    expect(transicionesTecnico({ estado: 'EQUIPO_RECIBIDO', modalidad: 'TALLER' })).toEqual([
+      { estado: 'EN_DIAGNOSTICO', etiqueta: 'Iniciar diagnóstico', icono: 'troubleshoot' },
     ]);
     expect(transicionesTecnico({ estado: 'EN_DIAGNOSTICO', modalidad: 'TALLER' })).toEqual([
       { estado: 'EN_REPARACION', etiqueta: 'Iniciar reparación', icono: 'build' },
@@ -51,6 +64,7 @@ describe('servicio-etiquetas', () => {
         estado: 'EN_PROCESO',
         modalidad: 'DOMICILIO',
         pinValidado: true,
+        constancias: [],
       }),
     ).toBe(true);
     expect(
@@ -58,6 +72,7 @@ describe('servicio-etiquetas', () => {
         estado: 'EN_PROCESO',
         modalidad: 'DOMICILIO',
         pinValidado: false,
+        constancias: [],
       }),
     ).toBe(false);
     expect(
@@ -65,19 +80,159 @@ describe('servicio-etiquetas', () => {
         estado: 'EN_DIAGNOSTICO',
         modalidad: 'DOMICILIO',
         pinValidado: true,
+        constancias: [],
       }),
     ).toBe(false);
   });
 
   it('detecta las constancias pendientes del flujo de taller', () => {
-    expect(requiereConstanciaRecepcion({ estado: 'PROGRAMADO', modalidad: 'TALLER' })).toBe(true);
-    expect(requiereConstanciaRecepcion({ estado: 'PROGRAMADO', modalidad: 'DOMICILIO' })).toBe(
+    expect(
+      requiereConstanciaRecepcion({ estado: 'PROGRAMADO', modalidad: 'TALLER', constancias: [] }),
+    ).toBe(true);
+    expect(
+      requiereConstanciaRecepcion({
+        estado: 'PROGRAMADO',
+        modalidad: 'DOMICILIO',
+        constancias: [],
+      }),
+    ).toBe(false);
+    expect(
+      requiereConstanciaEntrega({
+        estado: 'LISTO_PARA_RECOGER',
+        modalidad: 'TALLER',
+        constancias: [],
+      }),
+    ).toBe(true);
+    expect(
+      requiereConstanciaEntrega({ estado: 'EN_REPARACION', modalidad: 'TALLER', constancias: [] }),
+    ).toBe(false);
+    expect(
+      requiereConstanciaRecepcion({
+        estado: 'PROGRAMADO',
+        modalidad: 'TALLER',
+        constancias: [crearConstancia()],
+      }),
+    ).toBe(false);
+    expect(
+      requiereConstanciaEntrega({
+        estado: 'LISTO_PARA_RECOGER',
+        modalidad: 'TALLER',
+        constancias: [crearConstancia({ tipo: 'ENTREGA' })],
+      }),
+    ).toBe(false);
+  });
+
+  it('habilita la constancia de recepción y entrega solo en taller', () => {
+    expect(
+      puedeRegistrarConstancia(
+        { estado: 'PROGRAMADO', modalidad: 'TALLER', constancias: [] },
+        'RECEPCION',
+      ),
+    ).toBe(true);
+    expect(
+      puedeRegistrarConstancia(
+        { estado: 'EQUIPO_RECIBIDO', modalidad: 'TALLER', constancias: [] },
+        'RECEPCION',
+      ),
+    ).toBe(true);
+    expect(
+      puedeRegistrarConstancia(
+        {
+          estado: 'PROGRAMADO',
+          modalidad: 'TALLER',
+          constancias: [crearConstancia()],
+        },
+        'RECEPCION',
+      ),
+    ).toBe(false);
+    expect(
+      puedeRegistrarConstancia(
+        { estado: 'PROGRAMADO', modalidad: 'DOMICILIO', constancias: [] },
+        'RECEPCION',
+      ),
+    ).toBe(false);
+    expect(
+      puedeRegistrarConstancia(
+        { estado: 'LISTO_PARA_RECOGER', modalidad: 'TALLER', constancias: [] },
+        'ENTREGA',
+      ),
+    ).toBe(true);
+    expect(
+      puedeRegistrarConstancia(
+        { estado: 'EN_REPARACION', modalidad: 'TALLER', constancias: [] },
+        'ENTREGA',
+      ),
+    ).toBe(false);
+  });
+
+  it('permite finalizar y confirmar constancias según el rol', () => {
+    expect(
+      puedeFinalizarServicio({
+        estado: 'LISTO_PARA_RECOGER',
+        modalidad: 'TALLER',
+        pinValidado: false,
+        constancias: [crearConstancia({ tipo: 'ENTREGA' })],
+      }),
+    ).toBe(true);
+    expect(
+      puedeFinalizarServicio({
+        estado: 'LISTO_PARA_RECOGER',
+        modalidad: 'TALLER',
+        pinValidado: true,
+        constancias: [],
+      }),
+    ).toBe(false);
+    expect(puedeConfirmarConstancia(true, crearConstancia())).toBe(true);
+    expect(puedeConfirmarConstancia(true, crearConstancia({ confirmadaPorCliente: true }))).toBe(
       false,
     );
-    expect(requiereConstanciaEntrega({ estado: 'LISTO_PARA_RECOGER', modalidad: 'TALLER' })).toBe(
-      true,
+    expect(puedeConfirmarConstancia(false, crearConstancia())).toBe(false);
+  });
+
+  it('calcula los permisos de la reseña', () => {
+    expect(puedeCrearResena('CONFIRMADO')).toBe(true);
+    expect(puedeCrearResena('CALIFICADO')).toBe(false);
+    expect(puedeCrearResena('FINALIZADO')).toBe(false);
+
+    expect(puedeResponderResena(crearResena(), true)).toBe(true);
+    expect(puedeResponderResena(crearResena(), false)).toBe(false);
+    expect(puedeResponderResena(crearResena({ respuestaTecnico: 'Gracias.' }), true)).toBe(false);
+    expect(puedeResponderResena(crearResena({ estado: 'REPORTADA' }), true)).toBe(false);
+
+    expect(puedeReportarResena(crearResena(), true)).toBe(true);
+    expect(puedeReportarResena(crearResena(), false)).toBe(false);
+    expect(puedeReportarResena(crearResena({ estado: 'OCULTA' }), true)).toBe(false);
+  });
+
+  it('calcula los permisos y transiciones del reclamo', () => {
+    expect(esReclamoActivo('ABIERTO')).toBe(true);
+    expect(esReclamoActivo('EN_REVISION')).toBe(true);
+    expect(esReclamoActivo('RESUELTO')).toBe(false);
+    expect(esReclamoActivo('CERRADO')).toBe(false);
+
+    expect(puedeCrearReclamo('CONFIRMADO', [])).toBe(true);
+    expect(puedeCrearReclamo('CALIFICADO', [crearReclamo({ estado: 'CERRADO' })])).toBe(true);
+    expect(puedeCrearReclamo('CALIFICADO', [crearReclamo()])).toBe(false);
+    expect(puedeCrearReclamo('FINALIZADO', [])).toBe(false);
+
+    expect(puedeResponderReclamo(crearReclamo(), true)).toBe(true);
+    expect(puedeResponderReclamo(crearReclamo(), false)).toBe(false);
+    expect(puedeResponderReclamo(crearReclamo({ respuestaTecnico: 'Revisado.' }), true)).toBe(
+      false,
     );
-    expect(requiereConstanciaEntrega({ estado: 'EN_REPARACION', modalidad: 'TALLER' })).toBe(false);
+    expect(puedeResponderReclamo(crearReclamo({ estado: 'RESUELTO' }), true)).toBe(false);
+
+    expect(transicionesReclamo('ABIERTO')).toEqual([
+      { estado: 'EN_REVISION', etiqueta: 'Iniciar revisión', icono: 'manage_search' },
+    ]);
+    expect(transicionesReclamo('EN_REVISION')).toEqual([
+      { estado: 'RESUELTO', etiqueta: 'Resolver reclamo', icono: 'task_alt' },
+      { estado: 'CERRADO', etiqueta: 'Cerrar reclamo', icono: 'lock' },
+    ]);
+    expect(transicionesReclamo('RESUELTO')).toEqual([
+      { estado: 'CERRADO', etiqueta: 'Cerrar reclamo', icono: 'lock' },
+    ]);
+    expect(transicionesReclamo('CERRADO')).toEqual([]);
   });
 
   it('habilita avances y ajustes solo en los estados permitidos', () => {

@@ -55,7 +55,7 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
 | 4    | Cliente: solicitudes y adjuntos                        | ✅ Completada |
 | 5    | Técnico: solicitudes disponibles y ofertas             | ✅ Completada |
 | 6    | Servicios: aceptación y ejecución del servicio         | ✅ Completada |
-| 7    | Cierre, constancias, reseñas y reclamos                | ⏳ Pendiente  |
+| 7    | Cierre, constancias, reseñas y reclamos                | ✅ Completada |
 | 8    | Comisiones y pagos del técnico                         | ⏳ Pendiente  |
 | 9    | Administración de catálogos, parámetros y reportes     | ⏳ Pendiente  |
 | 10   | Notificaciones y perfil de usuario                     | ⏳ Pendiente  |
@@ -364,9 +364,9 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
 > muestra el diagnóstico por separado y nunca lo suma al total. Al finalizar se envía exactamente
 > `montoTotal` como `montoFinal`; el diálogo solo permite elegir el método de pago.
 
-> Dependencia de Fase 7: el flujo de taller queda bloqueado hasta que existan las pantallas de
-> constancias de recepción y entrega. El detalle muestra avisos y no ofrece acciones que la API
-> rechazaría; no se crearon pantallas de constancias en esta fase.
+> Continuación en Fase 7: el flujo de taller se completó con las constancias de recepción y
+> entrega, la finalización condicionada y la confirmación del cliente. La Fase 6 dejó los avisos y
+> las reglas de transición preparadas para esa integración.
 
 ### Criterios de cierre
 
@@ -377,14 +377,55 @@ Credenciales de desarrollo: `admin@fixtech.pe` / `Admin123!`.
 - [x] Flujo real de aceptación, ejecución, ajuste, finalización y conformidad verificado contra la
       API.
 
-## 11. Fase 7 — Cierre, constancias, reseñas y reclamos ⏳
+## 11. Fase 7 — Cierre, constancias, reseñas y reclamos ✅
 
-- [ ] Constancia de servicio con fotos y confirmación.
-- [ ] Reseña del cliente y respuesta del técnico.
-- [ ] Reporte de reseñas.
-- [ ] Reclamo con fotos, respuesta y seguimiento.
-- [ ] Estados vacíos y errores de conflicto.
-- [ ] Pruebas de permisos y E2E de cierre.
+### Contratos usados
+
+- `POST /api/servicios/{id}/constancias` (multipart: `tipo`, `observaciones`, `accesorios` y
+  `fotos`), `POST /api/servicios/{id}/constancias/{constanciaId}/confirmar` y
+  `GET /api/servicios/{id}/constancias/{constanciaId}/fotos/{fotoId}`.
+- `POST/GET /api/servicios/{id}/resenas`, `PATCH /api/servicios/{id}/resenas/{resenaId}/respuesta`
+  y `POST /api/servicios/{id}/resenas/{resenaId}/reporte`.
+- `GET /api/admin/resenas?estado=` y `PATCH /api/admin/resenas/{id}/moderacion`.
+- `POST/GET /api/servicios/{id}/reclamos` (multipart: `descripcion` y `fotos`), `GET
+/api/servicios/{id}/reclamos/{reclamoId}`, `GET .../fotos/{fotoId}` y `PATCH
+/api/servicios/{id}/reclamos/{reclamoId}/respuesta`.
+- `GET /api/admin/reclamos?estado=`, `GET /api/admin/reclamos/{id}`, `GET
+/api/admin/reclamos/{id}/fotos/{fotoId}` y `PATCH /api/admin/reclamos/{id}/estado`.
+
+### Frontend
+
+- [x] Constancias de taller con 1 a 5 fotos JPG/PNG de hasta 5 MB, accesorios, observaciones,
+      fotos autenticadas y confirmación exclusiva del cliente.
+- [x] La constancia de recepción en `PROGRAMADO` o `EQUIPO_RECIBIDO` transiciona el servicio a
+      `EQUIPO_RECIBIDO`; la constancia de entrega se registra en `LISTO_PARA_RECOGER` y habilita la
+      finalización. El detalle muestra avisos mientras falte cada constancia.
+- [x] Reseña del cliente en `CONFIRMADO` con estrellas obligatorias, criterios opcionales y
+      comentario de hasta 1000 caracteres; al crearla el servicio pasa a `CALIFICADO`.
+- [x] Respuesta única del técnico y reporte de reseñas `VISIBLE`; pantalla administrativa
+      `/app/admin/resenas` para moderar únicamente reseñas `REPORTADA` hacia `VISIBLE` u `OCULTA`.
+- [x] Reclamo del cliente en `CONFIRMADO` o `CALIFICADO` con 1 a 5 fotos, un solo reclamo activo,
+      respuesta única del técnico, resolución administrativa y seguimiento
+      `ABIERTO → EN_REVISION → RESUELTO|CERRADO` (`RESUELTO → CERRADO`).
+- [x] Pantalla `/app/admin/reclamos` con lista filtrable, detalle expandible consultado con
+      `GET /api/admin/reclamos/{id}`, fotos autenticadas, respuesta del técnico y diálogos de
+      resolución con texto obligatorio de hasta 1000 caracteres.
+- [x] Estados de carga, error con reintento y vacío en constancias, reseña, reclamos y pantallas
+      administrativas; errores `404` y `409` tratados sin romper el flujo.
+- [x] Navegación y accesos del panel administrativo a reseñas y reclamos.
+- [x] Pruebas unitarias de servicios HTTP, reglas de permisos y transiciones, diálogos, secciones,
+      páginas administrativas y fixtures de constancias, reseñas y reclamos.
+- [x] E2E real de taller: constancias de recepción y entrega con confirmación, finalización,
+      conformidad, reseña, respuesta y reporte del técnico, moderación administrativa, reclamo con
+      foto, respuesta técnica y revisión, resolución y cierre administrativos.
+
+### Criterios de cierre
+
+- [x] Build de producción, lint y formato sin errores.
+- [x] 358 pruebas unitarias en 52 archivos, todas en verde.
+- [x] 20 pruebas E2E en verde en Chromium y móvil de 360 px con el backend local.
+- [x] Axe sin violaciones en constancias, reseñas, reclamos y sus diálogos.
+- [x] Flujo real de taller, reseña y reclamo verificado contra la API.
 
 ## 12. Fase 8 — Comisiones y pagos ⏳
 
@@ -441,8 +482,8 @@ El registro completo, con impacto y decisión provisional, está en
 [`BRECHAS_PENDIENTES.md`](./BRECHAS_PENDIENTES.md). Se resolverán al final del proyecto. Entre las
 principales están los documentos de verificación sin controlador, la recuperación/cambio de
 contraseña, la búsqueda pública de técnicos, las fotos no reemplazables en la edición de
-solicitudes, la edición del perfil de usuario general, la ausencia de seed/limpieza para E2E, las
-constancias de taller de la Fase 7 y la mensajería sin tiempo real.
+solicitudes, la edición del perfil de usuario general, la ausencia de seed/limpieza para E2E y la
+mensajería sin tiempo real.
 
 | Necesidad                          | Situación                                                    | Decisión                                                                                  |
 | ---------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
@@ -468,9 +509,12 @@ constancias de taller de la Fase 7 y la mensajería sin tiempo real.
 
 ## 19. Registro de avances
 
-| Fecha      | Fase  | Evidencia                                                                                                                                                                                                     |
-| ---------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-10-27 | 0 y 1 | Build de producción, 21 pruebas unitarias, lint, Prettier y 8 pruebas E2E con Axe en escritorio y 360 px; login real contra backend verificado                                                                |
-| 2026-10-27 | 2     | Build de producción, 53 pruebas unitarias, lint y Prettier; 10 pruebas E2E con Axe en escritorio y 360 px; aprobación real de un técnico creado vía API y estado verificado con `GET /api/admin/tecnicos`     |
-| 2026-10-27 | 3     | Build de producción, 73 pruebas unitarias, lint y Prettier; 12 pruebas E2E con Axe en escritorio y 360 px; registro real de un técnico, login y perfil `PENDIENTE` verificado desde la interfaz               |
-| 2026-10-27 | 4     | Build de producción, 128 pruebas unitarias, lint y Prettier; 14 pruebas E2E con Axe en escritorio y 360 px; perfil técnico editable con foto autorizada y solicitud real con foto creada, editada y cancelada |
+| Fecha      | Fase  | Evidencia                                                                                                                                                                                                        |
+| ---------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-27 | 0 y 1 | Build de producción, 21 pruebas unitarias, lint, Prettier y 8 pruebas E2E con Axe en escritorio y 360 px; login real contra backend verificado                                                                   |
+| 2026-10-27 | 2     | Build de producción, 53 pruebas unitarias, lint y Prettier; 10 pruebas E2E con Axe en escritorio y 360 px; aprobación real de un técnico creado vía API y estado verificado con `GET /api/admin/tecnicos`        |
+| 2026-10-27 | 3     | Build de producción, 73 pruebas unitarias, lint y Prettier; 12 pruebas E2E con Axe en escritorio y 360 px; registro real de un técnico, login y perfil `PENDIENTE` verificado desde la interfaz                  |
+| 2026-10-27 | 4     | Build de producción, 128 pruebas unitarias, lint y Prettier; 14 pruebas E2E con Axe en escritorio y 360 px; perfil técnico editable con foto autorizada y solicitud real con foto creada, editada y cancelada    |
+| 2026-10-27 | 5     | Build de producción, 192 pruebas unitarias en 31 archivos, lint y Prettier; 16 pruebas E2E con Axe en escritorio y 360 px; oferta, contraoferta y creación real del servicio verificadas contra la API           |
+| 2026-10-27 | 6     | Build de producción, 270 pruebas unitarias en 42 archivos, lint y Prettier; 18 pruebas E2E con Axe en escritorio y 360 px; aceptación, ejecución, ajuste y conformidad verificados contra la API                 |
+| 2026-10-27 | 7     | Build de producción, 358 pruebas unitarias en 52 archivos, lint y Prettier; 20 pruebas E2E con Axe en escritorio y 360 px; constancias de taller, reseña, moderación, reclamo y cierre verificados contra la API |

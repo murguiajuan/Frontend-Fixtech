@@ -26,6 +26,15 @@ interface SesionPrueba {
   readonly password: string;
 }
 
+interface ModalidadesTecnico {
+  readonly ofreceDomicilio: boolean;
+  readonly ofreceTaller: boolean;
+}
+
+interface OpcionesSolicitud {
+  readonly modalidad?: string;
+}
+
 // PNG de 1x1 píxel para adjuntarlo como foto de la solicitud y de los avances.
 const PNG_BASE64 =
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
@@ -245,6 +254,399 @@ test.describe('Flujo completo del servicio', () => {
     await expect(page.getByText('No hay servicios en este filtro')).toBeVisible();
     await auditar(page);
   });
+
+  test('taller: constancias, finalización, reseña, reclamo y moderación', async ({
+    page,
+    request,
+  }, testInfo) => {
+    test.setTimeout(300_000);
+
+    const sufijo = `${Date.now()}-${testInfo.workerIndex}`;
+    const catalogos = await obtenerCatalogos(request);
+    const distrito = catalogos.distritos[0];
+    const tecnico = await registrarTecnico(request, distrito.id, testInfo.workerIndex, {
+      ofreceDomicilio: false,
+      ofreceTaller: true,
+    });
+    await aprobarTecnico(request, tecnico.correo);
+    const cliente = await registrarCliente(request, testInfo.workerIndex);
+    const descripcionServicio = `Servicio de taller E2E ${sufijo}: la laptop no carga.`;
+    const comentarioResena = `Reseña de taller E2E ${sufijo}: atención puntual y clara.`;
+    const respuestaResena = `Respuesta del técnico E2E ${sufijo}: gracias por tu comentario.`;
+    const motivoReporte = `Motivo del reporte E2E ${sufijo}: contiene datos imprecisos.`;
+    const descripcionReclamo = `Reclamo de taller E2E ${sufijo}: el equipo volvió con la tapa suelta.`;
+    const respuestaReclamo = `Respuesta al reclamo E2E ${sufijo}: revisaremos la tapa sin costo.`;
+    const resolucionReclamo = `Resolución E2E ${sufijo}: se coordinó la revisión y se validó el equipo.`;
+    const admin: SesionPrueba = { correo: 'admin@fixtech.pe', password: 'Admin123!' };
+
+    await iniciarSesion(page, cliente);
+    await publicarSolicitud(page, catalogos, distrito, descripcionServicio, {
+      modalidad: 'En taller',
+    });
+    const solicitudId = extraerId(page.url(), '/app/cliente/solicitudes/');
+
+    await cerrarSesion(page);
+    await iniciarSesion(page, tecnico);
+    await page.goto(`/app/tecnico/solicitudes/${solicitudId}`);
+    await expect(page.getByText(descripcionServicio, { exact: true })).toBeVisible();
+    await page.getByRole('link', { name: 'Enviar oferta' }).first().click();
+    await expect(page).toHaveURL(new RegExp(`/app/tecnico/solicitudes/${solicitudId}/ofertar$`));
+    await expect(page.getByLabel('Modalidad de la oferta')).toContainText('En taller');
+    await expect(page.getByLabel('Costo de movilidad')).toBeDisabled();
+    await page.getByLabel('Precio del servicio').fill('200');
+    await page.getByLabel('Tiempo estimado (horas)').fill('2');
+    await page.getByLabel('Costo de diagnóstico').fill('20');
+    await page.getByRole('button', { name: 'Enviar oferta' }).click();
+    await expect(page).toHaveURL(new RegExp(`/app/tecnico/solicitudes/${solicitudId}$`));
+    await expect(page.getByText('Tu oferta', { exact: true })).toBeVisible();
+    await expect(page.getByText('S/ 200.00').first()).toBeVisible();
+
+    await cerrarSesion(page);
+    await iniciarSesion(page, cliente);
+    await page.goto(`/app/cliente/solicitudes/${solicitudId}`);
+    await expect(page.getByRole('heading', { level: 2, name: 'Ofertas recibidas' })).toBeVisible();
+    await page.getByRole('button', { name: 'Aceptar oferta' }).click();
+    const dialogoAceptar = page.getByRole('dialog');
+    await expect(dialogoAceptar).toBeVisible();
+    await esperarAnimaciones(dialogoAceptar);
+    await expect(dialogoAceptar).toContainText('S/ 200.00');
+    await dialogoAceptar.getByRole('button', { name: 'Aceptar y crear servicio' }).click();
+
+    await expect(dialogoAceptar).toBeHidden();
+    await expect(page).toHaveURL(/\/app\/cliente\/servicios\/\d+$/);
+    const servicioId = extraerId(page.url(), '/app/cliente/servicios/');
+    await expect(page.locator('.detalle__badges')).toContainText('Programado');
+    await expect(page.locator('.detalle__badges')).toContainText('En taller');
+
+    const constanciasIniciales = page.locator('app-constancias-servicio');
+    await expect(
+      constanciasIniciales.getByRole('heading', { level: 2, name: 'Constancias del servicio' }),
+    ).toBeVisible();
+    await expect(
+      constanciasIniciales.getByText('Aún no hay constancias registradas para este servicio.'),
+    ).toBeVisible();
+    await expect(
+      constanciasIniciales.getByText('Falta la constancia de recepción del equipo.'),
+    ).toBeVisible();
+    const resenaInicial = page.locator('app-resena-servicio');
+    await expect(
+      resenaInicial.getByText('La reseña se habilita cuando el servicio esté confirmado.'),
+    ).toBeVisible();
+    const reclamosIniciales = page.locator('app-reclamos-servicio');
+    await expect(
+      reclamosIniciales.getByText('Los reclamos se habilitan cuando el servicio está confirmado.'),
+    ).toBeVisible();
+    await auditar(page);
+
+    await cerrarSesion(page);
+    await iniciarSesion(page, tecnico);
+    await page.goto(`/app/tecnico/servicios/${servicioId}`);
+    await expect(page.locator('.detalle__badges')).toContainText('Programado');
+    const constancias = page.locator('app-constancias-servicio');
+    await constancias.getByRole('button', { name: 'Registrar constancia de recepción' }).click();
+    const dialogoRecepcion = page.getByRole('dialog');
+    await expect(dialogoRecepcion).toBeVisible();
+    await esperarAnimaciones(dialogoRecepcion);
+    await dialogoRecepcion
+      .getByLabel('Accesorios entregados (opcional)')
+      .fill('Cargador original y funda.');
+    await dialogoRecepcion
+      .getByLabel('Observaciones (opcional)')
+      .fill('Equipo recibido con un rayón en la tapa.');
+    await dialogoRecepcion.locator('input[type="file"]').setInputFiles({
+      name: 'recepcion.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from(PNG_BASE64, 'base64'),
+    });
+    await expect(dialogoRecepcion.getByText('recepcion.png')).toBeVisible();
+    await auditar(page, 'mat-dialog-container');
+    await dialogoRecepcion.getByRole('button', { name: 'Registrar constancia' }).click();
+
+    await expect(dialogoRecepcion).toBeHidden();
+    await expect(page.locator('.detalle__badges')).toContainText('Equipo recibido');
+    const constanciaRecepcion = constancias
+      .locator('.constancia')
+      .filter({ hasText: 'Recepción del equipo' });
+    await expect(constanciaRecepcion.getByText('Pendiente de confirmación')).toBeVisible();
+    await expect(constanciaRecepcion.locator('app-imagen-autenticada img')).toBeVisible();
+    await auditar(page);
+
+    await cerrarSesion(page);
+    await iniciarSesion(page, cliente);
+    await page.goto(`/app/cliente/servicios/${servicioId}`);
+    const constanciasCliente = page.locator('app-constancias-servicio');
+    const recepcionCliente = constanciasCliente
+      .locator('.constancia')
+      .filter({ hasText: 'Recepción del equipo' });
+    await expect(recepcionCliente.getByText('Pendiente de confirmación')).toBeVisible();
+    await expect(recepcionCliente.locator('app-imagen-autenticada img')).toBeVisible();
+    await expect(
+      constanciasCliente.getByText('Falta la constancia de recepción del equipo.'),
+    ).toHaveCount(0);
+    await recepcionCliente.getByRole('button', { name: 'Confirmar constancia' }).click();
+    await expect(recepcionCliente.getByText('Confirmada', { exact: true })).toBeVisible();
+    await auditar(page);
+
+    await cerrarSesion(page);
+    await iniciarSesion(page, tecnico);
+    await page.goto(`/app/tecnico/servicios/${servicioId}`);
+    await expect(page.locator('.detalle__badges')).toContainText('Equipo recibido');
+    await page.getByRole('button', { name: 'Iniciar diagnóstico' }).click();
+    await expect(page.locator('.detalle__badges')).toContainText('En diagnóstico');
+    await page.getByRole('button', { name: 'Iniciar reparación' }).click();
+    await expect(page.locator('.detalle__badges')).toContainText('En reparación');
+    await page.getByRole('button', { name: 'Marcar listo para recoger' }).click();
+    await expect(page.locator('.detalle__badges')).toContainText('Listo para recoger');
+    await expect(page.getByRole('button', { name: 'Finalizar servicio' })).toHaveCount(0);
+
+    const constanciasTecnico = page.locator('app-constancias-servicio');
+    await expect(
+      constanciasTecnico.getByText('Falta la constancia de entrega del equipo.'),
+    ).toBeVisible();
+    await constanciasTecnico
+      .getByRole('button', { name: 'Registrar constancia de entrega' })
+      .click();
+    const dialogoEntrega = page.getByRole('dialog');
+    await expect(dialogoEntrega).toBeVisible();
+    await esperarAnimaciones(dialogoEntrega);
+    await dialogoEntrega
+      .getByLabel('Observaciones (opcional)')
+      .fill('Equipo entregado funcionando correctamente.');
+    await dialogoEntrega.locator('input[type="file"]').setInputFiles({
+      name: 'entrega.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from(PNG_BASE64, 'base64'),
+    });
+    await expect(dialogoEntrega.getByText('entrega.png')).toBeVisible();
+    await auditar(page, 'mat-dialog-container');
+    await dialogoEntrega.getByRole('button', { name: 'Registrar constancia' }).click();
+
+    await expect(dialogoEntrega).toBeHidden();
+    await expect(page.locator('.detalle__badges')).toContainText('Listo para recoger');
+    const constanciaEntrega = page
+      .locator('app-constancias-servicio .constancia')
+      .filter({ hasText: 'Entrega del equipo' });
+    await expect(constanciaEntrega.getByText('Pendiente de confirmación')).toBeVisible();
+    await expect(constanciaEntrega.locator('app-imagen-autenticada img')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Finalizar servicio' })).toBeVisible();
+    await auditar(page);
+
+    await cerrarSesion(page);
+    await iniciarSesion(page, cliente);
+    await page.goto(`/app/cliente/servicios/${servicioId}`);
+    const entregaCliente = page
+      .locator('app-constancias-servicio .constancia')
+      .filter({ hasText: 'Entrega del equipo' });
+    await expect(entregaCliente.getByText('Pendiente de confirmación')).toBeVisible();
+    await entregaCliente.getByRole('button', { name: 'Confirmar constancia' }).click();
+    await expect(entregaCliente.getByText('Confirmada', { exact: true })).toBeVisible();
+
+    await cerrarSesion(page);
+    await iniciarSesion(page, tecnico);
+    await page.goto(`/app/tecnico/servicios/${servicioId}`);
+    await page.getByRole('button', { name: 'Finalizar servicio' }).click();
+    const dialogoFinalizar = page.getByRole('dialog');
+    await expect(dialogoFinalizar).toBeVisible();
+    await esperarAnimaciones(dialogoFinalizar);
+    await expect(dialogoFinalizar).toContainText('S/ 200.00');
+    await dialogoFinalizar.getByRole('radio', { name: 'Yape' }).check();
+    await auditar(page, 'mat-dialog-container');
+    await dialogoFinalizar.getByRole('button', { name: 'Finalizar servicio' }).click();
+
+    await expect(dialogoFinalizar).toBeHidden();
+    await expect(page.locator('.detalle__badges')).toContainText('Finalizado');
+    await expect(
+      page.getByText('Servicio finalizado; falta la conformidad del cliente.'),
+    ).toBeVisible();
+    await auditar(page);
+
+    await cerrarSesion(page);
+    await iniciarSesion(page, cliente);
+    await page.goto(`/app/cliente/servicios/${servicioId}`);
+    await expect(page.locator('.detalle__badges')).toContainText('Finalizado');
+    await expect(page.getByText('Monto final').first()).toBeVisible();
+    await expect(page.getByText('S/ 200.00').first()).toBeVisible();
+    await expect(page.getByText('Yape', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Confirmar conformidad' }).click();
+    const dialogoConformidad = page.getByRole('dialog');
+    await expect(dialogoConformidad).toBeVisible();
+    await esperarAnimaciones(dialogoConformidad);
+    await auditar(page, 'mat-dialog-container');
+    await dialogoConformidad.getByRole('button', { name: 'Confirmar conformidad' }).click();
+
+    await expect(dialogoConformidad).toBeHidden();
+    await expect(page.locator('.detalle__badges')).toContainText('Confirmado');
+    await expect(page.getByText('Servicio confirmado.')).toBeVisible();
+
+    const resena = page.locator('app-resena-servicio');
+    await expect(resena.getByRole('button', { name: '4 de 5 estrellas' })).toBeVisible();
+    await resena.getByRole('button', { name: '4 de 5 estrellas' }).click();
+    await resena.getByLabel('Comentario (opcional)').fill(comentarioResena);
+    await auditar(page);
+    await resena.getByRole('button', { name: 'Publicar reseña' }).click();
+    await expect(resena.getByText(comentarioResena)).toBeVisible();
+    await expect(resena.getByRole('img', { name: 'Calificación: 4 de 5 estrellas' })).toBeVisible();
+    await expect(resena.getByText('Visible', { exact: true })).toBeVisible();
+    await expect(page.locator('.detalle__badges')).toContainText('Calificado');
+
+    const reclamos = page.locator('app-reclamos-servicio');
+    await expect(reclamos.getByRole('button', { name: 'Registrar reclamo' })).toBeVisible();
+    await reclamos.getByRole('button', { name: 'Registrar reclamo' }).click();
+    const dialogoReclamo = page.getByRole('dialog');
+    await expect(dialogoReclamo).toBeVisible();
+    await esperarAnimaciones(dialogoReclamo);
+    await dialogoReclamo.getByLabel('Descripción del reclamo').fill(descripcionReclamo);
+    await dialogoReclamo.locator('input[type="file"]').setInputFiles({
+      name: 'reclamo.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from(PNG_BASE64, 'base64'),
+    });
+    await expect(dialogoReclamo.getByText('reclamo.png')).toBeVisible();
+    await auditar(page, 'mat-dialog-container');
+    await dialogoReclamo.getByRole('button', { name: 'Registrar reclamo' }).click();
+
+    await expect(dialogoReclamo).toBeHidden();
+    const reclamo = reclamos.locator('.reclamo').filter({ hasText: descripcionReclamo });
+    await expect(reclamo.getByText('Abierto', { exact: true })).toBeVisible();
+    await expect(reclamo.getByText(descripcionReclamo)).toBeVisible();
+    await expect(reclamo.locator('app-imagen-autenticada img')).toBeVisible();
+    await auditar(page);
+
+    await cerrarSesion(page);
+    await iniciarSesion(page, tecnico);
+    await page.goto(`/app/tecnico/servicios/${servicioId}`);
+    const resenaTecnico = page.locator('app-resena-servicio');
+    await expect(resenaTecnico.getByText(comentarioResena)).toBeVisible();
+    await resenaTecnico.getByRole('button', { name: 'Responder reseña' }).click();
+    const dialogoRespuestaResena = page.getByRole('dialog');
+    await expect(dialogoRespuestaResena).toBeVisible();
+    await esperarAnimaciones(dialogoRespuestaResena);
+    await dialogoRespuestaResena.getByLabel('Tu respuesta').fill(respuestaResena);
+    await auditar(page, 'mat-dialog-container');
+    await dialogoRespuestaResena.getByRole('button', { name: 'Publicar respuesta' }).click();
+
+    await expect(dialogoRespuestaResena).toBeHidden();
+    await expect(resenaTecnico.getByText(respuestaResena)).toBeVisible();
+    await resenaTecnico.getByRole('button', { name: 'Reportar reseña' }).click();
+    const dialogoReporte = page.getByRole('dialog');
+    await expect(dialogoReporte).toBeVisible();
+    await esperarAnimaciones(dialogoReporte);
+    await dialogoReporte.getByLabel('Motivo del reporte').fill(motivoReporte);
+    await dialogoReporte.getByRole('button', { name: 'Reportar reseña' }).click();
+
+    await expect(dialogoReporte).toBeHidden();
+    await expect(resenaTecnico.getByText('Reseña reportada.')).toBeVisible();
+    await expect(resenaTecnico.getByText('Reportada', { exact: true })).toBeVisible();
+
+    const reclamoTecnico = page
+      .locator('app-reclamos-servicio .reclamo')
+      .filter({ hasText: descripcionReclamo });
+    await expect(reclamoTecnico.getByText(descripcionReclamo)).toBeVisible();
+    await reclamoTecnico.getByRole('button', { name: 'Responder reclamo' }).click();
+    const dialogoRespuestaReclamo = page.getByRole('dialog');
+    await expect(dialogoRespuestaReclamo).toBeVisible();
+    await esperarAnimaciones(dialogoRespuestaReclamo);
+    await dialogoRespuestaReclamo.getByLabel('Respuesta al reclamo').fill(respuestaReclamo);
+    await auditar(page, 'mat-dialog-container');
+    await dialogoRespuestaReclamo.getByRole('button', { name: 'Publicar respuesta' }).click();
+
+    await expect(dialogoRespuestaReclamo).toBeHidden();
+    await expect(reclamoTecnico.getByText(respuestaReclamo)).toBeVisible();
+    await auditar(page);
+
+    await cerrarSesion(page);
+    await iniciarSesion(page, admin);
+    await page.goto('/app/admin/resenas');
+    await expect(page.getByRole('heading', { level: 1, name: 'Reseñas' })).toBeVisible();
+    await elegirOpcion(page, 'Estado de la reseña', 'Reportada');
+    await page.getByRole('button', { name: 'Filtrar' }).click();
+    const resenaReportada = page.locator('article.resena').filter({ hasText: comentarioResena });
+    await expect(resenaReportada).toBeVisible();
+    await expect(resenaReportada.getByText(motivoReporte)).toBeVisible();
+    await expect(resenaReportada.getByText(respuestaResena)).toBeVisible();
+    await auditar(page);
+    await resenaReportada.getByRole('button', { name: 'Habilitar reseña' }).click();
+    const dialogoModeracion = page.getByRole('dialog');
+    await expect(dialogoModeracion).toBeVisible();
+    await esperarAnimaciones(dialogoModeracion);
+    await auditar(page, 'mat-dialog-container');
+    await dialogoModeracion.getByRole('button', { name: 'Habilitar reseña' }).click();
+
+    await expect(dialogoModeracion).toBeHidden();
+    await expect(page.getByText('Reseña habilitada nuevamente.')).toBeVisible();
+    await expect(resenaReportada).toHaveCount(0);
+    await elegirOpcion(page, 'Estado de la reseña', 'Visible');
+    await page.getByRole('button', { name: 'Filtrar' }).click();
+    const resenaVisible = page.locator('article.resena').filter({ hasText: comentarioResena });
+    await expect(resenaVisible).toBeVisible();
+    await expect(resenaVisible.getByText('Visible', { exact: true })).toBeVisible();
+    await auditar(page);
+
+    await page.goto('/app/admin/reclamos');
+    await expect(page.getByRole('heading', { level: 1, name: 'Reclamos' })).toBeVisible();
+    const reclamoAdmin = page.locator('article.reclamo').filter({ hasText: descripcionReclamo });
+    await expect(reclamoAdmin).toBeVisible();
+    await reclamoAdmin.getByRole('button', { name: 'Ver detalle' }).click();
+    await expect(
+      reclamoAdmin.getByRole('heading', { level: 3, name: 'Detalle del reclamo' }),
+    ).toBeVisible();
+    await expect(reclamoAdmin.getByText(respuestaReclamo)).toBeVisible();
+    await expect(reclamoAdmin.locator('app-imagen-autenticada img')).toBeVisible();
+    await auditar(page);
+
+    await reclamoAdmin.getByRole('button', { name: 'Iniciar revisión' }).click();
+    const dialogoRevision = page.getByRole('dialog');
+    await expect(dialogoRevision).toBeVisible();
+    await esperarAnimaciones(dialogoRevision);
+    await dialogoRevision.getByRole('button', { name: 'Iniciar revisión' }).click();
+    await expect(dialogoRevision).toBeHidden();
+    await expect(page.getByText('El reclamo pasó a revisión.')).toBeVisible();
+    await expect(reclamoAdmin.getByText('En revisión', { exact: true }).first()).toBeVisible();
+
+    await reclamoAdmin.getByRole('button', { name: 'Resolver reclamo' }).click();
+    const dialogoResolver = page.getByRole('dialog');
+    await expect(dialogoResolver).toBeVisible();
+    await esperarAnimaciones(dialogoResolver);
+    await dialogoResolver.getByLabel('Resolución del reclamo').fill(resolucionReclamo);
+    await auditar(page, 'mat-dialog-container');
+    await dialogoResolver.getByRole('button', { name: 'Resolver reclamo' }).click();
+    await expect(dialogoResolver).toBeHidden();
+    await expect(page.getByText('Reclamo resuelto. Se notificó a las partes.')).toBeVisible();
+    await expect(reclamoAdmin.getByText('Resuelto', { exact: true }).first()).toBeVisible();
+    await expect(reclamoAdmin.getByText(resolucionReclamo)).toBeVisible();
+
+    await reclamoAdmin.getByRole('button', { name: 'Cerrar reclamo' }).click();
+    const dialogoCerrar = page.getByRole('dialog');
+    await expect(dialogoCerrar).toBeVisible();
+    await esperarAnimaciones(dialogoCerrar);
+    await expect(dialogoCerrar.getByLabel('Resolución del reclamo')).toHaveValue(resolucionReclamo);
+    await auditar(page, 'mat-dialog-container');
+    await dialogoCerrar.getByRole('button', { name: 'Cerrar reclamo' }).click();
+    await expect(dialogoCerrar).toBeHidden();
+    await expect(page.getByText('Reclamo cerrado.')).toBeVisible();
+    await expect(reclamoAdmin.getByText('Cerrado', { exact: true }).first()).toBeVisible();
+    await expect(
+      reclamoAdmin.getByText('El reclamo está cerrado y no admite más cambios de estado.'),
+    ).toBeVisible();
+    await auditar(page);
+
+    await cerrarSesion(page);
+    await iniciarSesion(page, cliente);
+    await page.goto(`/app/cliente/servicios/${servicioId}`);
+    const resenaFinal = page.locator('app-resena-servicio');
+    await expect(resenaFinal.getByText(comentarioResena)).toBeVisible();
+    await expect(resenaFinal.getByText(respuestaResena)).toBeVisible();
+    await expect(resenaFinal.getByText('Visible', { exact: true })).toBeVisible();
+    const reclamoFinal = page
+      .locator('app-reclamos-servicio .reclamo')
+      .filter({ hasText: descripcionReclamo });
+    await expect(reclamoFinal.getByText('Cerrado', { exact: true })).toBeVisible();
+    await expect(reclamoFinal.getByText(resolucionReclamo)).toBeVisible();
+    await expect(
+      page.locator('app-reclamos-servicio').getByRole('button', { name: 'Registrar reclamo' }),
+    ).toBeVisible();
+    await auditar(page);
+  });
 });
 
 async function obtenerCatalogos(request: APIRequestContext): Promise<CatalogosSolicitud> {
@@ -275,6 +677,7 @@ async function registrarTecnico(
   request: APIRequestContext,
   distritoId: number,
   workerIndex: number,
+  modalidades: ModalidadesTecnico = { ofreceDomicilio: true, ofreceTaller: false },
 ): Promise<SesionPrueba> {
   const especialidades = await request.get(`${API_URL}/catalogos/especialidades`);
   expect(especialidades.ok()).toBeTruthy();
@@ -297,8 +700,9 @@ async function registrarTecnico(
       aceptoTerminos: true,
       descripcion: 'Técnico creado por la prueba E2E del flujo de servicios.',
       aniosExperiencia: 5,
-      ofreceDomicilio: true,
-      ofreceTaller: false,
+      ofreceDomicilio: modalidades.ofreceDomicilio,
+      ofreceTaller: modalidades.ofreceTaller,
+      direccionTaller: modalidades.ofreceTaller ? 'Av. Taller E2E 456, Piura' : null,
       especialidadIds: [especialidadesJson[0].id],
       distritoIds: [distritoId],
     },
@@ -381,6 +785,7 @@ async function publicarSolicitud(
   catalogos: CatalogosSolicitud,
   distrito: CatalogoConId,
   descripcion: string,
+  opciones: OpcionesSolicitud = {},
 ): Promise<void> {
   await page.goto('/app/cliente/solicitudes/nueva');
   await expect(page.getByRole('heading', { level: 1, name: 'Nueva solicitud' })).toBeVisible();
@@ -389,10 +794,15 @@ async function publicarSolicitud(
   await elegirOpcion(page, 'Tipo de servicio', catalogos.servicios[0].nombre);
   await elegirOpcion(page, 'Distrito', distrito.nombre);
   await elegirOpcion(page, 'Urgencia', 'Urgencia media');
+  if (opciones.modalidad !== undefined) {
+    await elegirOpcion(page, 'Modalidad de atención', opciones.modalidad);
+  }
   await page.getByLabel('Marca (opcional)').fill('Lenovo');
   await page.getByLabel('Modelo (opcional)').fill('ThinkPad E2E');
   await page.getByLabel('Descripción del problema').fill(descripcion);
-  await page.getByLabel('Dirección').fill('Av. Grau 123, Piura');
+  if (opciones.modalidad !== 'En taller') {
+    await page.getByLabel('Dirección').fill('Av. Grau 123, Piura');
+  }
   await page.getByLabel('Presupuesto referencial (opcional)').fill('180');
   await page.getByLabel('Seleccionar fotos del equipo').setInputFiles({
     name: 'equipo.png',
@@ -460,12 +870,11 @@ function extraerId(url: string, prefijo: string): string {
 
 async function auditar(page: Page, include?: string): Promise<void> {
   await esperarAnimaciones(page.locator('body'));
-  const analizador = new AxeBuilder({ page }).withTags([
-    'wcag2a',
-    'wcag2aa',
-    'wcag21a',
-    'wcag21aa',
-  ]);
+  // Las notificaciones son overlays transitorios que se desvanecen; su texto y estado se
+  // comprueban por separado. Excluirlas evita falsos positivos de contraste durante la salida.
+  const analizador = new AxeBuilder({ page })
+    .exclude('.mat-mdc-snack-bar-container')
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']);
   if (include !== undefined) {
     analizador.include(include);
   }

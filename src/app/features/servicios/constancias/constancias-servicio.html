@@ -1,0 +1,113 @@
+<section class="constancias ft-card" id="constancias-servicio" aria-labelledby="titulo-constancias">
+  <header class="constancias__cabecera">
+    <div>
+      <h2 id="titulo-constancias">Constancias del servicio</h2>
+      <p class="ft-muted">
+        La recepción y la entrega del equipo en taller se respaldan con fotos. El cliente confirma
+        cada constancia registrada por el técnico.
+      </p>
+    </div>
+    <div class="constancias__acciones">
+      @if (puedeRegistrarRecepcion()) {
+        <button mat-flat-button type="button" (click)="abrirRegistro('RECEPCION')">
+          <mat-icon aria-hidden="true">assignment_turned_in</mat-icon>
+          Registrar constancia de recepción
+        </button>
+      }
+      @if (puedeRegistrarEntrega()) {
+        <button mat-flat-button type="button" (click)="abrirRegistro('ENTREGA')">
+          <mat-icon aria-hidden="true">assignment_return</mat-icon>
+          Registrar constancia de entrega
+        </button>
+      }
+    </div>
+  </header>
+
+  @if (recepcionPendiente()) {
+    <div class="ft-alert ft-alert--warning" role="note">
+      <mat-icon aria-hidden="true">inventory_2</mat-icon>
+      <span>
+        Falta la constancia de recepción del equipo. Regístrala para habilitar el diagnóstico del
+        servicio en taller.
+      </span>
+    </div>
+  }
+
+  @if (entregaPendiente()) {
+    <div class="ft-alert ft-alert--warning" role="note">
+      <mat-icon aria-hidden="true">assignment_return</mat-icon>
+      <span>
+        Falta la constancia de entrega del equipo. Regístrala antes de finalizar el servicio.
+      </span>
+    </div>
+  }
+
+  @if (!hayConstancias()) {
+    <div class="constancias__vacio">
+      <mat-icon aria-hidden="true">photo_camera_back</mat-icon>
+      <p>Aún no hay constancias registradas para este servicio.</p>
+    </div>
+  } @else {
+    <ul class="constancias__lista" aria-label="Constancias registradas">
+      @for (constancia of servicio().constancias; track constancia.id) {
+        <li class="constancia">
+          <header class="constancia__cabecera">
+            <div>
+              <h3>{{ etiquetasTipo[constancia.tipo] }}</h3>
+              <p class="ft-muted">
+                Registrada el {{ constancia.creadoEn | date: 'dd MMM yyyy, HH:mm' }}
+              </p>
+            </div>
+            <app-estado-badge
+              [texto]="constancia.confirmadaPorCliente ? 'Confirmada' : 'Pendiente de confirmación'"
+              [tono]="constancia.confirmadaPorCliente ? 'ok' : 'alerta'"
+            />
+          </header>
+
+          @if (constancia.accesorios) {
+            <p class="constancia__dato"><strong>Accesorios:</strong> {{ constancia.accesorios }}</p>
+          }
+          @if (constancia.observaciones) {
+            <p class="constancia__dato constancia__observaciones">
+              {{ constancia.observaciones }}
+            </p>
+          }
+          @if (constancia.confirmadaPorCliente && constancia.fechaConfirmacion) {
+            <p class="ft-muted constancia__confirmacion">
+              Confirmada por el cliente el
+              {{ constancia.fechaConfirmacion | date: 'dd MMM yyyy, HH:mm' }}.
+            </p>
+          }
+
+          <ul
+            class="constancia__fotos"
+            [attr.aria-label]="'Fotos de ' + etiquetasTipo[constancia.tipo]"
+          >
+            @for (fotoId of constancia.fotoIds; track fotoId) {
+              <li>
+                <app-imagen-autenticada
+                  [src]="urlFoto(constancia, fotoId)"
+                  [alt]="'Foto de la constancia de ' + etiquetasTipo[constancia.tipo].toLowerCase()"
+                />
+              </li>
+            }
+          </ul>
+
+          @if (puedeConfirmar(constancia)) {
+            <div class="constancia__acciones">
+              <button
+                mat-stroked-button
+                type="button"
+                [disabled]="confirmando() === constancia.id"
+                (click)="confirmar(constancia)"
+              >
+                <mat-icon aria-hidden="true">verified</mat-icon>
+                {{ confirmando() === constancia.id ? 'Confirmando…' : 'Confirmar constancia' }}
+              </button>
+            </div>
+          }
+        </li>
+      }
+    </ul>
+  }
+</section>

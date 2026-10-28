@@ -1,0 +1,200 @@
+<div class="admin-resenas ft-page">
+  <header class="encabezado">
+    <div>
+      <p class="ft-eyebrow">Administración</p>
+      <h1>Reseñas</h1>
+      <p class="ft-muted">
+        Revisa las reseñas reportadas por los técnicos y decide si vuelven a mostrarse o quedan
+        ocultas. Solo las reseñas reportadas se pueden moderar.
+      </p>
+    </div>
+  </header>
+
+  <section class="panel-filtros ft-card" aria-labelledby="titulo-filtros-resenas">
+    <div class="panel-filtros__cabecera">
+      <div>
+        <h2 id="titulo-filtros-resenas">Filtros</h2>
+        <p class="ft-muted">Acota el listado por estado de la reseña.</p>
+      </div>
+      @if (hayFiltros()) {
+        <button mat-button type="button" (click)="limpiarFiltros()">
+          <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
+          Limpiar filtros
+        </button>
+      }
+    </div>
+
+    <form
+      class="panel-filtros__formulario"
+      [formGroup]="formularioFiltros"
+      (ngSubmit)="aplicarFiltros()"
+    >
+      <mat-form-field appearance="outline">
+        <mat-label>Estado de la reseña</mat-label>
+        <mat-select formControlName="estado">
+          <mat-option value="TODOS">Todos los estados</mat-option>
+          @for (estado of estados; track estado) {
+            <mat-option [value]="estado">{{ etiquetasEstado[estado] }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <button mat-flat-button type="submit">
+        <mat-icon aria-hidden="true">filter_alt</mat-icon>
+        Filtrar
+      </button>
+    </form>
+  </section>
+
+  @if (error(); as fallo) {
+    <section class="estado-panel ft-card" role="alert" aria-labelledby="titulo-error-resenas">
+      <mat-icon aria-hidden="true">cloud_off</mat-icon>
+      <h2 id="titulo-error-resenas">No pudimos cargar las reseñas</h2>
+      <p class="ft-muted">{{ fallo.mensaje }}</p>
+      @if (fallo.detalles.length > 0) {
+        <ul class="estado-panel__detalles">
+          @for (detalle of fallo.detalles; track detalle) {
+            <li>{{ detalle }}</li>
+          }
+        </ul>
+      }
+      <button mat-flat-button type="button" (click)="recargar()">
+        <mat-icon aria-hidden="true">refresh</mat-icon>
+        Reintentar
+      </button>
+    </section>
+  } @else {
+    @if (resenasResource.value(); as resenas) {
+      <section aria-labelledby="titulo-listado-resenas">
+        <div class="listado__cabecera">
+          <div>
+            <h2 id="titulo-listado-resenas">Reseñas registradas</h2>
+            <p class="ft-muted" role="status">
+              {{ resenas.length }}
+              {{ resenas.length === 1 ? 'reseña' : 'reseñas' }}
+              @if (hayFiltros()) {
+                con los filtros aplicados
+              }
+            </p>
+          </div>
+          @if (resenasResource.isLoading()) {
+            <span class="listado__actualizando" role="status">Actualizando…</span>
+          }
+        </div>
+
+        @if (resenas.length === 0) {
+          <div class="estado-panel ft-card">
+            <mat-icon aria-hidden="true">reviews</mat-icon>
+            <h3>{{ hayFiltros() ? 'No encontramos reseñas' : 'Aún no hay reseñas' }}</h3>
+            <p class="ft-muted">
+              {{
+                hayFiltros()
+                  ? 'Prueba con otro estado para revisar las reseñas.'
+                  : 'Las reseñas de los clientes aparecerán aquí.'
+              }}
+            </p>
+            @if (hayFiltros()) {
+              <button mat-stroked-button type="button" (click)="limpiarFiltros()">
+                <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
+                Limpiar filtros
+              </button>
+            }
+          </div>
+        } @else {
+          <ul class="listado">
+            @for (resena of resenas; track resena.id) {
+              <li>
+                <article class="resena ft-card" [attr.aria-labelledby]="'resena-' + resena.id">
+                  <header class="resena__cabecera">
+                    <div>
+                      <h2 [id]="'resena-' + resena.id">{{ resena.clienteNombre }}</h2>
+                      <p class="ft-muted">
+                        Servicio #{{ resena.servicioId }} · Técnico {{ resena.tecnicoNombre }}
+                      </p>
+                      <p class="ft-muted">
+                        Publicada el {{ resena.creadoEn | date: 'dd MMM yyyy, HH:mm' }}
+                      </p>
+                    </div>
+                    <app-estado-badge
+                      [texto]="etiquetasEstado[resena.estado]"
+                      [tono]="tonosEstado[resena.estado]"
+                    />
+                  </header>
+
+                  <div class="resena__puntaje">
+                    <span
+                      class="resena__estrellas"
+                      role="img"
+                      [attr.aria-label]="ariaEstrellas(resena)"
+                    >
+                      @for (valor of [1, 2, 3, 4, 5]; track valor) {
+                        <mat-icon aria-hidden="true">
+                          {{ resena.estrellas >= valor ? 'star' : 'star_border' }}
+                        </mat-icon>
+                      }
+                    </span>
+                    <strong>{{ resena.estrellas }} de 5</strong>
+                  </div>
+
+                  @if (resena.comentario) {
+                    <p class="resena__comentario">{{ resena.comentario }}</p>
+                  } @else {
+                    <p class="ft-muted resena__comentario">Sin comentario.</p>
+                  }
+
+                  @if (criterios(resena).length > 0) {
+                    <ul class="resena__criterios" aria-label="Criterios evaluados">
+                      @for (criterio of criterios(resena); track criterio) {
+                        <li>{{ criterio }}</li>
+                      }
+                    </ul>
+                  }
+
+                  @if (resena.respuestaTecnico) {
+                    <p class="resena__respuesta">
+                      <strong>Respuesta del técnico:</strong> {{ resena.respuestaTecnico }}
+                    </p>
+                  }
+
+                  @if (resena.motivoReporte) {
+                    <div class="ft-alert ft-alert--warning" role="note">
+                      <mat-icon aria-hidden="true">flag</mat-icon>
+                      <div>
+                        <strong>Motivo del reporte</strong>
+                        <p>{{ resena.motivoReporte }}</p>
+                      </div>
+                    </div>
+                  }
+
+                  @if (resena.estado === 'REPORTADA') {
+                    <div class="resena__acciones">
+                      <button
+                        mat-flat-button
+                        type="button"
+                        [disabled]="moderando() === resena.id"
+                        (click)="moderar(resena, 'VISIBLE')"
+                      >
+                        <mat-icon aria-hidden="true">visibility</mat-icon>
+                        Habilitar reseña
+                      </button>
+                      <button
+                        mat-stroked-button
+                        type="button"
+                        class="resena__ocultar"
+                        [disabled]="moderando() === resena.id"
+                        (click)="moderar(resena, 'OCULTA')"
+                      >
+                        <mat-icon aria-hidden="true">visibility_off</mat-icon>
+                        Ocultar reseña
+                      </button>
+                    </div>
+                  }
+                </article>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    }
+  }
+</div>

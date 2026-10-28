@@ -21,6 +21,8 @@ describe('ServicioDetallePage', () => {
     listarMensajes: vi.fn(),
     urlFotoAvance: vi.fn(),
     urlEvidenciaAjuste: vi.fn(),
+    obtenerResena: vi.fn(),
+    listarReclamos: vi.fn(),
   };
   const dialogo = { open: vi.fn() };
   const notificaciones = { exito: vi.fn(), error: vi.fn() };
@@ -40,6 +42,10 @@ describe('ServicioDetallePage', () => {
     serviciosService.listarMensajes.mockReturnValue(of([]));
     serviciosService.urlFotoAvance.mockReset();
     serviciosService.urlEvidenciaAjuste.mockReset();
+    serviciosService.obtenerResena.mockReset();
+    serviciosService.obtenerResena.mockReturnValue(of(null));
+    serviciosService.listarReclamos.mockReset();
+    serviciosService.listarReclamos.mockReturnValue(of([]));
     dialogo.open.mockReset();
     dialogo.open.mockReturnValue({ afterClosed: () => of(undefined) });
     notificaciones.exito.mockReset();
@@ -77,7 +83,8 @@ describe('ServicioDetallePage', () => {
     expect(texto).toContain('912345678');
     expect(texto).toContain('Historial de estados');
     expect(texto).toContain('Servicio creado');
-    expect(texto).toContain('Aún no hay constancias registradas');
+    expect(texto).toContain('Reseña del servicio');
+    expect(texto).toContain('La reseña se habilita cuando el servicio esté confirmado.');
   });
 
   it('inicia el traslado del técnico sin PIN', async () => {

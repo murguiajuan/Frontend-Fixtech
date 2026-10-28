@@ -1,0 +1,245 @@
+<section class="resena ft-card" aria-labelledby="titulo-resena">
+  <header class="resena__cabecera">
+    <div>
+      <h2 id="titulo-resena">Reseña del servicio</h2>
+      <p class="ft-muted">
+        @if (esCliente()) {
+          Califica la atención del técnico cuando el servicio esté confirmado.
+        } @else {
+          Consulta la opinión del cliente y responde una sola vez.
+        }
+      </p>
+    </div>
+  </header>
+
+  @if (cargando()) {
+    <div class="resena__cargando" role="status">
+      <mat-spinner diameter="28" aria-label="Cargando la reseña" />
+      <span class="ft-muted">Cargando la reseña…</span>
+    </div>
+  } @else if (error(); as fallo) {
+    <div class="ft-alert ft-alert--error" role="alert">
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <div class="resena__error">
+        <p>{{ fallo.mensaje }}</p>
+        <button mat-stroked-button type="button" (click)="cargar()">
+          <mat-icon aria-hidden="true">refresh</mat-icon>
+          Reintentar
+        </button>
+      </div>
+    </div>
+  } @else if (resena(); as actual) {
+    <article class="resena__detalle" [attr.aria-labelledby]="'resena-' + actual.id">
+      <header class="resena__detalle-cabecera">
+        <div>
+          <h3 [id]="'resena-' + actual.id">{{ actual.clienteNombre }}</h3>
+          <p class="ft-muted">Publicada el {{ actual.creadoEn | date: 'dd MMM yyyy, HH:mm' }}</p>
+        </div>
+        <app-estado-badge
+          [texto]="etiquetasEstado[actual.estado]"
+          [tono]="tonosEstado[actual.estado]"
+        />
+      </header>
+
+      <div class="resena__puntaje">
+        <span class="resena__estrellas" role="img" [attr.aria-label]="ariaEstrellas(actual)">
+          @for (valor of valores; track valor) {
+            <mat-icon aria-hidden="true">{{
+              actual.estrellas >= valor ? 'star' : 'star_border'
+            }}</mat-icon>
+          }
+        </span>
+        <strong>{{ actual.estrellas }} de 5</strong>
+      </div>
+
+      @if (criterios(actual).length > 0) {
+        <dl class="resena__criterios">
+          @for (criterio of criterios(actual); track criterio.etiqueta) {
+            <div>
+              <dt>{{ criterio.etiqueta }}</dt>
+              <dd>{{ criterio.valor }} / 5</dd>
+            </div>
+          }
+        </dl>
+      }
+
+      @if (actual.comentario) {
+        <p class="resena__comentario">{{ actual.comentario }}</p>
+      } @else {
+        <p class="ft-muted resena__comentario">El cliente no dejó un comentario.</p>
+      }
+
+      @if (actual.respuestaTecnico) {
+        <div class="resena__respuesta" role="note">
+          <h4>
+            <mat-icon aria-hidden="true">reply</mat-icon>
+            Respuesta del técnico
+          </h4>
+          <p>{{ actual.respuestaTecnico }}</p>
+          @if (actual.fechaRespuesta) {
+            <p class="ft-muted resena__fecha-respuesta">
+              {{ actual.fechaRespuesta | date: 'dd MMM yyyy, HH:mm' }}
+            </p>
+          }
+        </div>
+      }
+
+      @if (actual.estado === 'REPORTADA') {
+        <div class="ft-alert ft-alert--warning" role="note">
+          <mat-icon aria-hidden="true">flag</mat-icon>
+          <div>
+            <strong>Reseña reportada.</strong>
+            <p>Administración revisará el reporte antes de decidir si vuelve a mostrarse.</p>
+            @if (actual.motivoReporte) {
+              <p>Motivo: {{ actual.motivoReporte }}</p>
+            }
+          </div>
+        </div>
+      } @else if (actual.estado === 'OCULTA') {
+        <p class="ft-muted resena__nota">Esta reseña fue ocultada por administración.</p>
+      }
+
+      @if (puedeResponder() || puedeReportar()) {
+        <div class="resena__acciones">
+          @if (puedeResponder()) {
+            <button mat-flat-button type="button" [disabled]="respondiendo()" (click)="responder()">
+              <mat-icon aria-hidden="true">reply</mat-icon>
+              {{ respondiendo() ? 'Publicando…' : 'Responder reseña' }}
+            </button>
+          }
+          @if (puedeReportar()) {
+            <button
+              mat-stroked-button
+              type="button"
+              class="resena__reportar"
+              [disabled]="reportando()"
+              (click)="reportar()"
+            >
+              <mat-icon aria-hidden="true">flag</mat-icon>
+              {{ reportando() ? 'Reportando…' : 'Reportar reseña' }}
+            </button>
+          }
+        </div>
+      }
+    </article>
+  } @else if (puedeCrear()) {
+    <form
+      class="resena__formulario"
+      [formGroup]="formulario"
+      (ngSubmit)="enviarResena()"
+      novalidate
+    >
+      <fieldset class="resena__puntaje-campo">
+        <legend>Calificación general</legend>
+        <div class="resena__selector" role="group" aria-label="Calificación general">
+          @for (valor of valores; track valor) {
+            <button
+              type="button"
+              class="resena__estrella"
+              [class.resena__estrella--activa]="esEstrellaActiva(valor)"
+              [attr.aria-label]="valor + ' de 5 estrellas'"
+              [attr.aria-pressed]="estrellas() === valor"
+              (click)="seleccionarEstrellas(valor)"
+            >
+              <mat-icon aria-hidden="true">
+                {{ esEstrellaActiva(valor) ? 'star' : 'star_border' }}
+              </mat-icon>
+            </button>
+          }
+        </div>
+        @if (
+          (formulario.controls.estrellas.touched || intentoEnvio()) &&
+          formulario.controls.estrellas.invalid
+        ) {
+          <p class="resena__error-campo" role="alert">
+            Selecciona una calificación de 1 a 5 estrellas.
+          </p>
+        }
+      </fieldset>
+
+      <div class="resena__criterios-formulario">
+        <mat-form-field appearance="outline">
+          <mat-label>Puntualidad (opcional)</mat-label>
+          <mat-select formControlName="puntualidad">
+            <mat-option [value]="null">Sin evaluar</mat-option>
+            @for (valor of valores; track valor) {
+              <mat-option [value]="valor">{{ valor }} de 5</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Trato (opcional)</mat-label>
+          <mat-select formControlName="trato">
+            <mat-option [value]="null">Sin evaluar</mat-option>
+            @for (valor of valores; track valor) {
+              <mat-option [value]="valor">{{ valor }} de 5</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Calidad (opcional)</mat-label>
+          <mat-select formControlName="calidad">
+            <mat-option [value]="null">Sin evaluar</mat-option>
+            @for (valor of valores; track valor) {
+              <mat-option [value]="valor">{{ valor }} de 5</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Precio justo (opcional)</mat-label>
+          <mat-select formControlName="precioJusto">
+            <mat-option [value]="null">Sin evaluar</mat-option>
+            @for (valor of valores; track valor) {
+              <mat-option [value]="valor">{{ valor }} de 5</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Comentario (opcional)</mat-label>
+        <textarea
+          matInput
+          formControlName="comentario"
+          rows="4"
+          maxlength="1000"
+          placeholder="Cuenta cómo fue tu experiencia con el técnico."
+        ></textarea>
+        <mat-hint>Máximo 1000 caracteres. Tu comentario será público.</mat-hint>
+        @if (formulario.controls.comentario.hasError('maxlength')) {
+          <mat-error>El comentario no puede superar los 1000 caracteres.</mat-error>
+        }
+      </mat-form-field>
+
+      <p class="resena__nota">
+        La reseña se puede registrar dentro del plazo configurado por FIXTECH. Solo se permite una
+        reseña por servicio.
+      </p>
+
+      <button mat-flat-button type="submit" class="resena__enviar" [disabled]="enviando()">
+        <mat-icon aria-hidden="true">star</mat-icon>
+        {{ enviando() ? 'Publicando…' : 'Publicar reseña' }}
+      </button>
+    </form>
+  } @else if (mostrarVacio()) {
+    <div class="resena__vacio">
+      <mat-icon aria-hidden="true">reviews</mat-icon>
+      @if (esCliente()) {
+        @if (servicio().estado === 'FINALIZADO') {
+          <p>Confirma la conformidad del servicio para habilitar la reseña.</p>
+        } @else {
+          <p>La reseña se habilita cuando el servicio esté confirmado.</p>
+        }
+      } @else {
+        @if (servicio().estado === 'CONFIRMADO' || servicio().estado === 'CALIFICADO') {
+          <p>El cliente aún no registró una reseña para este servicio.</p>
+        } @else {
+          <p>La reseña aparecerá cuando el cliente confirme la conformidad del servicio.</p>
+        }
+      }
+    </div>
+  }
+</section>

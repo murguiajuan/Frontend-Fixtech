@@ -1,0 +1,256 @@
+<div class="admin-reclamos ft-page">
+  <header class="encabezado">
+    <div>
+      <p class="ft-eyebrow">Administración</p>
+      <h1>Reclamos</h1>
+      <p class="ft-muted">
+        Revisa los reclamos de los clientes, consulta las fotos y la respuesta del técnico, y
+        registra la resolución con su seguimiento.
+      </p>
+    </div>
+  </header>
+
+  <section class="panel-filtros ft-card" aria-labelledby="titulo-filtros-reclamos">
+    <div class="panel-filtros__cabecera">
+      <div>
+        <h2 id="titulo-filtros-reclamos">Filtros</h2>
+        <p class="ft-muted">Acota el listado por estado del reclamo.</p>
+      </div>
+      @if (hayFiltros()) {
+        <button mat-button type="button" (click)="limpiarFiltros()">
+          <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
+          Limpiar filtros
+        </button>
+      }
+    </div>
+
+    <form
+      class="panel-filtros__formulario"
+      [formGroup]="formularioFiltros"
+      (ngSubmit)="aplicarFiltros()"
+    >
+      <mat-form-field appearance="outline">
+        <mat-label>Estado del reclamo</mat-label>
+        <mat-select formControlName="estado">
+          <mat-option value="TODOS">Todos los estados</mat-option>
+          @for (estado of estados; track estado) {
+            <mat-option [value]="estado">{{ etiquetasEstado[estado] }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <button mat-flat-button type="submit">
+        <mat-icon aria-hidden="true">filter_alt</mat-icon>
+        Filtrar
+      </button>
+    </form>
+  </section>
+
+  @if (error(); as fallo) {
+    <section class="estado-panel ft-card" role="alert" aria-labelledby="titulo-error-reclamos">
+      <mat-icon aria-hidden="true">cloud_off</mat-icon>
+      <h2 id="titulo-error-reclamos">No pudimos cargar los reclamos</h2>
+      <p class="ft-muted">{{ fallo.mensaje }}</p>
+      @if (fallo.detalles.length > 0) {
+        <ul class="estado-panel__detalles">
+          @for (detalle of fallo.detalles; track detalle) {
+            <li>{{ detalle }}</li>
+          }
+        </ul>
+      }
+      <button mat-flat-button type="button" (click)="recargar()">
+        <mat-icon aria-hidden="true">refresh</mat-icon>
+        Reintentar
+      </button>
+    </section>
+  } @else {
+    @if (reclamosResource.value(); as reclamos) {
+      <section aria-labelledby="titulo-listado-reclamos">
+        <div class="listado__cabecera">
+          <div>
+            <h2 id="titulo-listado-reclamos">Reclamos registrados</h2>
+            <p class="ft-muted" role="status">
+              {{ reclamos.length }}
+              {{ reclamos.length === 1 ? 'reclamo' : 'reclamos' }}
+              @if (hayFiltros()) {
+                con los filtros aplicados
+              }
+            </p>
+          </div>
+          @if (reclamosResource.isLoading()) {
+            <span class="listado__actualizando" role="status">Actualizando…</span>
+          }
+        </div>
+
+        @if (reclamos.length === 0) {
+          <div class="estado-panel ft-card">
+            <mat-icon aria-hidden="true">support_agent</mat-icon>
+            <h3>{{ hayFiltros() ? 'No encontramos reclamos' : 'Aún no hay reclamos' }}</h3>
+            <p class="ft-muted">
+              {{
+                hayFiltros()
+                  ? 'Prueba con otro estado para revisar los reclamos.'
+                  : 'Los reclamos de los clientes aparecerán aquí.'
+              }}
+            </p>
+            @if (hayFiltros()) {
+              <button mat-stroked-button type="button" (click)="limpiarFiltros()">
+                <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
+                Limpiar filtros
+              </button>
+            }
+          </div>
+        } @else {
+          <ul class="listado">
+            @for (reclamo of reclamos; track reclamo.id) {
+              <li>
+                <article class="reclamo ft-card" [attr.aria-labelledby]="'reclamo-' + reclamo.id">
+                  <header class="reclamo__cabecera">
+                    <div>
+                      <h2 [id]="'reclamo-' + reclamo.id">Reclamo #{{ reclamo.id }}</h2>
+                      <p class="ft-muted">
+                        Servicio #{{ reclamo.servicioId }} · {{ reclamo.clienteNombre }}
+                      </p>
+                      <p class="ft-muted">
+                        Registrado el {{ reclamo.creadoEn | date: 'dd MMM yyyy, HH:mm' }}
+                      </p>
+                    </div>
+                    <app-estado-badge
+                      [texto]="etiquetasEstado[reclamo.estado]"
+                      [tono]="tonosEstado[reclamo.estado]"
+                    />
+                  </header>
+
+                  <p class="reclamo__resumen">{{ reclamo.descripcion }}</p>
+
+                  <div class="reclamo__acciones">
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      [attr.aria-expanded]="esExpandido(reclamo.id)"
+                      (click)="alternarDetalle(reclamo)"
+                    >
+                      <mat-icon aria-hidden="true">
+                        {{ esExpandido(reclamo.id) ? 'expand_less' : 'visibility' }}
+                      </mat-icon>
+                      {{ esExpandido(reclamo.id) ? 'Ocultar detalle' : 'Ver detalle' }}
+                    </button>
+                  </div>
+
+                  @if (esExpandido(reclamo.id)) {
+                    <section
+                      class="detalle"
+                      [attr.aria-labelledby]="'detalle-reclamo-' + reclamo.id"
+                    >
+                      <h3 [id]="'detalle-reclamo-' + reclamo.id">Detalle del reclamo</h3>
+
+                      @if (cargandoDetalle()) {
+                        <div class="detalle__cargando" role="status">
+                          <mat-spinner diameter="24" aria-label="Cargando el detalle" />
+                          <span class="ft-muted">Cargando el detalle…</span>
+                        </div>
+                      } @else if (errorDetalle(); as mensaje) {
+                        <div class="ft-alert ft-alert--error" role="alert">
+                          <mat-icon aria-hidden="true">error_outline</mat-icon>
+                          <div class="detalle__error">
+                            <p>{{ mensaje }}</p>
+                            <button mat-stroked-button type="button" (click)="recargar()">
+                              <mat-icon aria-hidden="true">refresh</mat-icon>
+                              Reintentar
+                            </button>
+                          </div>
+                        </div>
+                      } @else if (detalle(); as d) {
+                        <p class="detalle__descripcion">{{ d.descripcion }}</p>
+
+                        @if (d.fotoIds.length > 0) {
+                          <ul
+                            class="detalle__fotos"
+                            [attr.aria-label]="'Fotos del reclamo ' + d.id"
+                          >
+                            @for (fotoId of d.fotoIds; track fotoId) {
+                              <li>
+                                <app-imagen-autenticada
+                                  [src]="urlFoto(d, fotoId)"
+                                  [alt]="'Foto del reclamo ' + d.id"
+                                />
+                              </li>
+                            }
+                          </ul>
+                        } @else {
+                          <p class="ft-muted">El reclamo no tiene fotos adjuntas.</p>
+                        }
+
+                        <dl class="detalle__datos">
+                          <div>
+                            <dt>Cliente</dt>
+                            <dd>{{ d.clienteNombre }}</dd>
+                          </div>
+                          <div>
+                            <dt>Estado</dt>
+                            <dd>{{ etiquetasEstado[d.estado] }}</dd>
+                          </div>
+                          @if (d.fechaResolucion) {
+                            <div>
+                              <dt>Fecha de resolución</dt>
+                              <dd>{{ d.fechaResolucion | date: 'dd MMM yyyy, HH:mm' }}</dd>
+                            </div>
+                          }
+                        </dl>
+
+                        @if (d.respuestaTecnico) {
+                          <div class="detalle__bloque" role="note">
+                            <h4>
+                              <mat-icon aria-hidden="true">reply</mat-icon>
+                              Respuesta del técnico
+                            </h4>
+                            <p>{{ d.respuestaTecnico }}</p>
+                          </div>
+                        } @else {
+                          <p class="ft-muted">
+                            El técnico aún no registró una respuesta al reclamo.
+                          </p>
+                        }
+
+                        @if (d.resolucion) {
+                          <div class="detalle__bloque detalle__bloque--resolucion" role="note">
+                            <h4>
+                              <mat-icon aria-hidden="true">task_alt</mat-icon>
+                              Resolución
+                            </h4>
+                            <p>{{ d.resolucion }}</p>
+                          </div>
+                        }
+
+                        @if (transiciones(d.estado).length > 0) {
+                          <div class="detalle__acciones">
+                            @for (accion of transiciones(d.estado); track accion.estado) {
+                              <button
+                                mat-flat-button
+                                type="button"
+                                [class.detalle__cerrar]="accion.estado === 'CERRADO'"
+                                [disabled]="cambiando() === d.id"
+                                (click)="accionar(d, accion)"
+                              >
+                                <mat-icon aria-hidden="true">{{ accion.icono }}</mat-icon>
+                                {{ accion.etiqueta }}
+                              </button>
+                            }
+                          </div>
+                        } @else {
+                          <p class="ft-muted">
+                            El reclamo está cerrado y no admite más cambios de estado.
+                          </p>
+                        }
+                      }
+                    </section>
+                  }
+                </article>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    }
+  }
+</div>

@@ -25,6 +25,10 @@ export type EstadoAjuste = 'PENDIENTE' | 'APROBADO' | 'RECHAZADO';
 
 export type TipoConstancia = 'RECEPCION' | 'ENTREGA';
 
+export type EstadoResena = 'VISIBLE' | 'OCULTA' | 'REPORTADA';
+
+export type EstadoReclamo = 'ABIERTO' | 'EN_REVISION' | 'RESUELTO' | 'CERRADO';
+
 export interface ServicioListado {
   readonly id: number;
   readonly solicitudId: number;
@@ -92,6 +96,60 @@ export interface Constancia {
   readonly fechaConfirmacion: string | null;
   readonly creadoEn: string;
   readonly fotoIds: readonly number[];
+}
+
+export interface ConstanciaRequest {
+  readonly tipo: TipoConstancia;
+  readonly observaciones: string | null;
+  readonly accesorios: string | null;
+}
+
+export interface Resena {
+  readonly id: number;
+  readonly servicioId: number;
+  readonly tecnicoId: number;
+  readonly tecnicoNombre: string;
+  readonly clienteNombre: string;
+  readonly estrellas: number;
+  readonly puntualidad: number | null;
+  readonly trato: number | null;
+  readonly calidad: number | null;
+  readonly precioJusto: number | null;
+  readonly comentario: string | null;
+  readonly respuestaTecnico: string | null;
+  readonly fechaRespuesta: string | null;
+  readonly estado: EstadoResena;
+  readonly motivoReporte: string | null;
+  readonly creadoEn: string;
+}
+
+export interface ResenaRequest {
+  readonly estrellas: number;
+  readonly puntualidad: number | null;
+  readonly trato: number | null;
+  readonly calidad: number | null;
+  readonly precioJusto: number | null;
+  readonly comentario: string | null;
+}
+
+export interface Reclamo {
+  readonly id: number;
+  readonly servicioId: number;
+  readonly clienteId: number;
+  readonly clienteNombre: string;
+  readonly descripcion: string;
+  readonly estado: EstadoReclamo;
+  readonly respuestaTecnico: string | null;
+  readonly resolucion: string | null;
+  readonly resueltoPorId: number | null;
+  readonly creadoEn: string;
+  readonly fechaResolucion: string | null;
+  readonly fotoIds: readonly number[];
+}
+
+export interface CambioEstadoReclamoRequest {
+  readonly estado: EstadoReclamo;
+  readonly resolucion: string | null;
 }
 
 export interface Avance {
