@@ -5,7 +5,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { urlRetornoSegura } from '../../../core/auth/return-url';
@@ -24,7 +23,6 @@ import { NotificacionService } from '../../../shared/ui/notificacion.service';
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    MatProgressSpinnerModule,
     Icono,
   ],
   templateUrl: './login.page.html',
@@ -69,6 +67,10 @@ export class LoginPage {
   }
 
   protected enviar(): void {
+    if (this.enviando()) {
+      return;
+    }
+
     this.enviado.set(true);
     this.errorServidor.set(null);
     if (this.formulario.invalid) {
@@ -79,7 +81,13 @@ export class LoginPage {
     this.enviando.set(true);
     this.auth.iniciarSesion(this.formulario.getRawValue()).subscribe({
       next: () => {
-        void this.router.navigateByUrl(this.urlRetorno());
+        void this.router.navigateByUrl(this.urlRetorno()).then(
+          () => this.enviando.set(false),
+          () => {
+            this.errorServidor.set('No se pudo completar el inicio de sesión. Intente nuevamente.');
+            this.enviando.set(false);
+          },
+        );
       },
       error: (error: unknown) => {
         this.errorServidor.set(

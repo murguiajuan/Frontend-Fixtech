@@ -1,4 +1,4 @@
-<section class="acceso" aria-labelledby="titulo-login">
+<section class="acceso" aria-labelledby="titulo-login" [attr.inert]="enviando() ? '' : null">
   <div class="acceso__presentacion">
     <app-auth-presentacion contexto="login" />
   </div>
@@ -93,12 +93,7 @@
       </p>
 
       <button mat-flat-button class="acceso__submit" type="submit" [disabled]="enviando()">
-        @if (enviando()) {
-          <mat-spinner diameter="20" aria-hidden="true" />
-          <span>Ingresando…</span>
-        } @else {
-          <span>Ingresar</span>
-        }
+        <span>Ingresar</span>
       </button>
     </form>
 
@@ -116,3 +111,25 @@
     </p>
   </div>
 </section>
+
+@if (enviando()) {
+  <div class="acceso__carga-fondo">
+    <div
+      class="acceso__carga-modal"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      aria-label="Iniciando sesión. Estamos verificando tus datos."
+    >
+      <span class="acceso__carga-marca" aria-hidden="true">
+        <span class="acceso__carga-anillo"></span>
+        <span class="acceso__carga-circulo">
+          <mat-icon class="acceso__carga-engranaje">settings</mat-icon>
+          <mat-icon class="acceso__carga-herramienta">build</mat-icon>
+        </span>
+      </span>
+      <strong>Iniciando sesión…</strong>
+      <span>Estamos verificando tus datos</span>
+    </div>
+  </div>
+}

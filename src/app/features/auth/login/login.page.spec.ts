@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { PerfilUsuario } from '../../../core/auth/auth.models';
 import { SesionExpiradaService } from '../../../core/auth/sesion-expirada.service';
@@ -88,6 +88,34 @@ describe('LoginPage', () => {
       password: 'Password123',
     });
     expect(navegar).toHaveBeenCalledWith('/app/inicio');
+  });
+
+  it('muestra el modal mientras espera la respuesta real y bloquea envíos repetidos', () => {
+    const respuesta = new Subject<PerfilUsuario>();
+    authStub.iniciarSesion.mockReturnValue(respuesta);
+    const fixture = TestBed.createComponent(LoginPage);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    escribir(compiled, 'input[type="email"]', 'cliente@fixtech.pe');
+    escribir(compiled, 'input[formcontrolname="password"]', 'Password123');
+    fixture.detectChanges();
+
+    compiled.querySelector('form')?.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+
+    expect(compiled.textContent).toContain('Iniciando sesión…');
+    expect(compiled.textContent).toContain('Estamos verificando tus datos');
+    expect(compiled.querySelector('.acceso')?.hasAttribute('inert')).toBe(true);
+
+    compiled.querySelector('form')?.dispatchEvent(new Event('submit'));
+    expect(authStub.iniciarSesion).toHaveBeenCalledTimes(1);
+
+    respuesta.error(new Error('Sin conexión'));
+    fixture.detectChanges();
+    expect(compiled.querySelector('.acceso__carga-fondo')).toBeNull();
+    expect(compiled.querySelector('[role="alert"]')?.textContent).toContain(
+      'No se pudo iniciar sesión.',
+    );
   });
 
   it('respeta un returnUrl interno al iniciar sesión', async () => {
