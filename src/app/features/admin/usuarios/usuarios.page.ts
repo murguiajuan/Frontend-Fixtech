@@ -85,6 +85,12 @@ export class AdminUsuariosPage {
     return fallo === undefined ? null : normalizarError(fallo);
   });
 
+  protected readonly suspendidos = computed(() =>
+    this.usuariosResource.hasValue()
+      ? this.usuariosResource.value().filter((usuario) => usuario.estado === 'SUSPENDIDO').length
+      : 0,
+  );
+
   protected readonly hayFiltros = computed(() => {
     const filtros = this.filtrosAplicados();
     return filtros.rol !== 'TODOS' || filtros.estado !== 'TODOS' || filtros.busqueda !== '';

@@ -34,17 +34,14 @@
     @if (suspendiendo) {
       <div class="ft-alert ft-alert--warning" role="status">
         <mat-icon aria-hidden="true">warning</mat-icon>
-        <p>
-          La cuenta quedará suspendida y no podrá iniciar sesión hasta que un administrador la
-          reactive.
-        </p>
+        <p>La cuenta quedará suspendida y no podrá iniciar sesión hasta su reactivación.</p>
       </div>
 
       @if (usuario.motivoSuspension; as motivoActual) {
         <p class="motivo-actual"><strong>Motivo registrado:</strong> {{ motivoActual }}</p>
       }
 
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" [class.dialogo__campo--error]="mostrarErrorMotivo()">
         <mat-label>Motivo de la suspensión</mat-label>
         <textarea
           matInput

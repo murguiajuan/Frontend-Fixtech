@@ -1,5 +1,11 @@
 import { Component, inject, signal } from '@angular/core';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -24,6 +30,11 @@ import { AdminCatalogosService } from '../services/admin-catalogos.service';
 export interface CatalogoFormDialogData {
   readonly tipo: TipoCatalogoAdmin;
   readonly item: CatalogoAdmin | null;
+}
+
+function textoConContenido(control: AbstractControl): ValidationErrors | null {
+  const valor = typeof control.value === 'string' ? control.value : '';
+  return valor.trim() === '' ? { sinContenido: true } : null;
 }
 
 @Component({
@@ -60,14 +71,20 @@ export class CatalogoFormDialog {
   protected readonly maxTope = TOPE_MOVILIDAD_MAXIMO;
 
   protected readonly formulario = this.fb.group({
-    nombre: this.fb.control('', [Validators.required, Validators.maxLength(this.opcion.maxNombre)]),
+    nombre: this.fb.control('', [
+      Validators.required,
+      textoConContenido,
+      Validators.maxLength(this.opcion.maxNombre),
+    ]),
     descripcion: this.fb.control(
       '',
       this.esEspecialidad ? [Validators.maxLength(MAX_DESCRIPCION_ESPECIALIDAD)] : [],
     ),
     provincia: this.fb.control(
       '',
-      this.esDistrito ? [Validators.required, Validators.maxLength(MAX_PROVINCIA_DISTRITO)] : [],
+      this.esDistrito
+        ? [Validators.required, textoConContenido, Validators.maxLength(MAX_PROVINCIA_DISTRITO)]
+        : [],
     ),
     topeMovilidad: this.fb.control<number | null>(
       null,
@@ -135,13 +152,17 @@ export class CatalogoFormDialog {
   private construirSolicitud(): CatalogoAdminRequest | null {
     const valores = this.formulario.getRawValue();
     const nombre = valores.nombre.trim();
+    if (nombre === '') {
+      return null;
+    }
     if (this.esDistrito) {
-      if (valores.topeMovilidad === null) {
+      const provincia = valores.provincia.trim();
+      if (provincia === '' || valores.topeMovilidad === null) {
         return null;
       }
       return {
         nombre,
-        provincia: valores.provincia.trim(),
+        provincia,
         topeMovilidad: valores.topeMovilidad,
       };
     }

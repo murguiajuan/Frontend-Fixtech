@@ -1,13 +1,18 @@
 <div class="admin-resenas ft-page">
   <header class="encabezado">
     <div>
-      <p class="ft-eyebrow">Administración</p>
       <h1>Reseñas</h1>
       <p class="ft-muted">
         Revisa las reseñas reportadas por los técnicos y decide si vuelven a mostrarse o quedan
         ocultas. Solo las reseñas reportadas se pueden moderar.
       </p>
     </div>
+    @if (reportadas() > 0) {
+      <span class="encabezado__reportadas" role="status">
+        <mat-icon aria-hidden="true">flag</mat-icon>
+        {{ reportadas() }} {{ reportadas() === 1 ? 'reportada' : 'reportadas' }} en este listado
+      </span>
+    }
   </header>
 
   <section class="panel-filtros ft-card" aria-labelledby="titulo-filtros-resenas">
@@ -64,7 +69,7 @@
       </button>
     </section>
   } @else {
-    @if (resenasResource.value(); as resenas) {
+    @if (resenasOrdenadas(); as resenas) {
       <section aria-labelledby="titulo-listado-resenas">
         <div class="listado__cabecera">
           <div>
@@ -104,7 +109,11 @@
           <ul class="listado">
             @for (resena of resenas; track resena.id) {
               <li>
-                <article class="resena ft-card" [attr.aria-labelledby]="'resena-' + resena.id">
+                <article
+                  class="resena ft-card"
+                  [class.resena--reportada]="resena.estado === 'REPORTADA'"
+                  [attr.aria-labelledby]="'resena-' + resena.id"
+                >
                   <header class="resena__cabecera">
                     <div>
                       <h2 [id]="'resena-' + resena.id">{{ resena.clienteNombre }}</h2>
@@ -190,6 +199,17 @@
                         Ocultar reseña
                       </button>
                     </div>
+                  } @else {
+                    <p class="resena__estado-final">
+                      <mat-icon aria-hidden="true">
+                        {{ resena.estado === 'VISIBLE' ? 'visibility' : 'visibility_off' }}
+                      </mat-icon>
+                      {{
+                        resena.estado === 'VISIBLE'
+                          ? 'Esta reseña se muestra en el perfil del técnico.'
+                          : 'Esta reseña no se muestra en el perfil del técnico.'
+                      }}
+                    </p>
                   }
                 </article>
               </li>
@@ -197,6 +217,11 @@
           </ul>
         }
       </section>
+    } @else {
+      <div class="estado-panel ft-card" role="status" aria-live="polite">
+        <mat-spinner diameter="40" aria-label="Cargando reseñas" />
+        <p class="ft-muted">Cargando reseñas…</p>
+      </div>
     }
   }
 </div>

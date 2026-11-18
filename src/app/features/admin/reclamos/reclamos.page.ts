@@ -75,6 +75,24 @@ export class AdminReclamosPage {
     return fallo === undefined ? null : normalizarError(fallo);
   });
 
+  protected readonly pendientes = computed(() =>
+    this.reclamosResource.hasValue()
+      ? this.reclamosResource
+          .value()
+          .filter((reclamo) => reclamo.estado === 'ABIERTO' || reclamo.estado === 'EN_REVISION')
+          .length
+      : 0,
+  );
+  protected readonly reclamosOrdenados = computed(() => {
+    if (!this.reclamosResource.hasValue()) {
+      return undefined;
+    }
+    const prioridad = { ABIERTO: 0, EN_REVISION: 1, RESUELTO: 2, CERRADO: 3 };
+    return [...this.reclamosResource.value()].sort(
+      (a, b) => prioridad[a.estado] - prioridad[b.estado],
+    );
+  });
+
   protected readonly hayFiltros = computed(() => this.filtrosAplicados().estado !== 'TODOS');
   protected readonly expandido = signal<number | null>(null);
   protected readonly detalle = signal<Reclamo | null>(null);
@@ -103,6 +121,10 @@ export class AdminReclamosPage {
     }
   }
 
+  protected reintentarDetalle(reclamoId: number): void {
+    this.cargarDetalle(reclamoId);
+  }
+
   protected alternarDetalle(reclamo: Reclamo): void {
     if (this.expandido() === reclamo.id) {
       this.expandido.set(null);
@@ -110,6 +132,7 @@ export class AdminReclamosPage {
       return;
     }
     this.expandido.set(reclamo.id);
+    this.detalle.set(null);
     this.cargarDetalle(reclamo.id);
   }
 
@@ -180,10 +203,16 @@ export class AdminReclamosPage {
     this.errorDetalle.set(null);
     this.adminReclamos.obtener(reclamoId).subscribe({
       next: (detalle) => {
+        if (this.expandido() !== reclamoId) {
+          return;
+        }
         this.detalle.set(detalle);
         this.cargandoDetalle.set(false);
       },
       error: (error: unknown) => {
+        if (this.expandido() !== reclamoId) {
+          return;
+        }
         this.errorDetalle.set(normalizarError(error).mensaje);
         this.cargandoDetalle.set(false);
       },

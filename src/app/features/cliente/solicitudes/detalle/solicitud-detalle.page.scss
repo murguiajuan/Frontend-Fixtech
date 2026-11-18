@@ -19,6 +19,46 @@
 .detalle__cabecera {
   display: grid;
   gap: 1rem;
+  position: relative;
+  overflow: hidden;
+  padding: 1.5rem;
+  border-radius: var(--ft-radius-lg);
+  background: linear-gradient(110deg, #062657, #0e4789);
+  color: #fff;
+}
+
+.detalle__cabecera::after {
+  content: '';
+  position: absolute;
+  width: 12rem;
+  height: 12rem;
+  border: 1px solid #ffffff40;
+  border-radius: 50%;
+  right: -3rem;
+  top: -6rem;
+  pointer-events: none;
+}
+.detalle__cabecera > * {
+  position: relative;
+  z-index: 1;
+}
+.detalle__cabecera .ft-eyebrow {
+  color: #a8d7ff;
+}
+.detalle__cabecera h1 {
+  color: #fff;
+  font-weight: 800;
+}
+.detalle__cabecera .detalle__volver {
+  color: #fff;
+}
+.detalle__cabecera .detalle__acciones > * {
+  --mat-button-outlined-label-text-color: #fff;
+  --mat-button-outlined-outline-color: #ffffffb3;
+}
+.detalle__panel {
+  border-color: #d7e4f2;
+  box-shadow: 0 7px 24px #0626570c;
 }
 
 .detalle__cabecera h1 {

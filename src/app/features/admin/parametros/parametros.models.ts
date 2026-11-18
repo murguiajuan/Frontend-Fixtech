@@ -15,8 +15,18 @@ export type ClaveParametro =
 
 export type TipoValorParametro = 'entero' | 'decimal';
 
+export type GrupoParametro = 'comisiones' | 'solicitudes' | 'calidad';
+
+export interface GrupoParametros {
+  readonly id: GrupoParametro;
+  readonly etiqueta: string;
+  readonly descripcion: string;
+  readonly icono: string;
+}
+
 export interface DefinicionParametro {
   readonly clave: ClaveParametro;
+  readonly grupo: GrupoParametro;
   readonly etiqueta: string;
   readonly ayuda: string;
   readonly tipo: TipoValorParametro;
@@ -43,9 +53,31 @@ export interface ParametrosUpdateRequest {
   readonly parametros: readonly ParametroActualizacionRequest[];
 }
 
+export const GRUPOS_PARAMETRO: readonly GrupoParametros[] = [
+  {
+    id: 'comisiones',
+    etiqueta: 'Comisiones y pagos',
+    descripcion: 'Reglas de cobro, deuda y plazos de pago a los técnicos.',
+    icono: 'payments',
+  },
+  {
+    id: 'solicitudes',
+    etiqueta: 'Solicitudes y servicios',
+    descripcion: 'Tiempos, límites y condiciones que afectan a cada solicitud.',
+    icono: 'assignment',
+  },
+  {
+    id: 'calidad',
+    etiqueta: 'Reseñas y calidad',
+    descripcion: 'Criterios para reseñar servicios y revisar el desempeño técnico.',
+    icono: 'reviews',
+  },
+];
+
 export const DEFINICIONES_PARAMETRO: readonly DefinicionParametro[] = [
   {
     clave: 'comision_porcentaje',
+    grupo: 'comisiones',
     etiqueta: 'Comisión de FIXTECH',
     ayuda: 'Fracción entre 0.0001 y 1.0000. Por ejemplo, 0.0600 equivale a 6 %.',
     tipo: 'decimal',
@@ -56,6 +88,7 @@ export const DEFINICIONES_PARAMETRO: readonly DefinicionParametro[] = [
   },
   {
     clave: 'limite_deuda_comision',
+    grupo: 'comisiones',
     etiqueta: 'Límite de deuda por comisiones',
     ayuda: 'Deuda máxima antes de bloquear al técnico. Se expresa en soles.',
     tipo: 'decimal',
@@ -66,6 +99,7 @@ export const DEFINICIONES_PARAMETRO: readonly DefinicionParametro[] = [
   },
   {
     clave: 'plazo_pago_comision_dias',
+    grupo: 'comisiones',
     etiqueta: 'Plazo de pago de comisiones',
     ayuda: 'Días para pagar la comisión desde el cierre del servicio.',
     tipo: 'entero',
@@ -76,6 +110,7 @@ export const DEFINICIONES_PARAMETRO: readonly DefinicionParametro[] = [
   },
   {
     clave: 'vencimiento_solicitud_horas',
+    grupo: 'solicitudes',
     etiqueta: 'Vencimiento de solicitudes',
     ayuda: 'Horas para vencer una solicitud sin una oferta aceptada.',
     tipo: 'entero',
@@ -86,6 +121,7 @@ export const DEFINICIONES_PARAMETRO: readonly DefinicionParametro[] = [
   },
   {
     clave: 'confirmacion_automatica_horas',
+    grupo: 'solicitudes',
     etiqueta: 'Confirmación automática',
     ayuda: 'Horas para confirmar automáticamente un servicio finalizado.',
     tipo: 'entero',
@@ -96,6 +132,7 @@ export const DEFINICIONES_PARAMETRO: readonly DefinicionParametro[] = [
   },
   {
     clave: 'max_rondas_contraoferta',
+    grupo: 'solicitudes',
     etiqueta: 'Rondas de contraoferta',
     ayuda: 'Rondas máximas de contraoferta permitidas por oferta.',
     tipo: 'entero',
@@ -106,6 +143,7 @@ export const DEFINICIONES_PARAMETRO: readonly DefinicionParametro[] = [
   },
   {
     clave: 'garantia_minima_dias',
+    grupo: 'solicitudes',
     etiqueta: 'Garantía mínima',
     ayuda: 'Garantía mínima sugerida para los servicios, en días.',
     tipo: 'entero',
@@ -116,6 +154,7 @@ export const DEFINICIONES_PARAMETRO: readonly DefinicionParametro[] = [
   },
   {
     clave: 'max_imagenes_solicitud',
+    grupo: 'solicitudes',
     etiqueta: 'Imágenes por solicitud',
     ayuda: 'Cantidad máxima de fotos que puede adjuntar una solicitud.',
     tipo: 'entero',
@@ -126,6 +165,7 @@ export const DEFINICIONES_PARAMETRO: readonly DefinicionParametro[] = [
   },
   {
     clave: 'dias_para_resenar',
+    grupo: 'calidad',
     etiqueta: 'Plazo para reseñar',
     ayuda: 'Días disponibles para dejar una reseña tras confirmar el servicio.',
     tipo: 'entero',
@@ -136,6 +176,7 @@ export const DEFINICIONES_PARAMETRO: readonly DefinicionParametro[] = [
   },
   {
     clave: 'max_cancelaciones_tecnico_30d',
+    grupo: 'calidad',
     etiqueta: 'Cancelaciones en 30 días',
     ayuda: 'Cancelaciones permitidas al técnico en 30 días antes de revisión.',
     tipo: 'entero',
@@ -146,6 +187,7 @@ export const DEFINICIONES_PARAMETRO: readonly DefinicionParametro[] = [
   },
   {
     clave: 'calificacion_minima_revision',
+    grupo: 'calidad',
     etiqueta: 'Calificación mínima para revisión',
     ayuda: 'Promedio por debajo del cual se revisa al técnico. Escala de 0 a 5.',
     tipo: 'decimal',
@@ -156,6 +198,7 @@ export const DEFINICIONES_PARAMETRO: readonly DefinicionParametro[] = [
   },
   {
     clave: 'min_resenas_revision',
+    grupo: 'calidad',
     etiqueta: 'Reseñas mínimas para revisión',
     ayuda: 'Reseñas necesarias para aplicar la revisión por promedio.',
     tipo: 'entero',
@@ -166,6 +209,7 @@ export const DEFINICIONES_PARAMETRO: readonly DefinicionParametro[] = [
   },
   {
     clave: 'tope_movilidad_defecto',
+    grupo: 'solicitudes',
     etiqueta: 'Tope de movilidad por defecto',
     ayuda: 'Tope de movilidad sugerido para nuevos distritos. Se expresa en soles.',
     tipo: 'decimal',

@@ -61,6 +61,24 @@ describe('VerificacionDialog', () => {
     expect(compilado.textContent).toContain('La aprobación no requiere motivo.');
   });
 
+  it('evita reenviar un estado de verificación ya aplicado', () => {
+    TestBed.overrideProvider(MAT_DIALOG_DATA, {
+      useValue: { tecnico: { ...TECNICO, estadoVerificacion: 'OBSERVADO' } },
+    });
+    const fixture = crear();
+    const compilado = fixture.nativeElement as HTMLElement;
+
+    expect(compilado.textContent).toContain('Este ya es el estado del técnico.');
+    expect(compilado.querySelector<HTMLInputElement>('input[type="radio"]:checked')?.value).toBe(
+      'OBSERVADO',
+    );
+    expect(compilado.querySelector<HTMLButtonElement>('button[type="submit"]')?.disabled).toBe(
+      true,
+    );
+    enviar(compilado);
+    expect(servicio.verificar).not.toHaveBeenCalled();
+  });
+
   it('exige marcar la confirmación antes de enviar', () => {
     const fixture = crear();
     const compilado = fixture.nativeElement as HTMLElement;

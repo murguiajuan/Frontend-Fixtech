@@ -4,6 +4,8 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterLink } from '@angular/router';
+import { ClienteInicio } from './cliente-inicio';
+import { AdminInicio } from './admin-inicio';
 import { AuthService } from '../../core/auth/auth.service';
 import {
   ETIQUETAS_ESTADO_VERIFICACION,
@@ -14,6 +16,8 @@ import {
 @Component({
   selector: 'app-dashboard-page',
   imports: [
+    ClienteInicio,
+    AdminInicio,
     CurrencyPipe,
     DecimalPipe,
     RouterLink,

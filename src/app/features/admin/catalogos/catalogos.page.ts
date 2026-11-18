@@ -34,6 +34,11 @@ interface CatalogoItemVista {
   readonly detalle: string | null;
 }
 
+interface ProcesandoCatalogo {
+  readonly tipo: TipoCatalogoAdmin;
+  readonly id: number;
+}
+
 const FORMATO_MONEDA = new Intl.NumberFormat('es-PE', {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
@@ -59,9 +64,13 @@ export class AdminCatalogosPage {
   protected readonly opciones = TIPOS_CATALOGO_ADMIN.map((tipo) => OPCIONES_CATALOGO_ADMIN[tipo]);
   protected readonly tipoSeleccionado = signal<TipoCatalogoAdmin>('tipos-equipo');
   protected readonly incluirInactivos = signal(true);
-  protected readonly procesandoId = signal<number | null>(null);
+  protected readonly procesando = signal<readonly ProcesandoCatalogo[]>([]);
 
   protected readonly opcion = computed(() => OPCIONES_CATALOGO_ADMIN[this.tipoSeleccionado()]);
+  protected readonly procesandoActual = computed(() => {
+    const tipo = this.tipoSeleccionado();
+    return this.procesando().find((proceso) => proceso.tipo === tipo)?.id ?? null;
+  });
 
   protected readonly catalogoResource = rxResource<readonly CatalogoAdmin[], ParametrosCatalogo>({
     params: () => ({
@@ -76,16 +85,39 @@ export class AdminCatalogosPage {
     return fallo === undefined ? null : normalizarError(fallo);
   });
 
+  protected readonly cargandoInicial = computed(
+    () => this.catalogoResource.isLoading() && !this.catalogoResource.hasValue(),
+  );
+
+  protected readonly actualizando = computed(
+    () => this.catalogoResource.isLoading() && this.catalogoResource.hasValue(),
+  );
+
   protected readonly itemsVista = computed<readonly CatalogoItemVista[]>(() => {
     const catalogo = this.catalogoResource.hasValue() ? this.catalogoResource.value() : [];
-    return catalogo.map((item) => ({ item, detalle: this.detalleItem(item) }));
+    return [...catalogo]
+      .sort((primero, segundo) => Number(segundo.activo) - Number(primero.activo))
+      .map((item) => ({ item, detalle: this.detalleItem(item) }));
+  });
+
+  protected readonly activos = computed(
+    () => this.itemsVista().filter((vista) => vista.item.activo).length,
+  );
+
+  protected readonly resumen = computed(() => {
+    const total = this.itemsVista().length;
+    const activos = this.activos();
+    const base = `${total} ${total === 1 ? 'registro' : 'registros'}`;
+    if (!this.incluirInactivos()) {
+      return `${base} ${total === 1 ? 'activo' : 'activos'}`;
+    }
+    return `${base} · ${activos} ${activos === 1 ? 'activo' : 'activos'}`;
   });
 
   protected cambiarTipo(tipo: TipoCatalogoAdmin): void {
     if (tipo === this.tipoSeleccionado()) {
       return;
     }
-    this.procesandoId.set(null);
     this.tipoSeleccionado.set(tipo);
   }
 
@@ -148,9 +180,10 @@ export class AdminCatalogosPage {
   }
 
   private abrirFormulario(item: CatalogoAdmin | null): void {
+    const tipo = this.tipoSeleccionado();
     this.dialog
       .open<CatalogoFormDialog, CatalogoFormDialogData, CatalogoAdmin>(CatalogoFormDialog, {
-        data: { tipo: this.tipoSeleccionado(), item },
+        data: { tipo, item },
         width: 'min(94vw, 34rem)',
         maxWidth: '94vw',
         autoFocus: 'first-tabbable',
@@ -161,31 +194,43 @@ export class AdminCatalogosPage {
         if (resultado === undefined) {
           return;
         }
+        const opcion = OPCIONES_CATALOGO_ADMIN[tipo];
         this.notificaciones.exito(
           item === null
-            ? `Se creó ${this.opcion().etiquetaSingular} «${resultado.nombre}».`
-            : `Se actualizó ${this.opcion().etiquetaSingular} «${resultado.nombre}».`,
+            ? `Se creó ${opcion.etiquetaSingular} «${resultado.nombre}».`
+            : `Se actualizó ${opcion.etiquetaSingular} «${resultado.nombre}».`,
         );
-        this.catalogoResource.reload();
+        if (this.tipoSeleccionado() === tipo) {
+          this.catalogoResource.reload();
+        }
       });
   }
 
   private ejecutarCambioEstado(item: CatalogoAdmin, activo: boolean): void {
     const tipo = this.tipoSeleccionado();
-    this.procesandoId.set(item.id);
+    const proceso: ProcesandoCatalogo = { tipo, id: item.id };
+    this.procesando.update((actuales) => [...actuales, proceso]);
     this.adminCatalogos.cambiarEstado(tipo, item.id, activo).subscribe({
       next: () => {
-        this.procesandoId.set(null);
+        this.limpiarProcesando(proceso);
         this.notificaciones.exito(
           activo ? `Se activó «${item.nombre}».` : `Se desactivó «${item.nombre}».`,
         );
-        this.catalogoResource.reload();
+        if (this.tipoSeleccionado() === tipo) {
+          this.catalogoResource.reload();
+        }
       },
       error: (fallo: unknown) => {
-        this.procesandoId.set(null);
+        this.limpiarProcesando(proceso);
         this.notificaciones.error(normalizarError(fallo).mensaje);
       },
     });
+  }
+
+  private limpiarProcesando(proceso: ProcesandoCatalogo): void {
+    this.procesando.update((actuales) =>
+      actuales.filter((actual) => actual.tipo !== proceso.tipo || actual.id !== proceso.id),
+    );
   }
 
   private detalleItem(item: CatalogoAdmin): string | null {

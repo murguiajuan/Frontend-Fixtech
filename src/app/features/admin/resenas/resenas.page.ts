@@ -63,6 +63,21 @@ export class AdminResenasPage {
     return fallo === undefined ? null : normalizarError(fallo);
   });
 
+  protected readonly reportadas = computed(() =>
+    this.resenasResource.hasValue()
+      ? this.resenasResource.value().filter((resena) => resena.estado === 'REPORTADA').length
+      : 0,
+  );
+
+  protected readonly resenasOrdenadas = computed(() => {
+    if (!this.resenasResource.hasValue()) {
+      return undefined;
+    }
+    return [...this.resenasResource.value()].sort(
+      (a, b) => Number(b.estado === 'REPORTADA') - Number(a.estado === 'REPORTADA'),
+    );
+  });
+
   protected readonly hayFiltros = computed(() => this.filtrosAplicados().estado !== 'TODOS');
 
   protected aplicarFiltros(): void {

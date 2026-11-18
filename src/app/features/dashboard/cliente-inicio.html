@@ -1,0 +1,208 @@
+<div class="inicio ft-page">
+  <header class="bienvenida">
+    <div class="bienvenida__contenido">
+      <p class="bienvenida__etiqueta">
+        <mat-icon aria-hidden="true">verified</mat-icon> TU ESPACIO FIXTECH
+      </p>
+      <h1>Hola, {{ nombre() }} <span aria-hidden="true">✦</span></h1>
+      <p>Todo lo que necesitas para cuidar tus equipos, en un solo lugar.</p>
+      <a
+        mat-flat-button
+        routerLink="/app/cliente/solicitudes/nueva"
+        class="bienvenida__accion ft-action-accent"
+        ><mat-icon aria-hidden="true">add</mat-icon>Solicitar un servicio</a
+      >
+    </div>
+    <div class="bienvenida__imagen" aria-hidden="true">
+      <mat-icon>laptop_mac</mat-icon
+      ><span class="bienvenida__orbita"><mat-icon>build_circle</mat-icon></span>
+    </div>
+  </header>
+
+  <section aria-labelledby="titulo-resumen" class="resumen">
+    <div class="seccion-cabecera">
+      <div>
+        <p class="ft-eyebrow">TU ACTIVIDAD</p>
+        <h2 id="titulo-resumen">Tu espacio, de un vistazo</h2>
+      </div>
+    </div>
+    <div class="indicadores">
+      <a routerLink="/app/cliente/solicitudes" class="indicador ft-card"
+        ><span class="indicador__icono indicador__icono--azul"
+          ><mat-icon aria-hidden="true">assignment</mat-icon></span
+        ><span class="indicador__valor">
+          @if (cargandoSolicitudes()) {
+            <span class="ft-sr-only">Cargando</span
+            ><mat-spinner diameter="22" aria-label="Cargando solicitudes" />
+          } @else if (errorSolicitudes()) {
+            —
+          } @else {
+            {{ solicitudesActivas().length }}
+          }</span
+        ><strong>Solicitudes activas</strong><small>Publicadas o con ofertas</small></a
+      >
+      <a routerLink="/app/cliente/solicitudes" class="indicador ft-card"
+        ><span class="indicador__icono indicador__icono--naranja"
+          ><mat-icon aria-hidden="true">local_offer</mat-icon></span
+        ><span class="indicador__valor">
+          @if (cargandoSolicitudes()) {
+            <span class="ft-sr-only">Cargando</span
+            ><mat-spinner diameter="22" aria-label="Cargando ofertas" />
+          } @else if (errorSolicitudes()) {
+            —
+          } @else {
+            {{ conOfertas() }}
+          }</span
+        ><strong>Solicitudes con ofertas</strong><small>Listas para comparar</small></a
+      >
+      <a routerLink="/app/cliente/servicios" class="indicador ft-card"
+        ><span class="indicador__icono indicador__icono--verde"
+          ><mat-icon aria-hidden="true">handyman</mat-icon></span
+        ><span class="indicador__valor">
+          @if (cargandoServicios()) {
+            <span class="ft-sr-only">Cargando</span
+            ><mat-spinner diameter="22" aria-label="Cargando servicios" />
+          } @else if (errorServicios()) {
+            —
+          } @else {
+            {{ serviciosEnCurso().length }}
+          }</span
+        ><strong>Servicios en curso</strong><small>Con seguimiento disponible</small></a
+      >
+    </div>
+  </section>
+
+  <div class="columnas">
+    <section class="bloque ft-card" aria-labelledby="titulo-recientes">
+      <div class="bloque__cabecera">
+        <div>
+          <p class="ft-eyebrow">SIGUE EN CONTACTO</p>
+          <h2 id="titulo-recientes">Tus solicitudes recientes</h2>
+        </div>
+        <a routerLink="/app/cliente/solicitudes">Ver todas <span aria-hidden="true">→</span></a>
+      </div>
+      @if (errorSolicitudes()) {
+        <div class="ft-alert ft-alert--error" role="alert">
+          <mat-icon aria-hidden="true">error_outline</mat-icon
+          ><span
+            >No pudimos cargar tus solicitudes.
+            <button type="button" class="reintentar" (click)="cargarSolicitudes()">
+              Reintentar
+            </button></span
+          >
+        </div>
+      } @else if (cargandoSolicitudes()) {
+        <div class="cargando" role="status">
+          <mat-spinner diameter="28" aria-hidden="true" /> Cargando solicitudes…
+        </div>
+      } @else if (recientes().length === 0) {
+        <div class="vacio">
+          <span class="vacio__icono"><mat-icon aria-hidden="true">assignment_add</mat-icon></span>
+          <h3>Tu próxima solución empieza aquí</h3>
+          <p>Cuéntanos qué le ocurre a tu equipo y compara las propuestas que recibas.</p>
+          <a mat-stroked-button routerLink="/app/cliente/solicitudes/nueva"
+            >Crear mi primera solicitud</a
+          >
+        </div>
+      } @else {
+        <ul class="lista">
+          @for (solicitud of recientes(); track solicitud.id) {
+            <li>
+              <a [routerLink]="['/app/cliente/solicitudes', solicitud.id]"
+                ><span class="lista__icono"><mat-icon aria-hidden="true">devices</mat-icon></span
+                ><span class="lista__texto"
+                  ><strong>{{ solicitud.tipoServicio }} · {{ solicitud.tipoEquipo }}</strong
+                  ><small
+                    >{{ solicitud.distrito }} ·
+                    {{ solicitud.creadoEn | date: 'dd MMM yyyy' }}</small
+                  ></span
+                ><app-estado-badge
+                  [texto]="etiquetasSolicitud[solicitud.estado]"
+                  [tono]="tonosSolicitud[solicitud.estado]"
+                /><mat-icon class="lista__flecha" aria-hidden="true">chevron_right</mat-icon></a
+              >
+            </li>
+          }
+        </ul>
+      }
+    </section>
+    <section class="bloque ft-card" aria-labelledby="titulo-servicios-cliente">
+      <div class="bloque__cabecera">
+        <div>
+          <p class="ft-eyebrow">CADA PASO CUENTA</p>
+          <h2 id="titulo-servicios-cliente">Servicios en marcha</h2>
+        </div>
+        <a routerLink="/app/cliente/servicios">Ver todos <span aria-hidden="true">→</span></a>
+      </div>
+      @if (errorServicios()) {
+        <div class="ft-alert ft-alert--error" role="alert">
+          <mat-icon aria-hidden="true">error_outline</mat-icon
+          ><span
+            >No pudimos cargar tus servicios.
+            <button type="button" class="reintentar" (click)="cargarServicios()">
+              Reintentar
+            </button></span
+          >
+        </div>
+      } @else if (cargandoServicios()) {
+        <div class="cargando" role="status">
+          <mat-spinner diameter="28" aria-hidden="true" /> Cargando servicios…
+        </div>
+      } @else if (serviciosEnCurso().length === 0) {
+        <div class="vacio">
+          <span class="vacio__icono"><mat-icon aria-hidden="true">build_circle</mat-icon></span>
+          <h3>Todo en orden por ahora</h3>
+          <p>Cuando aceptes una oferta, podrás seguir aquí el avance del servicio.</p>
+          <a mat-stroked-button routerLink="/app/cliente/solicitudes">Explorar solicitudes</a>
+        </div>
+      } @else {
+        <ul class="lista">
+          @for (servicio of serviciosEnCurso().slice(0, 3); track servicio.id) {
+            <li>
+              <a [routerLink]="['/app/cliente/servicios', servicio.id]"
+                ><span class="lista__icono"
+                  ><mat-icon aria-hidden="true">build_circle</mat-icon></span
+                ><span class="lista__texto"
+                  ><strong
+                    >{{ servicio.tipoServicio || 'Servicio técnico' }} ·
+                    {{ servicio.tipoEquipo || 'Equipo' }}</strong
+                  ><small
+                    >{{ servicio.contraparteNombre }} ·
+                    {{
+                      servicio.montoFinal ?? servicio.montoTotal | currency: 'PEN' : 'symbol-narrow'
+                    }}</small
+                  ></span
+                ><app-estado-badge
+                  [texto]="etiquetasServicio[servicio.estado]"
+                  [tono]="tonosServicio[servicio.estado]"
+                /><mat-icon class="lista__flecha" aria-hidden="true">chevron_right</mat-icon></a
+              >
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  </div>
+
+  <section class="guia" aria-labelledby="titulo-guia">
+    <div class="guia__intro">
+      <p class="ft-eyebrow">ASÍ DE SENCILLO</p>
+      <h2 id="titulo-guia">Estamos contigo de principio a fin</h2>
+      <p>Publica tu solicitud, encuentra una buena propuesta y mantente al tanto de tu servicio.</p>
+    </div>
+    <ol>
+      <li>
+        <span>01</span><mat-icon aria-hidden="true">edit_note</mat-icon
+        ><strong>Cuéntanos qué pasa</strong>
+      </li>
+      <li>
+        <span>02</span><mat-icon aria-hidden="true">compare_arrows</mat-icon
+        ><strong>Compara propuestas</strong>
+      </li>
+      <li>
+        <span>03</span><mat-icon aria-hidden="true">verified_user</mat-icon
+        ><strong>Confirma y califica</strong>
+      </li>
+    </ol>
+  </section>
+</div>

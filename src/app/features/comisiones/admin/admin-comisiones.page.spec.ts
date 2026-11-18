@@ -71,6 +71,22 @@ describe('AdminComisionesPage', () => {
     expect(texto).toContain('30.00');
   });
 
+  it('prioriza pagos pendientes y evita inventar métricas cuando deudores falla', async () => {
+    servicio.listarPagos.mockReturnValue(
+      of([crearPago({ id: 52, estado: 'VALIDADO' }), crearPago({ id: 51, estado: 'PENDIENTE' })]),
+    );
+    servicio.listarDeudores.mockReturnValue(
+      throwError(() => ({ estado: 503, mensaje: 'Sin datos de deudores.', detalles: [] })),
+    );
+    const fixture = await crear();
+    const elemento = fixture.nativeElement as HTMLElement;
+    expect(elemento.querySelector('.pago h3')?.textContent).toContain('Pago #51');
+    expect(contenido(fixture)).toContain('1 por validar en este listado');
+    await abrirTab(fixture, 'Deudores');
+    expect(contenido(fixture)).toContain('No pudimos cargar los deudores');
+    expect(contenido(fixture)).not.toContain('Deuda pendiente total');
+  });
+
   it('aplica y limpia el filtro de estado de los pagos', async () => {
     const fixture = await crear();
     const formulario = acceder(fixture).formularioFiltros;

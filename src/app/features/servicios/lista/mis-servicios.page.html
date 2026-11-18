@@ -1,4 +1,4 @@
-<div class="servicios ft-page">
+<div class="servicios ft-page" [class.servicios--cliente]="esCliente()">
   <header class="servicios__cabecera">
     <div>
       <p class="ft-eyebrow">{{ esCliente() ? 'Cliente' : 'Técnico' }}</p>

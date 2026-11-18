@@ -51,6 +51,29 @@ describe('AdminResenasPage', () => {
     expect(texto).toContain('Excelente atención y explicación del problema.');
   });
 
+  it('prioriza las reportadas y cuenta solo las incluidas en el resultado', async () => {
+    servicio.listar.mockReturnValue(
+      of([
+        crearResena({ id: 40, clienteNombre: 'Visible', estado: 'VISIBLE' }),
+        crearResena({
+          id: 41,
+          clienteNombre: 'Reportada',
+          estado: 'REPORTADA',
+          motivoReporte: 'Contenido ofensivo.',
+        }),
+      ]),
+    );
+    const fixture = await crear();
+    const elemento = fixture.nativeElement as HTMLElement;
+    const nombres = Array.from(elemento.querySelectorAll('.resena__cabecera h2')).map((nodo) =>
+      nodo.textContent?.trim(),
+    );
+
+    expect(nombres).toEqual(['Reportada', 'Visible']);
+    expect(contenido(fixture)).toContain('1 reportada en este listado');
+    expect(elemento.querySelectorAll('.resena__acciones')).toHaveLength(1);
+  });
+
   it('aplica el filtro de estado', async () => {
     const fixture = await crear();
     accederFormulario(fixture).controls['estado'].setValue('REPORTADA');
@@ -103,6 +126,7 @@ describe('AdminResenasPage', () => {
 
     expect(contenido(fixture)).toContain('No pudimos cargar las reseñas');
     expect(contenido(fixture)).toContain('No se pudieron obtener las reseñas.');
+    expect(contenido(fixture)).not.toContain('reportada en este listado');
 
     pulsarBoton(fixture.nativeElement, 'Reintentar');
     fixture.detectChanges();

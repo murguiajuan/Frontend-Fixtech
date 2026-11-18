@@ -52,7 +52,7 @@
   }
 
   <form id="form-validacion-pago" [formGroup]="formulario" (ngSubmit)="enviar()" novalidate>
-    <mat-form-field appearance="outline">
+    <mat-form-field appearance="outline" [class.dialogo__campo--error]="mostrarErrorObservacion()">
       <mat-label>
         {{ esRechazo ? 'Motivo del rechazo' : 'Observación (opcional)' }}
       </mat-label>

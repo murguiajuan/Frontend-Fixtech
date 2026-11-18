@@ -1,0 +1,165 @@
+<div class="admin-inicio ft-page">
+  <header class="bienvenida">
+    <div>
+      <h1>Hola, {{ nombre() }}</h1>
+      <p>Revisa lo que necesita atención y continúa con la operación de FIXTECH.</p>
+    </div>
+    <a mat-flat-button routerLink="/app/admin/reportes">
+      <mat-icon aria-hidden="true">monitoring</mat-icon>
+      Ver reportes
+    </a>
+  </header>
+
+  <section class="prioridades" aria-labelledby="prioridades-titulo">
+    <div class="seccion-titulo">
+      <h2 id="prioridades-titulo">Necesita tu atención</h2>
+      <p>Indicadores actuales de la operación.</p>
+    </div>
+
+    @if (resumenResource.isLoading()) {
+      <div class="cargando" role="status" aria-label="Cargando indicadores administrativos">
+        <span class="ft-sr-only">Cargando indicadores administrativos…</span>
+        @for (item of [1, 2, 3, 4]; track item) {
+          <div class="cargando__fila" aria-hidden="true"><span></span><span></span></div>
+        }
+      </div>
+    } @else if (error(); as mensaje) {
+      <div class="ft-alert ft-alert--error" role="alert">
+        <mat-icon aria-hidden="true">error_outline</mat-icon>
+        <div>
+          <strong>No pudimos cargar los indicadores.</strong>
+          <p>{{ mensaje }}</p>
+          <button mat-stroked-button type="button" (click)="reintentar()">Volver a intentar</button>
+        </div>
+      </div>
+    } @else if (resumen(); as datos) {
+      <div class="indicadores">
+        <a class="indicador" routerLink="/app/admin/comisiones">
+          <span class="indicador__icono"><mat-icon aria-hidden="true">receipt_long</mat-icon></span>
+          <span class="indicador__contenido">
+            <strong>Pagos por validar</strong>
+            <small>Revisa los comprobantes recibidos</small>
+          </span>
+          <span class="indicador__valor">{{ datos.pagosPorValidar }}</span>
+          <mat-icon class="indicador__flecha" aria-hidden="true">arrow_forward</mat-icon>
+        </a>
+        <a class="indicador" routerLink="/app/admin/reportes">
+          <span class="indicador__icono"><mat-icon aria-hidden="true">assignment</mat-icon></span>
+          <span class="indicador__contenido">
+            <strong>Solicitudes sin ofertas</strong>
+            <small>Consulta su evolución en los reportes</small>
+          </span>
+          <span class="indicador__valor">{{ datos.solicitudesSinOfertas }}</span>
+          <mat-icon class="indicador__flecha" aria-hidden="true">arrow_forward</mat-icon>
+        </a>
+        <a class="indicador" routerLink="/app/admin/reclamos">
+          <span class="indicador__icono"
+            ><mat-icon aria-hidden="true">support_agent</mat-icon></span
+          >
+          <span class="indicador__contenido">
+            <strong>Reclamos abiertos</strong>
+            <small>Da seguimiento a cada caso</small>
+          </span>
+          <span class="indicador__valor">{{ datos.reclamosAbiertos }}</span>
+          <mat-icon class="indicador__flecha" aria-hidden="true">arrow_forward</mat-icon>
+        </a>
+        <a class="indicador" routerLink="/app/admin/resenas">
+          <span class="indicador__icono"><mat-icon aria-hidden="true">reviews</mat-icon></span>
+          <span class="indicador__contenido">
+            <strong>Reseñas reportadas</strong>
+            <small>Revisa las reseñas que requieren moderación</small>
+          </span>
+          <span class="indicador__valor">{{ datos.resenasReportadas }}</span>
+          <mat-icon class="indicador__flecha" aria-hidden="true">arrow_forward</mat-icon>
+        </a>
+      </div>
+      @if (
+        datos.pagosPorValidar === 0 &&
+        datos.solicitudesSinOfertas === 0 &&
+        datos.reclamosAbiertos === 0 &&
+        datos.resenasReportadas === 0
+      ) {
+        <p class="sin-pendientes">
+          <mat-icon aria-hidden="true">check_circle</mat-icon>
+          No hay asuntos pendientes en estos indicadores.
+        </p>
+      }
+      <div class="panorama" aria-label="Panorama general">
+        <p>
+          <strong>{{ datos.totalSolicitudes }}</strong> solicitudes registradas
+        </p>
+        <p>
+          <strong>{{ datos.totalServicios }}</strong> servicios registrados
+        </p>
+        <p>
+          <strong>{{ datos.tecnicosActivos }}</strong> técnicos activos
+        </p>
+      </div>
+    }
+  </section>
+
+  <section class="modulos" aria-labelledby="modulos-titulo">
+    <div class="seccion-titulo">
+      <h2 id="modulos-titulo">Gestionar FIXTECH</h2>
+      <p>Accede directamente a cada área de administración.</p>
+    </div>
+    <div class="modulos__lista">
+      <a routerLink="/app/admin/tecnicos">
+        <mat-icon aria-hidden="true">verified_user</mat-icon>
+        <span
+          ><strong>Verificación de técnicos</strong
+          ><small>Revisa perfiles y solicitudes de aprobación</small></span
+        >
+        <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+      </a>
+      <a routerLink="/app/admin/usuarios">
+        <mat-icon aria-hidden="true">group</mat-icon>
+        <span
+          ><strong>Usuarios y accesos</strong
+          ><small>Consulta, suspende y reactiva cuentas</small></span
+        >
+        <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+      </a>
+      <a routerLink="/app/admin/comisiones">
+        <mat-icon aria-hidden="true">account_balance_wallet</mat-icon>
+        <span
+          ><strong>Pagos y deudores</strong><small>Valida pagos y revisa comisiones</small></span
+        >
+        <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+      </a>
+      <a routerLink="/app/admin/reclamos">
+        <mat-icon aria-hidden="true">support_agent</mat-icon>
+        <span><strong>Reclamos</strong><small>Gestiona casos y resoluciones</small></span>
+        <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+      </a>
+      <a routerLink="/app/admin/resenas">
+        <mat-icon aria-hidden="true">reviews</mat-icon>
+        <span><strong>Reseñas</strong><small>Modera las reseñas reportadas</small></span>
+        <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+      </a>
+      <a routerLink="/app/admin/reportes">
+        <mat-icon aria-hidden="true">monitoring</mat-icon>
+        <span
+          ><strong>Reportes e indicadores</strong
+          ><small>Consulta y exporta información</small></span
+        >
+        <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+      </a>
+      <a routerLink="/app/admin/catalogos">
+        <mat-icon aria-hidden="true">category</mat-icon>
+        <span><strong>Catálogos</strong><small>Equipos, servicios y distritos</small></span>
+        <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+      </a>
+      <a routerLink="/app/admin/parametros">
+        <mat-icon aria-hidden="true">tune</mat-icon>
+        <span><strong>Parámetros</strong><small>Configura los valores del sistema</small></span>
+        <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+      </a>
+      <a routerLink="/app/admin/auditoria">
+        <mat-icon aria-hidden="true">history</mat-icon>
+        <span><strong>Auditoría</strong><small>Consulta el historial de acciones</small></span>
+        <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+      </a>
+    </div>
+  </section>
+</div>

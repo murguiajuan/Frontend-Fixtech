@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { AuthPresentacion } from '../auth-presentacion';
 import {
   AbstractControl,
   NonNullableFormBuilder,
@@ -31,6 +32,7 @@ type CampoRegistro =
 @Component({
   selector: 'app-registro-cliente-page',
   imports: [
+    AuthPresentacion,
     ReactiveFormsModule,
     RouterLink,
     MatButtonModule,

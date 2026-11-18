@@ -1,12 +1,17 @@
 <div class="admin-tecnicos ft-page">
   <header class="encabezado">
     <div>
-      <p class="ft-eyebrow">Administración</p>
       <h1>Verificación de técnicos</h1>
       <p class="ft-muted">
         Revisa el perfil de cada técnico, consulta su estado y registra la decisión de verificación.
       </p>
     </div>
+    @if (pendientes() > 0) {
+      <span class="encabezado__pendientes" role="status">
+        <mat-icon aria-hidden="true">pending_actions</mat-icon>
+        {{ pendientes() }} {{ pendientes() === 1 ? 'pendiente' : 'pendientes' }} en este listado
+      </span>
+    }
   </header>
 
   <section class="panel-filtros ft-card" aria-labelledby="titulo-filtros">
@@ -49,7 +54,6 @@
           autocomplete="off"
           placeholder="Nombre, correo, DNI o celular"
         />
-        <mat-hint>Puedes buscar por nombre, correo, DNI o celular.</mat-hint>
         @if (formularioFiltros.controls.busqueda.hasError('maxlength')) {
           <mat-error>La búsqueda no puede superar los 120 caracteres.</mat-error>
         }
@@ -80,7 +84,7 @@
       </button>
     </section>
   } @else {
-    @if (tecnicosResource.value(); as tecnicos) {
+    @if (tecnicosOrdenados(); as tecnicos) {
       <section aria-labelledby="titulo-listado-tecnicos">
         <div class="listado__cabecera">
           <div>
@@ -257,9 +261,9 @@
                       <div class="ft-alert ft-alert--info">
                         <mat-icon aria-hidden="true">description</mat-icon>
                         <p>
-                          La API de administración no expone documentos de verificación. Esta ficha
-                          muestra únicamente los datos registrados en el perfil; no se inventan
-                          documentos ni campos inexistentes.
+                          Los documentos de verificación no están disponibles en esta ficha. Revisa
+                          los datos del perfil antes de decidir; no presupongas evidencia que no se
+                          muestra aquí.
                         </p>
                       </div>
                     </section>
@@ -282,7 +286,7 @@
                     </button>
                     <button mat-flat-button type="button" (click)="abrirVerificacion(tecnico)">
                       <mat-icon aria-hidden="true">fact_check</mat-icon>
-                      Verificar
+                      {{ etiquetaAccion(tecnico) }}
                     </button>
                   </div>
                 </article>

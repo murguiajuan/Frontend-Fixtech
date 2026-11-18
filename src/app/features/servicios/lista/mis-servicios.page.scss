@@ -2,6 +2,38 @@
   display: block;
 }
 
+.servicios--cliente .servicios__cabecera {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--ft-radius-lg);
+  padding: 1.5rem;
+  background: linear-gradient(110deg, #062657, #0e4789);
+  color: white;
+}
+.servicios--cliente .servicios__cabecera h1 {
+  color: white;
+  font-weight: 800;
+}
+.servicios--cliente .servicios__cabecera .ft-eyebrow {
+  color: #a8d7ff;
+}
+.servicios--cliente .servicios__cabecera .ft-muted {
+  color: #e0ebf8;
+}
+.servicios--cliente .servicios__volver {
+  --mat-button-outlined-label-text-color: white;
+  --mat-button-outlined-outline-color: #ffffffb3;
+}
+.servicios--cliente .servicio {
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+.servicios--cliente .servicio:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--ft-shadow-md);
+}
+
 .servicios {
   display: grid;
   gap: 1rem;

@@ -70,6 +70,20 @@ describe('AdminTecnicosPage', () => {
     expect(compilado.textContent).toContain('12345678');
   });
 
+  it('prioriza técnicos pendientes dentro de los resultados sin alterar el servicio', async () => {
+    servicio.listar.mockReturnValue(
+      of([{ ...TECNICO, id: 10, nombres: 'Beatriz', estadoVerificacion: 'APROBADO' }, TECNICO]),
+    );
+    const fixture = await crear();
+    const compilado = fixture.nativeElement as HTMLElement;
+    const nombres = Array.from(compilado.querySelectorAll('.tecnico__identidad h2')).map((nodo) =>
+      nodo.textContent?.trim(),
+    );
+
+    expect(nombres).toEqual(['Ana Torres', 'Beatriz Torres']);
+    expect(compilado.textContent).toContain('1 pendiente en este listado');
+  });
+
   it('aplica la búsqueda y conserva el filtro de estado', async () => {
     const fixture = await crear();
     const compilado = fixture.nativeElement as HTMLElement;
@@ -130,7 +144,7 @@ describe('AdminTecnicosPage', () => {
     expect(compilado.textContent).toContain('A domicilio');
     expect(compilado.textContent).toContain('En taller');
     expect(compilado.textContent).toContain(
-      'La API de administración no expone documentos de verificación.',
+      'Los documentos de verificación no están disponibles en esta ficha.',
     );
   });
 

@@ -85,6 +85,24 @@ export class AdminTecnicosPage {
     return fallo === undefined ? null : normalizarError(fallo);
   });
 
+  protected readonly pendientes = computed(() =>
+    this.tecnicosResource.hasValue()
+      ? this.tecnicosResource
+          .value()
+          .filter((tecnico) => tecnico.estadoVerificacion === 'PENDIENTE').length
+      : 0,
+  );
+
+  protected readonly tecnicosOrdenados = computed(() => {
+    if (!this.tecnicosResource.hasValue()) {
+      return undefined;
+    }
+    return [...this.tecnicosResource.value()].sort(
+      (a, b) =>
+        Number(b.estadoVerificacion === 'PENDIENTE') - Number(a.estadoVerificacion === 'PENDIENTE'),
+    );
+  });
+
   protected readonly hayFiltros = computed(() => {
     const filtros = this.filtrosAplicados();
     return filtros.estadoVerificacion !== 'TODOS' || filtros.busqueda !== '';
@@ -98,6 +116,7 @@ export class AdminTecnicosPage {
       return;
     }
     const valores = this.formularioFiltros.getRawValue();
+    this.expandido.set(null);
     this.filtrosAplicados.set({
       estadoVerificacion: valores.estadoVerificacion,
       busqueda: valores.busqueda.trim(),
@@ -144,6 +163,10 @@ export class AdminTecnicosPage {
         );
         this.tecnicosResource.reload();
       });
+  }
+
+  protected etiquetaAccion(tecnico: TecnicoAdmin): string {
+    return tecnico.estadoVerificacion === 'PENDIENTE' ? 'Verificar' : 'Actualizar estado';
   }
 
   protected nombre(tecnico: TecnicoAdmin): string {

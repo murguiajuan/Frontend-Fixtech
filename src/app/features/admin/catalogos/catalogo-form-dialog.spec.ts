@@ -78,6 +78,24 @@ describe('CatalogoFormDialog', () => {
     });
   });
 
+  it('rechaza nombres y provincias compuestos solo por espacios', () => {
+    datos.tipo = 'distritos';
+    datos.item = null;
+    const fixture = crear();
+    const compilado = fixture.nativeElement as HTMLElement;
+
+    escribir(compilado, 'Nombre', '   ');
+    escribir(compilado, 'Provincia', '   ');
+    escribir(compilado, 'Tope de movilidad', '10');
+    fixture.detectChanges();
+    enviar(compilado);
+    fixture.detectChanges();
+
+    expect(servicio.crear).not.toHaveBeenCalled();
+    expect(compilado.textContent).toContain('El nombre no puede estar vacío.');
+    expect(compilado.textContent).toContain('La provincia no puede estar vacía.');
+  });
+
   it('valida los campos obligatorios de un distrito y envía el tope numérico', () => {
     datos.tipo = 'distritos';
     datos.item = null;

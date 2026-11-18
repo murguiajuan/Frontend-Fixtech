@@ -111,16 +111,21 @@ export class VerificacionDialog {
     this.tecnico.apellidos,
     this.tecnico.correo,
   );
+  private readonly estadoInicial: EstadoVerificacionAccion =
+    this.tecnico.estadoVerificacion === 'PENDIENTE' ? 'APROBADO' : this.tecnico.estadoVerificacion;
 
   protected readonly formulario = this.fb.group({
-    estado: this.fb.control<EstadoVerificacionAccion>('APROBADO', [Validators.required]),
+    estado: this.fb.control<EstadoVerificacionAccion>(this.estadoInicial, [Validators.required]),
     motivo: this.fb.control('', [Validators.maxLength(300), motivoSegunEstado]),
     confirmado: this.fb.control(false, [Validators.requiredTrue]),
   });
 
   protected readonly estadoSeleccionado = toSignal(this.formulario.controls.estado.valueChanges, {
-    initialValue: 'APROBADO' as EstadoVerificacionAccion,
+    initialValue: this.estadoInicial,
   });
+  protected readonly sinCambios = computed(
+    () => this.estadoSeleccionado() === this.tecnico.estadoVerificacion,
+  );
   protected readonly enviando = signal(false);
   protected readonly enviado = signal(false);
   protected readonly errorServidor = signal<string | null>(null);
@@ -165,6 +170,9 @@ export class VerificacionDialog {
   }
 
   protected enviar(): void {
+    if (this.enviando() || this.sinCambios()) {
+      return;
+    }
     this.enviado.set(true);
     this.errorServidor.set(null);
     this.detallesError.set([]);

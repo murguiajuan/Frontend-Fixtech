@@ -1,0 +1,210 @@
+<a class="skip" href="#principal">Saltar al contenido</a>
+<header class="cabecera" id="inicio">
+  <div class="contenedor barra flex items-center justify-between">
+    <a class="marca" href="#inicio"><app-brand [compacta]="true" /></a>
+    <button
+      class="menu-boton"
+      type="button"
+      (click)="menuAbierto.set(!menuAbierto())"
+      [attr.aria-expanded]="menuAbierto()"
+      aria-controls="navegacion"
+      aria-label="Abrir o cerrar menú"
+    >
+      <mat-icon>{{ menuAbierto() ? 'close' : 'menu' }}</mat-icon>
+    </button>
+    <nav id="navegacion" aria-label="Navegación principal" [class.abierto]="menuAbierto()">
+      <a class="activo" href="#inicio" (click)="menuAbierto.set(false)">Inicio</a>
+      <a href="#servicios" (click)="menuAbierto.set(false)">Servicios</a>
+      <a href="#como-funciona" (click)="menuAbierto.set(false)">Cómo funciona</a>
+      <a href="#resenas" (click)="menuAbierto.set(false)">Reseñas</a>
+      <div class="acciones flex items-center">
+        <a class="boton boton-naranja" routerLink="/registro">Regístrate</a>
+        <a class="boton boton-borde" routerLink="/login">Ingresar</a>
+        <a class="boton boton-marino" routerLink="/app/cliente/solicitudes/nueva"
+          ><mat-icon>build</mat-icon>¡Solicitar Técnico Ahora!</a
+        >
+      </div>
+    </nav>
+  </div>
+</header>
+
+<main id="principal" tabindex="-1">
+  <section class="hero" aria-labelledby="titulo">
+    <div class="hero-foto">
+      <img
+        ngSrc="/images/landing/hero.webp"
+        fill
+        sizes="(max-width: 767px) 100vw, 51vw"
+        priority
+        alt="Técnico con polo azul revisando una laptop junto a un cliente"
+      />
+    </div>
+    <div class="contenedor hero-interior">
+      <div class="hero-texto">
+        <span class="etiqueta"
+          ><mat-icon>verified_user</mat-icon>Técnicos verificados y de confianza</span
+        >
+        <h1 id="titulo">Tu Solución Técnica<br /><span>Confiable y Rápida</span></h1>
+        <p class="descripcion">
+          Reparación y mantenimiento de <strong>PC, Laptop y más.</strong> Encuentra técnicos
+          calificados, compara propuestas y solicita tu servicio en minutos. ¡Recupera tu
+          tranquilidad tech!
+        </p>
+        <form class="buscador" (submit)="buscar($event)" role="search">
+          <label class="sr-only" for="problema">¿Qué problema tienes hoy?</label>
+          <mat-icon>search</mat-icon>
+          <input
+            #problema
+            id="problema"
+            type="search"
+            [value]="consulta()"
+            (input)="consulta.set(problema.value)"
+            placeholder="¿Qué problema tienes hoy? (Ej. Limpieza PC, Pantalla...)"
+          />
+          <button type="submit">Buscar<mat-icon>arrow_forward</mat-icon></button>
+        </form>
+        <div class="beneficios">
+          @for (beneficio of beneficios; track beneficio.titulo) {
+            <div class="beneficio">
+              <span class="beneficio-icono"
+                ><mat-icon>{{ beneficio.icono }}</mat-icon></span
+              ><span
+                ><strong>{{ beneficio.titulo }}</strong
+                ><small>{{ beneficio.detalle }}</small></span
+              >
+            </div>
+          }
+        </div>
+      </div>
+      <div class="flotante diagnostico">
+        <mat-icon>desktop_windows</mat-icon><span>Diagnóstico<strong>Profesional</strong></span
+        ><mat-icon class="check">check_circle</mat-icon>
+      </div>
+      <div class="flotante especialidades">
+        <span><mat-icon>check_circle</mat-icon>PC y Laptops</span
+        ><span><mat-icon>check_circle</mat-icon>Hardware y Software</span
+        ><span><mat-icon>check_circle</mat-icon>Limpieza y Optimización</span
+        ><span><mat-icon>check_circle</mat-icon>Soporte Remoto</span>
+      </div>
+      <div class="flotante confianza">
+        <mat-icon>verified_user</mat-icon><strong>Tu equipo en buenas manos</strong
+        ><mat-icon class="check">check_circle</mat-icon>
+      </div>
+    </div>
+  </section>
+
+  <section class="contenedor servicios" id="servicios" aria-labelledby="titulo-servicios">
+    <div class="seccion-titulo">
+      <h2 id="titulo-servicios">Nuestros <span>Servicios Principales</span></h2>
+      <button class="enlace" type="button" (click)="filtro.set(''); consulta.set('')">
+        Ver todos los servicios <span aria-hidden="true">→</span>
+      </button>
+    </div>
+    @if (filtro()) {
+      <p role="status">
+        {{ servicios().length }} servicios para «{{ filtro() }}». Catálogo de demostración.
+      </p>
+    }
+    <div class="servicios-grid">
+      @for (servicio of servicios(); track servicio.id) {
+        <a
+          class="servicio"
+          [class]="'servicio ' + servicio.color"
+          routerLink="/app/cliente/solicitudes/nueva"
+        >
+          <mat-icon class="servicio-icono">{{ servicio.icono }}</mat-icon>
+          <h3>{{ servicio.titulo }}</h3>
+          <p>{{ servicio.descripcion }}</p>
+          <span class="flecha"><mat-icon>arrow_forward</mat-icon></span>
+        </a>
+      } @empty {
+        <p class="sin-resultados">
+          No encontramos ese servicio. Prueba con “pantalla”, “limpieza” o “software”.
+        </p>
+      }
+    </div>
+    <p class="nota-catalogo">
+      Catálogo ilustrativo. La disponibilidad y modalidad se acuerdan con el técnico.
+    </p>
+  </section>
+
+  <div class="contenedor zona-inferior">
+    <section id="como-funciona" aria-labelledby="titulo-pasos">
+      <h2 id="titulo-pasos">¿Cómo <span>Funciona?</span></h2>
+      <p class="subtitulo">Tu equipo listo, sin complicaciones.</p>
+      <ol class="pasos">
+        @for (paso of pasos; track paso.titulo; let indice = $index) {
+          <li>
+            <div class="paso-imagen">
+              <span class="numero">{{ indice + 1 }}</span
+              ><mat-icon>{{ paso.icono }}</mat-icon>
+            </div>
+            <h3>{{ paso.titulo }}</h3>
+            <p>{{ paso.detalle }}</p>
+          </li>
+        }
+      </ol>
+      <a class="enlace" routerLink="/registro-tecnico"
+        >¿Eres técnico? Únete a FIXTECH <span aria-hidden="true">→</span></a
+      >
+    </section>
+    <section id="resenas" aria-labelledby="titulo-resenas">
+      <div class="seccion-titulo">
+        <h2 id="titulo-resenas">Lo Que Dicen<br /><span>Nuestros Clientes</span></h2>
+        <span class="demo">Demostración</span>
+      </div>
+      <div class="resenas-layout">
+        <article class="resena" aria-live="polite" aria-atomic="true">
+          <div class="cliente">
+            <img
+              [ngSrc]="resena().cliente.foto"
+              width="42"
+              height="42"
+              alt="Retrato ilustrativo de cliente"
+            />
+            <div>
+              <strong>{{ resena().cliente.nombre }}</strong
+              ><span class="estrellas" aria-label="5 de 5 estrellas">★★★★★</span>
+            </div>
+            <mat-icon class="comillas">format_quote</mat-icon>
+          </div>
+          <p>“{{ resena().texto }}”</p>
+          <small>{{ resena().servicio }}</small>
+          <div class="resena-pie">
+            <span><mat-icon>check_circle</mat-icon>Opinión de ejemplo</span>
+            <div class="carrusel">
+              <button type="button" (click)="cambiarResena(-1)" aria-label="Reseña anterior">
+                <mat-icon>chevron_left</mat-icon></button
+              ><button type="button" (click)="cambiarResena(1)" aria-label="Reseña siguiente">
+                <mat-icon>chevron_right</mat-icon>
+              </button>
+            </div>
+          </div>
+        </article>
+        @for (tecnico of tecnicos; track tecnico.id) {
+          <article class="tecnico">
+            <img
+              [ngSrc]="tecnico.foto"
+              fill
+              sizes="(max-width: 767px) 26vw, 12vw"
+              alt="Retrato ilustrativo de técnico"
+            />
+            <div>
+              <strong>{{ tecnico.nombre }}</strong
+              ><small>{{ tecnico.especialidad }}</small
+              ><span>Perfil de ejemplo</span>
+            </div>
+          </article>
+        }
+      </div>
+    </section>
+  </div>
+</main>
+<footer>
+  <div class="contenedor pie">
+    <a class="marca marca-pequena" href="#inicio"><app-brand [compacta]="true" /></a>
+    <p>Conectamos tu problema con la solución.</p>
+    <a routerLink="/registro-tecnico">Soy técnico</a><a routerLink="/login">Mi cuenta</a
+    ><small>© 2026 FIXTECH · Piura, Perú</small>
+  </div>
+</footer>

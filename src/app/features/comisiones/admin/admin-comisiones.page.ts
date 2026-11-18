@@ -85,6 +85,14 @@ export class AdminComisionesPage {
   protected readonly pagos = computed(() =>
     this.pagosResource.hasValue() ? this.pagosResource.value() : [],
   );
+  protected readonly pagosOrdenados = computed(() =>
+    [...this.pagos()].sort(
+      (a, b) => Number(b.estado === 'PENDIENTE') - Number(a.estado === 'PENDIENTE'),
+    ),
+  );
+  protected readonly porValidar = computed(
+    () => this.pagos().filter((pago) => pago.estado === 'PENDIENTE').length,
+  );
   protected readonly deudores = computed(() =>
     this.deudoresResource.hasValue() ? this.deudoresResource.value() : [],
   );

@@ -8,55 +8,58 @@
     (openedChange)="sidenavAbierto.set($event)"
     [fixedInViewport]="esMovil()"
   >
-    <div class="sidenav__marca">
-      <app-brand />
-    </div>
+    <div class="sidenav__estructura">
+      <div class="sidenav__marca">
+        <app-brand />
+      </div>
 
-    <nav class="sidenav__nav" aria-label="Navegación principal">
-      @for (item of navegacion(); track item.ruta) {
-        @if (item.disponible) {
-          <a
-            class="nav__enlace"
-            [routerLink]="item.ruta"
-            routerLinkActive="nav__enlace--activo"
-            ariaCurrentWhenActive="page"
-            (click)="cerrarEnMovil()"
-          >
-            <mat-icon aria-hidden="true">{{ item.icono }}</mat-icon>
-            <span>{{ item.etiqueta }}</span>
-            @if (item.contador !== undefined && item.contador > 0) {
-              <span class="nav__contador" aria-hidden="true">
-                {{ item.contador > 99 ? '99+' : item.contador }}
-              </span>
-              <span class="ft-sr-only">{{ item.contador }} sin leer</span>
-            }
-          </a>
-        } @else {
-          <span class="nav__enlace nav__enlace--bloqueado" aria-disabled="true">
-            <mat-icon aria-hidden="true">{{ item.icono }}</mat-icon>
-            <span>{{ item.etiqueta }}</span>
-            <span class="nav__pronto">Pronto</span>
-          </span>
+      <p class="sidenav__contexto">{{ etiquetasRol[rol() ?? 'CLIENTE'] }}</p>
+      <nav class="sidenav__nav" aria-label="Navegación principal">
+        @for (item of navegacion(); track item.ruta) {
+          @if (item.disponible) {
+            <a
+              class="nav__enlace"
+              [routerLink]="item.ruta"
+              routerLinkActive="nav__enlace--activo"
+              ariaCurrentWhenActive="page"
+              (click)="cerrarEnMovil()"
+            >
+              <mat-icon aria-hidden="true">{{ item.icono }}</mat-icon>
+              <span>{{ item.etiqueta }}</span>
+              @if (item.contador !== undefined && item.contador > 0) {
+                <span class="nav__contador" aria-hidden="true">
+                  {{ item.contador > 99 ? '99+' : item.contador }}
+                </span>
+                <span class="ft-sr-only">{{ item.contador }} sin leer</span>
+              }
+            </a>
+          } @else {
+            <span class="nav__enlace nav__enlace--bloqueado" aria-disabled="true">
+              <mat-icon aria-hidden="true">{{ item.icono }}</mat-icon>
+              <span>{{ item.etiqueta }}</span>
+              <span class="nav__pronto">Pronto</span>
+            </span>
+          }
         }
-      }
-    </nav>
+      </nav>
 
-    <div class="sidenav__pie">
-      @if (perfil(); as p) {
-        <div class="sidenav__usuario">
-          <span class="sidenav__avatar" aria-hidden="true">
-            {{ p.nombres.charAt(0) }}{{ p.apellidos.charAt(0) }}
-          </span>
-          <div class="sidenav__datos">
-            <strong>{{ p.nombres }} {{ p.apellidos }}</strong>
-            <small>{{ etiquetasRol[p.rol] }}</small>
+      <div class="sidenav__pie">
+        @if (perfil(); as p) {
+          <div class="sidenav__usuario">
+            <span class="sidenav__avatar" aria-hidden="true">
+              {{ p.nombres.charAt(0) }}{{ p.apellidos.charAt(0) }}
+            </span>
+            <div class="sidenav__datos">
+              <strong>{{ p.nombres }} {{ p.apellidos }}</strong>
+              <small>{{ etiquetasRol[p.rol] }}</small>
+            </div>
           </div>
-        </div>
-      }
-      <button mat-button class="sidenav__salir" type="button" (click)="cerrarSesion()">
-        <mat-icon>logout</mat-icon>
-        Cerrar sesión
-      </button>
+        }
+        <button mat-button class="sidenav__salir" type="button" (click)="cerrarSesion()">
+          <mat-icon>logout</mat-icon>
+          Cerrar sesión
+        </button>
+      </div>
     </div>
   </mat-sidenav>
 

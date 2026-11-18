@@ -2,6 +2,61 @@
   display: block;
 }
 
+.solicitudes__cabecera {
+  position: relative;
+  overflow: hidden;
+  padding: 1.5rem;
+  border-color: transparent;
+  background: linear-gradient(110deg, #062657, #0e4789);
+  color: #fff;
+}
+.solicitudes__cabecera::after {
+  content: '';
+  position: absolute;
+  width: 12rem;
+  height: 12rem;
+  border: 1px solid #ffffff40;
+  border-radius: 50%;
+  right: -3rem;
+  top: -6rem;
+  pointer-events: none;
+}
+.solicitudes__cabecera h1 {
+  color: white;
+  font-weight: 800;
+}
+.solicitudes__cabecera .ft-eyebrow {
+  color: #a8d7ff;
+}
+.solicitudes__cabecera .ft-muted {
+  color: #e0ebf8;
+}
+.solicitudes__cabecera > * {
+  position: relative;
+  z-index: 1;
+}
+.solicitudes__filtros {
+  padding: 1.25rem;
+}
+.solicitud {
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+.solicitud:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--ft-shadow-md);
+}
+.solicitud__sin-imagen {
+  background: #e2efff;
+  color: var(--ft-primary-700);
+}
+.solicitud__sin-imagen mat-icon {
+  font-size: 2.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
 .solicitudes {
   width: min(100% - 2rem, var(--ft-content-max));
   margin-inline: auto;

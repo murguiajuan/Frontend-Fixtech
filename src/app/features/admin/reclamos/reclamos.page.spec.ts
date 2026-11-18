@@ -97,6 +97,19 @@ describe('AdminReclamosPage', () => {
     expect(texto).toContain('El equipo regresó con la misma falla al día siguiente.');
   });
 
+  it('prioriza reclamos por atender y cuenta solo los del resultado actual', async () => {
+    servicio.listar.mockReturnValue(
+      of([
+        crearReclamo({ id: 52, estado: 'CERRADO' }),
+        crearReclamo({ id: 51, estado: 'ABIERTO' }),
+      ]),
+    );
+    const fixture = await crear();
+    const elemento = fixture.nativeElement as HTMLElement;
+    expect(elemento.querySelector('.reclamo h2')?.textContent).toContain('Reclamo #51');
+    expect(contenido(fixture)).toContain('1 por atender en este listado');
+  });
+
   it('aplica el filtro de estado', async () => {
     const fixture = await crear();
     accederFormulario(fixture).controls['estado'].setValue('EN_REVISION');

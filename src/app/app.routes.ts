@@ -6,15 +6,15 @@ import { PublicLayout } from './core/layout/public-layout/public-layout';
 export const routes: Routes = [
   {
     path: '',
+    pathMatch: 'full',
+    title: 'FIXTECH | Soporte y Reparación Técnica',
+    loadComponent: () => import('./features/landing/landing.page').then((m) => m.LandingPage),
+  },
+  {
+    path: '',
     component: PublicLayout,
     canActivate: [guestGuard],
     children: [
-      {
-        path: '',
-        pathMatch: 'full',
-        title: 'FIXTECH | Soporte y Reparación Técnica',
-        loadComponent: () => import('./features/landing/landing.page').then((m) => m.LandingPage),
-      },
       {
         path: 'login',
         title: 'Iniciar sesión | FIXTECH',

@@ -1,13 +1,18 @@
 <div class="admin-comisiones ft-page">
   <header class="encabezado">
     <div>
-      <p class="ft-eyebrow">Administración</p>
       <h1>Comisiones y pagos</h1>
       <p class="ft-muted">
         Valida los pagos de comisiones enviados por los técnicos y revisa a los deudores con saldo
         pendiente o comisiones vencidas.
       </p>
     </div>
+    @if (porValidar() > 0) {
+      <span class="encabezado__pendientes" role="status">
+        <mat-icon aria-hidden="true">pending_actions</mat-icon>
+        {{ porValidar() }} por validar en este listado
+      </span>
+    }
   </header>
 
   <mat-tab-group animationDuration="0ms" class="tabs">
@@ -72,9 +77,13 @@
               <div>
                 <h2 id="titulo-listado-pagos">Pagos registrados</h2>
                 <p class="ft-muted" role="status">
-                  {{ pagos().length }} {{ pagos().length === 1 ? 'pago' : 'pagos' }}
-                  @if (hayFiltros()) {
-                    con los filtros aplicados
+                  @if (pagosResource.hasValue()) {
+                    {{ pagos().length }} {{ pagos().length === 1 ? 'pago' : 'pagos' }}
+                    @if (hayFiltros()) {
+                      con los filtros aplicados
+                    }
+                  } @else {
+                    Consultando pagos…
                   }
                 </p>
               </div>
@@ -83,7 +92,7 @@
               }
             </div>
 
-            @if (pagosResource.isLoading() && pagos().length === 0) {
+            @if (pagosResource.isLoading() && !pagosResource.hasValue()) {
               <div class="cargando" role="status">
                 <mat-spinner diameter="30" aria-hidden="true" />
                 <span>Cargando pagos…</span>
@@ -110,9 +119,13 @@
               </div>
             } @else {
               <ul class="pagos" aria-label="Pagos de comisiones registrados">
-                @for (pago of pagos(); track pago.id) {
+                @for (pago of pagosOrdenados(); track pago.id) {
                   <li>
-                    <article class="pago ft-card" [attr.aria-labelledby]="'pago-' + pago.id">
+                    <article
+                      class="pago ft-card"
+                      [class.pago--pendiente]="pago.estado === 'PENDIENTE'"
+                      [attr.aria-labelledby]="'pago-' + pago.id"
+                    >
                       <header class="pago__cabecera">
                         <div>
                           <h3 [id]="'pago-' + pago.id">Pago #{{ pago.id }}</h3>
@@ -266,25 +279,29 @@
       </div>
     </mat-tab>
 
-    <mat-tab [label]="'Deudores (' + deudores().length + ')'">
+    <mat-tab
+      [label]="deudoresResource.hasValue() ? 'Deudores (' + deudores().length + ')' : 'Deudores'"
+    >
       <div class="tab__contenido">
-        <section class="metricas" aria-label="Resumen de deudores">
-          <article class="metrica ft-card">
-            <mat-icon aria-hidden="true">account_balance_wallet</mat-icon>
-            <strong>{{ totalDeuda() | currency: 'PEN' : 'symbol-narrow' : '1.2-2' }}</strong>
-            <span>Deuda pendiente total</span>
-          </article>
-          <article class="metrica ft-card">
-            <mat-icon aria-hidden="true">lock</mat-icon>
-            <strong>{{ totalBloqueados() }}</strong>
-            <span>Técnicos bloqueados</span>
-          </article>
-          <article class="metrica ft-card">
-            <mat-icon aria-hidden="true">event_busy</mat-icon>
-            <strong>{{ totalVencidas() }}</strong>
-            <span>Comisiones vencidas</span>
-          </article>
-        </section>
+        @if (deudoresResource.hasValue()) {
+          <section class="metricas" aria-label="Resumen de deudores">
+            <article class="metrica ft-card">
+              <mat-icon aria-hidden="true">account_balance_wallet</mat-icon>
+              <strong>{{ totalDeuda() | currency: 'PEN' : 'symbol-narrow' : '1.2-2' }}</strong>
+              <span>Deuda pendiente total</span>
+            </article>
+            <article class="metrica ft-card">
+              <mat-icon aria-hidden="true">lock</mat-icon>
+              <strong>{{ totalBloqueados() }}</strong>
+              <span>Técnicos bloqueados</span>
+            </article>
+            <article class="metrica ft-card">
+              <mat-icon aria-hidden="true">event_busy</mat-icon>
+              <strong>{{ totalVencidas() }}</strong>
+              <span>Comisiones vencidas</span>
+            </article>
+          </section>
+        }
 
         <div class="ft-alert ft-alert--info" role="note">
           <mat-icon aria-hidden="true">info</mat-icon>
@@ -315,7 +332,7 @@
               Reintentar
             </button>
           </section>
-        } @else if (deudoresResource.isLoading() && deudores().length === 0) {
+        } @else if (deudoresResource.isLoading() && !deudoresResource.hasValue()) {
           <div class="cargando" role="status">
             <mat-spinner diameter="30" aria-hidden="true" />
             <span>Cargando deudores…</span>

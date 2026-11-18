@@ -40,7 +40,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  min-height: 4.25rem;
+  min-height: 5rem;
 }
 
 .publico__marca {
@@ -64,6 +64,20 @@
   display: flex;
   flex: 1;
   flex-direction: column;
+  background: radial-gradient(ellipse at 95% 5%, #e4efff, transparent 45%), #f6faff;
+}
+
+@media (max-width: 35.99rem) {
+  .publico__inicio {
+    display: none;
+  }
+  .publico__barra {
+    min-height: 4.5rem;
+  }
+  .publico__marca {
+    --ft-brand-icon-size: 2.25rem;
+    --ft-brand-text-size: 1.4rem;
+  }
 }
 
 .publico__pie {

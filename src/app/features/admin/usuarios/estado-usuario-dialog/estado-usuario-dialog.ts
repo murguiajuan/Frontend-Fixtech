@@ -112,6 +112,9 @@ export class EstadoUsuarioDialog {
   }
 
   protected enviar(): void {
+    if (this.enviando()) {
+      return;
+    }
     this.enviado.set(true);
     this.errorServidor.set(null);
     this.detallesError.set([]);

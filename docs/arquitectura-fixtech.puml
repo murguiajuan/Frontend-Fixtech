@@ -1,0 +1,80 @@
+@startuml
+!pragma layout smetana
+title FIXTECH — diagrama UML de componentes
+caption Backend monolítico modular; frontend Angular y MySQL son elementos separados
+
+skinparam backgroundColor white
+skinparam componentStyle uml2
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam packageStyle rectangle
+left to right direction
+
+actor "Cliente / Técnico / Admin" as User
+
+package "Frontend (aplicación independiente)" {
+  component "SPA Angular" as SPA
+  component "Rutas y pantallas\npor rol" as UI
+  component "Servicios HTTP\ny sesión" as HTTP
+  SPA --> UI
+  UI --> HTTP
+}
+
+package "Backend: un proceso Spring Boot / app.jar\n«monolito modular»" {
+  component "Spring Security\nJWT + roles" as Security
+  component "Controladores REST\n/api/*" as Controllers
+  component "Autenticación\ny usuarios" as Auth
+  component "Solicitudes\ny ofertas" as Requests
+  component "Servicios\ny seguimiento" as Work
+  component "Administración\ny comisiones" as Admin
+  component "Notificaciones\ny correo" as Notifications
+  component "Repositorios JPA" as Repos
+  component "ArchivoService" as Files
+
+  Security --> Controllers : autoriza peticiones
+  Controllers --> Auth
+  Controllers --> Requests
+  Controllers --> Work
+  Controllers --> Admin
+  Controllers --> Notifications
+  Auth --> Repos
+  Requests --> Repos
+  Work --> Repos
+  Admin --> Repos
+  Notifications --> Repos
+  Requests --> Files : fotos de solicitudes
+  Work --> Files : fotos de servicio
+}
+
+database "MySQL\nfixtech_db" as MySQL
+folder "Almacenamiento local\nde imágenes" as Uploads
+cloud "Servidor SMTP\n(opcional)" as SMTP
+
+User --> SPA : usa en navegador
+HTTP --> Security : HTTP /api · Bearer JWT
+Repos --> MySQL : JDBC
+Files --> Uploads : lee / escribe
+Notifications ..> SMTP : envía solo si está habilitado
+
+note bottom of Security
+  La API aplica autenticación y roles.
+  Los guards del frontend no sustituyen
+  esta autorización.
+end note
+
+note bottom of SMTP
+  Desactivado por defecto; requiere
+  configuración de correo y JavaMailSender.
+end note
+
+legend bottom
+  **Alcance:** componentes lógicos, no infraestructura de producción.
+  El compose del backend define app + MySQL y volúmenes; no despliega Angular.
+  Fuente frontend (HEAD 8a7f2df): src/app/app.routes.ts, app.config.ts,
+  src/app/core/auth/auth.interceptor.ts, src/environments/environment.prod.ts.
+  Fuente backend (HEAD bd305ab): FixtechApplication.java, Dockerfile,
+  compose.yaml, config/SecurityConfig.java, controller/*, service/*,
+  repository/*, src/main/resources/application.properties.
+  Ambos repositorios no tienen origin; hay cambios sin confirmar en frontend.
+endlegend
+@enduml

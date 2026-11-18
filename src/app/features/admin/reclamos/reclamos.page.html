@@ -1,13 +1,18 @@
 <div class="admin-reclamos ft-page">
   <header class="encabezado">
     <div>
-      <p class="ft-eyebrow">Administración</p>
       <h1>Reclamos</h1>
       <p class="ft-muted">
         Revisa los reclamos de los clientes, consulta las fotos y la respuesta del técnico, y
         registra la resolución con su seguimiento.
       </p>
     </div>
+    @if (pendientes() > 0) {
+      <span class="encabezado__pendientes" role="status">
+        <mat-icon aria-hidden="true">pending_actions</mat-icon>
+        {{ pendientes() }} por atender en este listado
+      </span>
+    }
   </header>
 
   <section class="panel-filtros ft-card" aria-labelledby="titulo-filtros-reclamos">
@@ -64,7 +69,7 @@
       </button>
     </section>
   } @else {
-    @if (reclamosResource.value(); as reclamos) {
+    @if (reclamosOrdenados(); as reclamos) {
       <section aria-labelledby="titulo-listado-reclamos">
         <div class="listado__cabecera">
           <div>
@@ -104,7 +109,13 @@
           <ul class="listado">
             @for (reclamo of reclamos; track reclamo.id) {
               <li>
-                <article class="reclamo ft-card" [attr.aria-labelledby]="'reclamo-' + reclamo.id">
+                <article
+                  class="reclamo ft-card"
+                  [class.reclamo--pendiente]="
+                    reclamo.estado === 'ABIERTO' || reclamo.estado === 'EN_REVISION'
+                  "
+                  [attr.aria-labelledby]="'reclamo-' + reclamo.id"
+                >
                   <header class="reclamo__cabecera">
                     <div>
                       <h2 [id]="'reclamo-' + reclamo.id">Reclamo #{{ reclamo.id }}</h2>
@@ -128,6 +139,9 @@
                       mat-stroked-button
                       type="button"
                       [attr.aria-expanded]="esExpandido(reclamo.id)"
+                      [attr.aria-controls]="
+                        esExpandido(reclamo.id) ? 'detalle-panel-' + reclamo.id : null
+                      "
                       (click)="alternarDetalle(reclamo)"
                     >
                       <mat-icon aria-hidden="true">
@@ -140,6 +154,7 @@
                   @if (esExpandido(reclamo.id)) {
                     <section
                       class="detalle"
+                      [id]="'detalle-panel-' + reclamo.id"
                       [attr.aria-labelledby]="'detalle-reclamo-' + reclamo.id"
                     >
                       <h3 [id]="'detalle-reclamo-' + reclamo.id">Detalle del reclamo</h3>
@@ -154,7 +169,11 @@
                           <mat-icon aria-hidden="true">error_outline</mat-icon>
                           <div class="detalle__error">
                             <p>{{ mensaje }}</p>
-                            <button mat-stroked-button type="button" (click)="recargar()">
+                            <button
+                              mat-stroked-button
+                              type="button"
+                              (click)="reintentarDetalle(reclamo.id)"
+                            >
                               <mat-icon aria-hidden="true">refresh</mat-icon>
                               Reintentar
                             </button>
@@ -251,6 +270,11 @@
           </ul>
         }
       </section>
+    } @else {
+      <div class="estado-panel ft-card" role="status" aria-live="polite">
+        <mat-spinner diameter="40" aria-label="Cargando reclamos" />
+        <p class="ft-muted">Cargando reclamos…</p>
+      </div>
     }
   }
 </div>

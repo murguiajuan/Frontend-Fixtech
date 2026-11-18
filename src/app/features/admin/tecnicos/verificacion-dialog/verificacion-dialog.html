@@ -33,6 +33,11 @@
   }
 
   <form id="form-verificacion" [formGroup]="formulario" (ngSubmit)="enviar()" novalidate>
+    @if (sinCambios()) {
+      <p class="decision__aviso" role="status">
+        Este ya es el estado del técnico. Elige otra decisión para actualizarlo.
+      </p>
+    }
     <fieldset class="decision">
       <legend id="leyenda-decision">Decisión de verificación</legend>
       <mat-radio-group
@@ -42,7 +47,11 @@
         (change)="actualizarValidacionMotivo()"
       >
         @for (opcion of opciones; track opcion.valor) {
-          <mat-radio-button class="decision__opcion" [value]="opcion.valor">
+          <mat-radio-button
+            class="decision__opcion"
+            [class.decision__opcion--seleccionada]="estadoSeleccionado() === opcion.valor"
+            [value]="opcion.valor"
+          >
             <span class="decision__contenido">
               <mat-icon aria-hidden="true">{{ opcion.icono }}</mat-icon>
               <span class="decision__texto">
@@ -56,15 +65,12 @@
     </fieldset>
 
     @if (estadoSeleccionado() === 'APROBADO') {
-      <div class="ft-alert ft-alert--info" role="status">
+      <p class="decision__nota" role="status">
         <mat-icon aria-hidden="true">info</mat-icon>
-        <p>
-          La aprobación no requiere motivo. El técnico podrá operar en la plataforma y recibirá una
-          notificación.
-        </p>
-      </div>
+        La aprobación no requiere motivo. Se notificará al técnico al guardar.
+      </p>
     } @else {
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" [class.dialogo__campo--error]="mostrarErrorMotivo()">
         <mat-label>
           {{
             estadoSeleccionado() === 'OBSERVADO' ? 'Motivo de la observación' : 'Motivo del rechazo'
@@ -111,7 +117,7 @@
     type="submit"
     form="form-verificacion"
     [color]="estadoSeleccionado() === 'RECHAZADO' ? 'warn' : 'primary'"
-    [disabled]="enviando()"
+    [disabled]="enviando() || sinCambios()"
   >
     @if (enviando()) {
       <mat-spinner diameter="18" aria-label="Guardando verificación" />

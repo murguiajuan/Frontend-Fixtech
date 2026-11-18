@@ -1,5 +1,4 @@
 @use '@angular/material' as mat;
-@use 'tailwindcss';
 
 // =====================================================================
 // Tipografías locales
@@ -17,9 +16,9 @@
 @font-face {
   font-family: 'Material Symbols Outlined';
   font-style: normal;
-  font-weight: 100 700;
+  font-weight: 400;
   font-display: block;
-  src: url('/fonts/material-symbols-outlined.woff2') format('woff2');
+  src: url('/fonts/fixtech-symbols.woff2') format('woff2');
 }
 
 // Clase que Angular Material aplica a <mat-icon> al detectar la familia.
@@ -47,35 +46,61 @@ html {
   @include mat.theme(
     (
       color: (
-        primary: mat.$cyan-palette,
+        primary: mat.$azure-palette,
         tertiary: mat.$orange-palette,
       ),
       typography: Roboto,
       density: 0,
     )
   );
+  @include mat.theme-overrides(
+    (
+      primary: #0865d9,
+      on-primary: #ffffff,
+      primary-container: #e2efff,
+      on-primary-container: #062657,
+      tertiary: #b74400,
+      on-tertiary: #ffffff,
+      tertiary-container: #ffeadb,
+      on-tertiary-container: #672600,
+      surface: #f6faff,
+      on-surface: #07152f,
+      on-surface-variant: #4d617b,
+      outline: #73849b,
+      outline-variant: #d7e4f2,
+    )
+  );
 }
 
 :root {
-  --ft-primary-950: #032b38;
-  --ft-primary-900: #063746;
-  --ft-primary-800: #08485b;
-  --ft-primary-700: #0a5b73;
-  --ft-primary-600: #0d718d;
-  --ft-primary-500: #1089a8;
-  --ft-primary-100: #d8eef4;
-  --ft-primary-50: #eef8fa;
+  --ft-primary-950: #07152f;
+  --ft-primary-900: #062657;
+  --ft-primary-800: #104781;
+  --ft-primary-700: #075aad;
+  --ft-primary-600: #0865d9;
+  --ft-primary-500: #0876e5;
+  --ft-primary-100: #e2efff;
+  --ft-primary-50: #f0f7ff;
 
-  --ft-accent-600: #d97706;
-  --ft-accent-500: #f59e0b;
-  --ft-accent-100: #fef3c7;
+  --ft-accent-600: #b74400;
+  --ft-accent-500: #ff6900;
+  --ft-accent-100: #ffeadb;
+  --ft-on-accent: #07152f;
 
-  --ft-surface: #f4f8fa;
+  --ft-surface: #f6faff;
   --ft-surface-raised: #ffffff;
-  --ft-surface-muted: #e8f0f4;
-  --ft-on-surface: #102a33;
-  --ft-on-surface-muted: #526a74;
-  --ft-border: #d7e3e8;
+  --ft-surface-muted: #eaf1f9;
+  --ft-on-surface: #07152f;
+  --ft-on-surface-muted: #4d617b;
+  --ft-border: #d7e4f2;
+  --ft-focus: #0865d9;
+  --ft-space-1: 0.25rem;
+  --ft-space-2: 0.5rem;
+  --ft-space-3: 0.75rem;
+  --ft-space-4: 1rem;
+  --ft-space-6: 1.5rem;
+  --ft-space-8: 2rem;
+  --ft-motion-fast: 160ms;
 
   --ft-success: #177245;
   --ft-success-bg: #e6f4ec;
@@ -108,7 +133,7 @@ body {
 
 body {
   background:
-    radial-gradient(circle at 100% 0%, rgb(216 238 244 / 65%), transparent 26rem), var(--ft-surface);
+    radial-gradient(circle at 100% 0%, rgb(226 239 255 / 65%), transparent 26rem), var(--ft-surface);
   color: var(--ft-on-surface);
   font: var(--mat-sys-body-medium);
   font-family: Roboto, 'Helvetica Neue', sans-serif;
@@ -151,7 +176,7 @@ textarea {
 }
 
 :focus-visible {
-  outline: 3px solid rgb(16 137 168 / 55%);
+  outline: 3px solid var(--ft-focus);
   outline-offset: 3px;
 }
 
@@ -203,6 +228,36 @@ textarea {
   border-radius: var(--ft-radius-lg);
   background: var(--ft-surface-raised);
   box-shadow: var(--ft-shadow-sm);
+}
+
+// Acciones destacadas: aplicar explícitamente, sin afectar acciones destructivas.
+.ft-action-accent {
+  @include mat.button-overrides(
+    (
+      filled-container-color: var(--ft-accent-500),
+      filled-label-text-color: var(--ft-on-accent),
+    )
+  );
+}
+
+.ft-page-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ft-space-4);
+}
+
+.ft-page-heading h1 {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 800;
+}
+
+.ft-page-heading p {
+  margin-top: var(--ft-space-2);
+  color: var(--ft-on-surface-muted);
+  max-width: 65ch;
+  line-height: 1.5;
 }
 
 .ft-alert {

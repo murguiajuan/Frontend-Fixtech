@@ -24,3 +24,15 @@ mat-spinner {
   display: inline-block;
   margin-right: 0.35rem;
 }
+
+@media (max-width: 29.999rem) {
+  mat-dialog-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    padding-inline: 1rem;
+  }
+
+  mat-dialog-actions button {
+    width: 100%;
+  }
+}

@@ -1,0 +1,125 @@
+@use '@angular/material' as mat;
+
+// Misma estructura visual para login, registro y los tres pasos OTP.
+@mixin pantalla($prefijo, $amplia: false) {
+  :host {
+    @include mat.form-field-overrides(
+      (
+        outlined-container-shape: 12px,
+        outlined-outline-color: #b8c9dc,
+        outlined-hover-outline-color: #075aad,
+        outlined-focus-outline-color: #0865d9,
+        outlined-label-text-color: #4d617b,
+      )
+    );
+    @include mat.button-overrides(
+      (
+        filled-container-shape: 12px,
+      )
+    );
+  }
+
+  .#{$prefijo} {
+    width: min(100% - 2rem, 72rem);
+    padding-block: 2rem 3rem;
+    gap: 1.5rem;
+    align-items: start;
+    min-height: auto;
+  }
+  .#{$prefijo}__presentacion {
+    display: block;
+    min-width: 0;
+    position: static;
+  }
+  .#{$prefijo}__panel {
+    min-width: 0;
+    max-width: none;
+    border: 1px solid #dce7f4;
+    border-radius: 1.5rem;
+    padding: 2rem;
+    background: white;
+    box-shadow: 0 12px 45px rgb(6 38 87 / 6%);
+  }
+  .#{$prefijo}__encabezado {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+  }
+  .#{$prefijo}__encabezado h1 {
+    font-size: clamp(1.55rem, 2.5vw, 2rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+  }
+  .#{$prefijo}__encabezado p {
+    margin-top: 0.5rem;
+    line-height: 1.6;
+  }
+  .#{$prefijo}__icono {
+    background: #eaf3ff;
+    color: #0865d9;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 1rem;
+  }
+  .#{$prefijo}__submit {
+    min-height: 3.25rem;
+    font-size: 0.95rem;
+    box-shadow: 0 5px 14px #0865d91a;
+  }
+  .#{$prefijo}__alternativa,
+  .#{$prefijo}__volver {
+    line-height: 1.65;
+  }
+  .#{$prefijo}__seccion {
+    padding: 1.25rem;
+    border: 1px solid var(--ft-border);
+    border-radius: 1rem;
+    background: #fbfdff;
+  }
+  .#{$prefijo}__seccion-cabecera h2 {
+    font-size: 1.05rem;
+  }
+
+  @media (min-width: 56rem) {
+    .#{$prefijo} {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      @if $amplia {
+        grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+      }
+      padding-block: 2.5rem 3rem;
+      gap: 2rem;
+    }
+    .#{$prefijo}__presentacion {
+      position: sticky;
+      top: 6.5rem;
+    }
+    .#{$prefijo}__panel {
+      padding: 2.5rem;
+    }
+  }
+  @media (max-width: 35.99rem) {
+    .#{$prefijo} {
+      gap: 1rem;
+      padding-block: 1rem 2rem;
+    }
+    .#{$prefijo}__panel {
+      padding: 1.5rem 1.25rem;
+      border-radius: 1rem;
+    }
+    .#{$prefijo}__encabezado {
+      flex-direction: row;
+      gap: 0.85rem;
+      margin-bottom: 1.5rem;
+    }
+    .#{$prefijo}__encabezado h1 {
+      font-size: 1.4rem;
+    }
+    .#{$prefijo}__encabezado p {
+      font-size: 0.8rem;
+    }
+    .#{$prefijo}__seccion {
+      padding: 1rem 0.75rem;
+    }
+  }
+}

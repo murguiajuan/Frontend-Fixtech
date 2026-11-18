@@ -1,5 +1,11 @@
 import { Component, computed, inject } from '@angular/core';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -16,6 +22,12 @@ export interface ResolucionReclamoData {
 
 export interface ResolucionReclamoResultado {
   readonly resolucion: string;
+}
+
+function resolucionNoVacia(control: AbstractControl): ValidationErrors | null {
+  return typeof control.value === 'string' && control.value.trim() !== ''
+    ? null
+    : { required: true };
 }
 
 @Component({
@@ -42,7 +54,12 @@ export interface ResolucionReclamoResultado {
       </div>
 
       <form id="form-resolucion" [formGroup]="formulario" (ngSubmit)="enviar()" novalidate>
-        <mat-form-field appearance="outline">
+        <mat-form-field
+          appearance="outline"
+          [class.resolucion__campo--error]="
+            formulario.controls.resolucion.invalid && formulario.controls.resolucion.touched
+          "
+        >
           <mat-label>Resolución del reclamo</mat-label>
           <textarea
             matInput
@@ -104,6 +121,10 @@ export interface ResolucionReclamoResultado {
       width: 100%;
     }
 
+    .resolucion__campo--error {
+      margin-bottom: 1.4rem;
+    }
+
     mat-dialog-actions {
       flex-wrap: wrap;
       gap: 0.5rem;
@@ -120,7 +141,7 @@ export class ResolucionReclamoDialog {
   private readonly datos = inject<ResolucionReclamoData>(MAT_DIALOG_DATA);
 
   protected readonly formulario = this.fb.group({
-    resolucion: [this.datos.resolucionActual, [Validators.required, Validators.maxLength(1000)]],
+    resolucion: [this.datos.resolucionActual, [resolucionNoVacia, Validators.maxLength(1000)]],
   });
 
   protected readonly titulo = computed(() =>

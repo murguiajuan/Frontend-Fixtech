@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, ElementRef, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { rxResource } from '@angular/core/rxjs-interop';
 import {
@@ -23,6 +23,8 @@ import {
   ClaveParametro,
   DEFINICIONES_PARAMETRO,
   DefinicionParametro,
+  GRUPOS_PARAMETRO,
+  GrupoParametros,
   ParametroSistema,
   ParametrosUpdateRequest,
   errorValorParametro,
@@ -33,6 +35,12 @@ type ControlesParametros = Record<ClaveParametro, FormControl<string>>;
 interface ParametroVista {
   readonly definicion: DefinicionParametro;
   readonly parametro: ParametroSistema | null;
+  readonly cambiado: boolean;
+}
+
+interface GrupoVista extends GrupoParametros {
+  readonly parametros: readonly ParametroVista[];
+  readonly cambios: number;
 }
 
 const FORMATO_NUMERO = new Intl.NumberFormat('es-PE', { maximumFractionDigits: 4 });
@@ -62,6 +70,7 @@ export class AdminParametrosPage {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly adminParametros = inject(AdminParametrosService);
   private readonly notificaciones = inject(NotificacionService);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   protected readonly definiciones = DEFINICIONES_PARAMETRO;
   protected readonly formulario = this.crearFormulario();
@@ -79,6 +88,10 @@ export class AdminParametrosPage {
     return fallo === undefined ? null : normalizarError(fallo);
   });
 
+  protected readonly cargandoInicial = computed(
+    () => this.parametrosResource.isLoading() && !this.parametrosResource.hasValue(),
+  );
+
   protected readonly sinParametros = computed(() => {
     const parametros = this.parametrosResource.value();
     return parametros !== undefined && parametros.length === 0;
@@ -88,41 +101,39 @@ export class AdminParametrosPage {
     this.parametrosResource.hasValue() ? this.parametrosResource.value() : [],
   );
 
-  protected readonly parametrosVista = computed<readonly ParametroVista[]>(() => {
-    const porClave = new Map(
-      this.parametrosCargados().map((parametro) => [parametro.clave, parametro]),
-    );
-    return DEFINICIONES_PARAMETRO.map((definicion) => ({
-      definicion,
-      parametro: porClave.get(definicion.clave) ?? null,
-    }));
-  });
+  private readonly parametrosPorClave = computed<ReadonlyMap<string, ParametroSistema>>(
+    () => new Map(this.parametrosCargados().map((parametro) => [parametro.clave, parametro])),
+  );
 
   private readonly cambios = toSignal(this.formulario.valueChanges, {
     initialValue: this.formulario.getRawValue(),
   });
 
-  protected readonly hayCambios = computed(() => {
+  protected readonly gruposVista = computed<readonly GrupoVista[]>(() => {
     const valores = this.cambios();
-    const porClave = new Map(
-      this.parametrosCargados().map((parametro) => [parametro.clave, parametro.valor]),
-    );
-    return DEFINICIONES_PARAMETRO.some(
-      (definicion) =>
-        (valores[definicion.clave] ?? '').trim() !== (porClave.get(definicion.clave) ?? ''),
-    );
+    const porClave = this.parametrosPorClave();
+    return GRUPOS_PARAMETRO.map((grupo) => {
+      const parametros = DEFINICIONES_PARAMETRO.filter(
+        (definicion) => definicion.grupo === grupo.id,
+      ).map<ParametroVista>((definicion) => {
+        const parametro = porClave.get(definicion.clave) ?? null;
+        const valor = (valores[definicion.clave] ?? '').trim();
+        const original = parametro?.valor ?? '';
+        return { definicion, parametro, cambiado: valor !== original };
+      });
+      return {
+        ...grupo,
+        parametros,
+        cambios: parametros.filter((parametro) => parametro.cambiado).length,
+      };
+    });
   });
 
-  protected readonly cambiosPendientes = computed(() => {
-    const valores = this.cambios();
-    const porClave = new Map(
-      this.parametrosCargados().map((parametro) => [parametro.clave, parametro.valor]),
-    );
-    return DEFINICIONES_PARAMETRO.filter(
-      (definicion) =>
-        (valores[definicion.clave] ?? '').trim() !== (porClave.get(definicion.clave) ?? ''),
-    ).length;
-  });
+  protected readonly cambiosPendientes = computed(() =>
+    this.gruposVista().reduce((total, grupo) => total + grupo.cambios, 0),
+  );
+
+  protected readonly hayCambios = computed(() => this.cambiosPendientes() > 0);
 
   constructor() {
     effect(() => {
@@ -149,11 +160,19 @@ export class AdminParametrosPage {
 
   protected porcentajeComision(): string | null {
     const valor = this.formulario.controls.comision_porcentaje.value.trim();
-    const definicion = DEFINICIONES_PARAMETRO[0];
-    if (errorValorParametro(definicion, valor) !== null) {
+    const definicion = DEFINICIONES_PARAMETRO.find(
+      (candidata) => candidata.clave === 'comision_porcentaje',
+    );
+    if (definicion === undefined || errorValorParametro(definicion, valor) !== null) {
       return null;
     }
     return FORMATO_NUMERO.format(Number(valor) * 100);
+  }
+
+  protected camposInvalidos(): number {
+    return DEFINICIONES_PARAMETRO.filter(
+      (definicion) => this.formulario.controls[definicion.clave].invalid,
+    ).length;
   }
 
   protected guardar(): void {
@@ -162,6 +181,7 @@ export class AdminParametrosPage {
     this.detallesError.set([]);
     if (this.formulario.invalid) {
       this.formulario.markAllAsTouched();
+      this.enfocarPrimerInvalido();
       return;
     }
 
@@ -186,9 +206,9 @@ export class AdminParametrosPage {
     this.adminParametros.actualizar(solicitud).subscribe({
       next: (actualizados) => {
         this.guardando.set(false);
+        this.parametrosResource.set(actualizados);
         this.cargarValores(actualizados);
         this.notificaciones.exito('Los parámetros se actualizaron correctamente.');
-        this.parametrosResource.reload();
       },
       error: (fallo: unknown) => {
         const apiError = normalizarError(fallo);
@@ -227,6 +247,17 @@ export class AdminParametrosPage {
       this.formulario.controls[definicion.clave].setValue(porClave.get(definicion.clave) ?? '');
     }
     this.formulario.markAsPristine();
+    this.formulario.markAsUntouched();
     this.enviado.set(false);
+  }
+
+  private enfocarPrimerInvalido(): void {
+    const definicion = DEFINICIONES_PARAMETRO.find(
+      (candidata) => this.formulario.controls[candidata.clave].invalid,
+    );
+    if (definicion === undefined) {
+      return;
+    }
+    this.host.nativeElement.querySelector<HTMLElement>(`#parametro-${definicion.clave}`)?.focus();
   }
 }

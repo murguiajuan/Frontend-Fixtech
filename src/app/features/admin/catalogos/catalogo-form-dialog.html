@@ -34,6 +34,8 @@
         <mat-error>
           @if (formulario.controls.nombre.hasError('required')) {
             El nombre es obligatorio.
+          } @else if (formulario.controls.nombre.hasError('sinContenido')) {
+            El nombre no puede estar vacío.
           } @else {
             El nombre no puede superar los {{ opcion.maxNombre }} caracteres.
           }
@@ -83,6 +85,8 @@
           <mat-error>
             @if (formulario.controls.provincia.hasError('required')) {
               La provincia es obligatoria.
+            } @else if (formulario.controls.provincia.hasError('sinContenido')) {
+              La provincia no puede estar vacía.
             } @else {
               La provincia no puede superar los {{ maxProvincia }} caracteres.
             }
@@ -124,8 +128,22 @@
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  <button mat-button type="button" [disabled]="enviando()" (click)="cancelar()">Cancelar</button>
-  <button mat-flat-button type="submit" form="form-catalogo" [disabled]="enviando()">
+  <button
+    mat-button
+    class="catalogo-form__cancelar"
+    type="button"
+    [disabled]="enviando()"
+    (click)="cancelar()"
+  >
+    Cancelar
+  </button>
+  <button
+    mat-flat-button
+    class="catalogo-form__guardar"
+    type="submit"
+    form="form-catalogo"
+    [disabled]="enviando()"
+  >
     @if (enviando()) {
       <mat-spinner diameter="18" aria-label="Guardando catálogo" />
     } @else {

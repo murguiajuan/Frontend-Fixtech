@@ -4,15 +4,16 @@
   <app-aviso-conexion />
   <header class="publico__cabecera">
     <div class="ft-container publico__barra">
-      <a class="publico__marca" routerLink="/login">
+      <a class="publico__marca" routerLink="/">
         <app-brand />
       </a>
       <nav class="publico__acciones" aria-label="Acceso a la cuenta">
+        <a class="publico__inicio" mat-button routerLink="/">Volver al inicio</a>
         @if (!enLogin()) {
           <a mat-button routerLink="/login">Iniciar sesión</a>
         }
         @if (!enRegistro()) {
-          <a mat-flat-button routerLink="/registro">Crear cuenta</a>
+          <a mat-flat-button class="ft-action-accent" routerLink="/registro">Crear cuenta</a>
         }
       </nav>
     </div>

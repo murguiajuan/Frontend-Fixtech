@@ -1,5 +1,6 @@
 import {
   DEFINICIONES_PARAMETRO,
+  GRUPOS_PARAMETRO,
   definicionParametro,
   errorValorParametro,
 } from './parametros.models';
@@ -17,6 +18,18 @@ describe('modelo de parámetros', () => {
     expect(DEFINICIONES_PARAMETRO).toHaveLength(13);
     expect(new Set(DEFINICIONES_PARAMETRO.map((definicion) => definicion.clave)).size).toBe(13);
     expect(definicionParametro('clave_inexistente')).toBeNull();
+  });
+
+  it('asigna cada parámetro a un grupo visible sin perder claves', () => {
+    const grupos = new Set(GRUPOS_PARAMETRO.map((grupo) => grupo.id));
+    expect(grupos.size).toBe(GRUPOS_PARAMETRO.length);
+    for (const definicion of DEFINICIONES_PARAMETRO) {
+      expect(grupos.has(definicion.grupo)).toBe(true);
+    }
+    const agrupadas = GRUPOS_PARAMETRO.flatMap((grupo) =>
+      DEFINICIONES_PARAMETRO.filter((definicion) => definicion.grupo === grupo.id),
+    );
+    expect(agrupadas).toHaveLength(DEFINICIONES_PARAMETRO.length);
   });
 
   it('valida un porcentaje decimal dentro del rango y con su escala', () => {

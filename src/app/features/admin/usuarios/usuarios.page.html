@@ -1,12 +1,18 @@
 <div class="admin-usuarios ft-page">
   <header class="encabezado">
     <div>
-      <p class="ft-eyebrow">Administración</p>
       <h1>Usuarios y accesos</h1>
       <p class="ft-muted">
         Consulta las cuentas registradas y suspende o reactiva el acceso de clientes y técnicos.
       </p>
     </div>
+    @if (suspendidos() > 0) {
+      <span class="encabezado__suspendidos" role="status">
+        <mat-icon aria-hidden="true">person_off</mat-icon>
+        {{ suspendidos() }} {{ suspendidos() === 1 ? 'cuenta suspendida' : 'cuentas suspendidas' }}
+        en este listado
+      </span>
+    }
   </header>
 
   <section class="panel-filtros ft-card" aria-labelledby="titulo-filtros-usuarios">
@@ -59,7 +65,6 @@
           autocomplete="off"
           placeholder="Nombre o correo"
         />
-        <mat-hint>Puedes buscar por nombre o correo electrónico.</mat-hint>
         @if (formularioFiltros.controls.busqueda.hasError('maxlength')) {
           <mat-error>La búsqueda no puede superar los 120 caracteres.</mat-error>
         }
@@ -90,7 +95,8 @@
       </button>
     </section>
   } @else {
-    @if (usuariosResource.value(); as usuarios) {
+    @if (usuariosResource.hasValue()) {
+      @let usuarios = usuariosResource.value();
       <section aria-labelledby="titulo-listado-usuarios">
         <div class="listado__cabecera">
           <div>
@@ -110,8 +116,7 @@
 
         <p class="nota-protegidas">
           <mat-icon aria-hidden="true">shield</mat-icon>
-          Las cuentas administradoras y tu propia cuenta están protegidas: su estado no puede
-          cambiarse desde esta pantalla.
+          Las cuentas administradoras y tu cuenta no pueden modificarse desde aquí.
         </p>
 
         @if (usuarios.length === 0) {

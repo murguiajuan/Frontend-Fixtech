@@ -102,6 +102,16 @@ describe('AdminUsuariosPage', () => {
     expect(compilado.textContent).toContain('Suspendido');
     expect(compilado.textContent).toContain('suspendido@fixtech.pe');
     expect(compilado.textContent).toContain('Incumplimiento de las normas.');
+    expect(compilado.textContent).toContain('1 cuenta suspendida en este listado');
+  });
+
+  it('cuenta únicamente los suspendidos incluidos en el resultado filtrado', async () => {
+    servicio.listar.mockReturnValue(of([CLIENTE]));
+    const fixture = await crear();
+    const compilado = fixture.nativeElement as HTMLElement;
+
+    expect(compilado.textContent).toContain('1 usuario');
+    expect(compilado.textContent).not.toContain('cuenta suspendida en este listado');
   });
 
   it('protege las cuentas administradoras y la cuenta propia', async () => {

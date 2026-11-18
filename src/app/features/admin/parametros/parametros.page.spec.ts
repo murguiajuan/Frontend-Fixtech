@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { NotificacionService } from '../../../shared/ui/notificacion.service';
 import { AdminParametrosService } from '../services/admin-parametros.service';
 import { AdminParametrosPage } from './parametros.page';
@@ -61,12 +61,11 @@ describe('AdminParametrosPage', () => {
     expect(texto).toContain('Usuario #1');
   });
 
-  it('envía solo los parámetros modificados y recarga la lista', async () => {
+  it('envía solo los parámetros modificados y usa la respuesta sin recargar', async () => {
     const actualizados = PARAMETROS.map((parametro) =>
       parametro.clave === 'comision_porcentaje' ? { ...parametro, valor: '0.0700' } : parametro,
     );
     servicio.actualizar.mockReturnValue(of(actualizados));
-    servicio.listar.mockReturnValueOnce(of(PARAMETROS)).mockReturnValue(of(actualizados));
     const fixture = await crear();
 
     escribirValor(fixture, 0, '0.0700');
@@ -84,8 +83,64 @@ describe('AdminParametrosPage', () => {
     expect(notificaciones.exito).toHaveBeenCalledWith(
       'Los parámetros se actualizaron correctamente.',
     );
-    expect(servicio.listar).toHaveBeenCalledTimes(2);
+    expect(servicio.listar).toHaveBeenCalledTimes(1);
     expect(contenido(fixture)).toContain('No hay cambios pendientes.');
+    expect(contenido(fixture)).toContain('Equivale a 7 % del servicio.');
+  });
+
+  it('agrupa los parámetros y marca los cambios por grupo y por campo', async () => {
+    const fixture = await crear();
+    const host = fixture.nativeElement as HTMLElement;
+
+    expect(contenido(fixture)).toContain('Comisiones y pagos');
+    expect(contenido(fixture)).toContain('Solicitudes y servicios');
+    expect(contenido(fixture)).toContain('Reseñas y calidad');
+    expect(host.querySelectorAll('.parametro')).toHaveLength(13);
+
+    escribirValor(fixture, 0, '0.0700');
+    fixture.detectChanges();
+
+    expect(contenido(fixture)).toContain('1 cambio pendiente');
+    expect(contenido(fixture)).toContain('1 sin guardar');
+    expect(host.querySelectorAll('.parametro--cambiado')).toHaveLength(1);
+  });
+
+  it('enfoca el primer valor inválido y muestra el resumen de validación', async () => {
+    const fixture = await crear();
+    const host = fixture.nativeElement as HTMLElement;
+    const primerValor = host.querySelector<HTMLInputElement>('#parametro-comision_porcentaje');
+    expect(primerValor).not.toBeNull();
+    if (primerValor === null) {
+      return;
+    }
+    const enfoque = vi.spyOn(primerValor, 'focus');
+
+    escribirValor(fixture, 0, '2');
+    fixture.detectChanges();
+    enviar(fixture);
+    fixture.detectChanges();
+
+    expect(contenido(fixture)).toContain('1 valor que requiere revisión');
+    expect(servicio.actualizar).not.toHaveBeenCalled();
+    expect(enfoque).toHaveBeenCalled();
+  });
+
+  it('muestra la carga inicial sin formulario y lo renderiza al recibir datos', async () => {
+    const respuesta = new Subject<readonly ParametroSistema[]>();
+    servicio.listar.mockReturnValue(respuesta.asObservable());
+    const fixture = TestBed.createComponent(AdminParametrosPage);
+    fixture.detectChanges();
+
+    expect(contenido(fixture)).toContain('Cargando parámetros');
+    expect((fixture.nativeElement as HTMLElement).querySelector('form')).toBeNull();
+
+    respuesta.next(PARAMETROS);
+    respuesta.complete();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(contenido(fixture)).toContain('Comisión de FIXTECH');
   });
 
   it('descarta los cambios locales y restaura los valores cargados', async () => {
@@ -137,12 +192,20 @@ describe('AdminParametrosPage', () => {
     expect(valores(fixture)[0]).toBe('0.0700');
   });
 
-  it('muestra el estado vacío cuando la API no devuelve parámetros', async () => {
-    servicio.listar.mockReturnValue(of([]));
+  it('muestra el estado vacío y permite volver a consultar', async () => {
+    servicio.listar.mockReturnValueOnce(of([])).mockReturnValue(of(PARAMETROS));
     const fixture = await crear();
 
     expect(contenido(fixture)).toContain('No hay parámetros configurados');
     expect((fixture.nativeElement as HTMLElement).querySelector('form')).toBeNull();
+
+    pulsarBoton(fixture.nativeElement, 'Volver a consultar');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(servicio.listar).toHaveBeenCalledTimes(2);
+    expect(contenido(fixture)).toContain('Comisión de FIXTECH');
   });
 
   it('muestra el error de carga y permite reintentar', async () => {

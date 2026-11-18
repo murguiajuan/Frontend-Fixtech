@@ -1,4 +1,5 @@
 import { DecimalPipe } from '@angular/common';
+import { AuthPresentacion } from '../auth-presentacion';
 import { Component, computed, inject, signal } from '@angular/core';
 import {
   AbstractControl,
@@ -42,6 +43,7 @@ type CampoSeleccion = 'especialidadIds' | 'distritoIds';
 @Component({
   selector: 'app-registro-tecnico-page',
   imports: [
+    AuthPresentacion,
     DecimalPipe,
     ReactiveFormsModule,
     RouterLink,

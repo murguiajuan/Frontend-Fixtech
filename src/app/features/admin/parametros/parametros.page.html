@@ -27,7 +27,7 @@
         Reintentar
       </button>
     </section>
-  } @else if (parametrosResource.isLoading()) {
+  } @else if (cargandoInicial()) {
     <div class="estado-panel ft-card" role="status" aria-live="polite">
       <mat-spinner diameter="40" aria-label="Cargando parámetros" />
       <p class="ft-muted">Cargando parámetros…</p>
@@ -39,82 +39,138 @@
       <p class="ft-muted">
         La API no devolvió parámetros del sistema. Verifica la configuración inicial del backend.
       </p>
+      <div class="estado-panel__acciones">
+        <button mat-stroked-button type="button" (click)="recargar()">
+          <mat-icon aria-hidden="true">refresh</mat-icon>
+          Volver a consultar
+        </button>
+      </div>
     </section>
   } @else {
     <div class="ft-alert ft-alert--info" role="status">
       <mat-icon aria-hidden="true">info</mat-icon>
       <p>
-        Los valores se validan con los mismos rangos del backend. Si un valor no cambia, no se envía
-        ni se registra en la auditoría.
+        Los valores se validan con los mismos rangos del backend. Solo se envían los campos
+        modificados y cada cambio queda registrado en la auditoría.
       </p>
     </div>
 
     <form [formGroup]="formulario" (ngSubmit)="guardar()" novalidate>
-      <div class="parametros">
-        @for (vista of parametrosVista(); track vista.definicion.clave) {
-          <article
-            class="parametro ft-card"
-            [attr.aria-labelledby]="'titulo-parametro-' + vista.definicion.clave"
-          >
-            <div class="parametro__cabecera">
-              <div>
-                <h2 [id]="'titulo-parametro-' + vista.definicion.clave">
-                  {{ vista.definicion.etiqueta }}
-                </h2>
-                <p class="ft-muted">{{ vista.definicion.ayuda }}</p>
+      <div class="grupos">
+        @for (grupo of gruposVista(); track grupo.id) {
+          <section class="grupo" [attr.aria-labelledby]="'grupo-' + grupo.id">
+            <header class="grupo__cabecera">
+              <span class="grupo__icono" aria-hidden="true">
+                <mat-icon>{{ grupo.icono }}</mat-icon>
+              </span>
+              <div class="grupo__identidad">
+                <div class="grupo__titulo">
+                  <h2 [id]="'grupo-' + grupo.id">{{ grupo.etiqueta }}</h2>
+                  @if (grupo.cambios > 0) {
+                    <span class="grupo__cambios">{{ grupo.cambios }} sin guardar</span>
+                  }
+                </div>
+                <p class="ft-muted">{{ grupo.descripcion }}</p>
               </div>
-              <code class="parametro__clave">{{ vista.definicion.clave }}</code>
+              <span class="grupo__total">
+                {{ grupo.parametros.length }}
+                {{ grupo.parametros.length === 1 ? 'parámetro' : 'parámetros' }}
+              </span>
+            </header>
+
+            <div class="grupo__rejilla">
+              @for (vista of grupo.parametros; track vista.definicion.clave) {
+                <article
+                  class="parametro ft-card"
+                  [class.parametro--cambiado]="vista.cambiado"
+                  [attr.aria-labelledby]="'titulo-parametro-' + vista.definicion.clave"
+                >
+                  <div class="parametro__cabecera">
+                    <div>
+                      <h3 [id]="'titulo-parametro-' + vista.definicion.clave">
+                        {{ vista.definicion.etiqueta }}
+                      </h3>
+                      <p class="ft-muted">{{ vista.definicion.ayuda }}</p>
+                    </div>
+                    <div class="parametro__etiquetas">
+                      @if (vista.cambiado) {
+                        <span class="parametro__cambio">
+                          <mat-icon aria-hidden="true">edit</mat-icon>
+                          Sin guardar
+                        </span>
+                      }
+                      <code class="parametro__clave">{{ vista.definicion.clave }}</code>
+                    </div>
+                  </div>
+
+                  @if (vista.parametro?.descripcion; as descripcion) {
+                    <p class="parametro__descripcion">{{ descripcion }}</p>
+                  }
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Valor</mat-label>
+                    <input
+                      matInput
+                      [id]="'parametro-' + vista.definicion.clave"
+                      [formControlName]="vista.definicion.clave"
+                      [attr.aria-label]="'Valor de ' + vista.definicion.etiqueta"
+                      autocomplete="off"
+                      spellcheck="false"
+                      [attr.inputmode]="vista.definicion.tipo === 'entero' ? 'numeric' : 'decimal'"
+                      [attr.aria-describedby]="'ayuda-parametro-' + vista.definicion.clave"
+                    />
+                    @if (vista.definicion.unidad; as unidad) {
+                      <span matTextSuffix>{{ unidad }}</span>
+                    }
+                    <mat-hint [id]="'ayuda-parametro-' + vista.definicion.clave">
+                      {{ rango(vista.definicion) }}
+                    </mat-hint>
+                    @if (mensajeError(vista.definicion); as mensaje) {
+                      <mat-error>{{ mensaje }}</mat-error>
+                    }
+                  </mat-form-field>
+
+                  @if (vista.definicion.clave === 'comision_porcentaje') {
+                    @if (porcentajeComision(); as porcentaje) {
+                      <p class="parametro__equivalencia" role="status">
+                        Equivale a <strong>{{ porcentaje }} %</strong> del servicio.
+                      </p>
+                    }
+                  }
+
+                  <footer class="parametro__pie">
+                    @if (vista.parametro; as parametro) {
+                      <span>
+                        Actualizado:
+                        {{ parametro.actualizadoEn | date: 'dd MMM yyyy, HH:mm' }}
+                      </span>
+                      @if (parametro.actualizadoPorId !== null) {
+                        <span>Usuario #{{ parametro.actualizadoPorId }}</span>
+                      }
+                    } @else {
+                      <span>Sin configuración disponible en la API.</span>
+                    }
+                  </footer>
+                </article>
+              }
             </div>
-
-            @if (vista.parametro?.descripcion; as descripcion) {
-              <p class="parametro__descripcion">{{ descripcion }}</p>
-            }
-
-            <mat-form-field appearance="outline">
-              <mat-label>Valor</mat-label>
-              <input
-                matInput
-                [formControlName]="vista.definicion.clave"
-                autocomplete="off"
-                spellcheck="false"
-                [attr.inputmode]="vista.definicion.tipo === 'entero' ? 'numeric' : 'decimal'"
-                [attr.aria-describedby]="'ayuda-parametro-' + vista.definicion.clave"
-              />
-              @if (vista.definicion.unidad; as unidad) {
-                <span matTextSuffix>{{ unidad }}</span>
-              }
-              <mat-hint [id]="'ayuda-parametro-' + vista.definicion.clave">
-                {{ rango(vista.definicion) }}
-              </mat-hint>
-              @if (mensajeError(vista.definicion); as mensaje) {
-                <mat-error>{{ mensaje }}</mat-error>
-              }
-            </mat-form-field>
-
-            @if (vista.definicion.clave === 'comision_porcentaje') {
-              @if (porcentajeComision(); as porcentaje) {
-                <p class="parametro__equivalencia" role="status">
-                  Equivale a <strong>{{ porcentaje }} %</strong> del servicio.
-                </p>
-              }
-            }
-
-            <footer class="parametro__pie">
-              @if (vista.parametro; as parametro) {
-                <span>
-                  Actualizado:
-                  {{ parametro.actualizadoEn | date: 'dd MMM yyyy, HH:mm' }}
-                </span>
-                @if (parametro.actualizadoPorId !== null) {
-                  <span>Usuario #{{ parametro.actualizadoPorId }}</span>
-                }
-              } @else {
-                <span>Sin configuración disponible en la API.</span>
-              }
-            </footer>
-          </article>
+          </section>
         }
       </div>
+
+      @if (enviado() && formulario.invalid) {
+        <div class="ft-alert ft-alert--error" role="alert">
+          <mat-icon aria-hidden="true">error_outline</mat-icon>
+          <p>
+            Hay {{ camposInvalidos() }}
+            {{
+              camposInvalidos() === 1
+                ? 'valor que requiere revisión'
+                : 'valores que requieren revisión'
+            }}. Corrige los campos marcados para guardar.
+          </p>
+        </div>
+      }
 
       @if (errorServidor(); as mensaje) {
         <div class="ft-alert ft-alert--error" role="alert">
@@ -132,26 +188,35 @@
         </div>
       }
 
-      <div class="acciones">
-        <p class="ft-muted" role="status">
-          @if (cambiosPendientes() > 0) {
-            {{ cambiosPendientes() }}
-            {{ cambiosPendientes() === 1 ? 'cambio pendiente' : 'cambios pendientes' }}
-          } @else {
-            No hay cambios pendientes.
-          }
-        </p>
+      <div class="acciones" [class.acciones--pendientes]="hayCambios()">
+        <div class="acciones__resumen">
+          <p class="acciones__estado" role="status">
+            @if (cambiosPendientes() > 0) {
+              {{ cambiosPendientes() }}
+              {{ cambiosPendientes() === 1 ? 'cambio pendiente' : 'cambios pendientes' }}
+            } @else {
+              No hay cambios pendientes.
+            }
+          </p>
+          <span class="acciones__nota">Solo se envían los campos modificados.</span>
+        </div>
         <div class="acciones__botones">
           <button
             mat-stroked-button
             type="button"
+            class="acciones__descartar"
             [disabled]="!hayCambios() || guardando()"
             (click)="descartar()"
           >
             <mat-icon aria-hidden="true">undo</mat-icon>
-            Descartar cambios
+            <span class="acciones__texto">Descartar cambios</span>
           </button>
-          <button mat-flat-button type="submit" [disabled]="!hayCambios() || guardando()">
+          <button
+            mat-flat-button
+            type="submit"
+            class="acciones__guardar"
+            [disabled]="!hayCambios() || guardando()"
+          >
             @if (guardando()) {
               <mat-spinner diameter="18" aria-label="Guardando parámetros" />
             } @else {

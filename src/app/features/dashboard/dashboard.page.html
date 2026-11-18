@@ -1,293 +1,156 @@
 @if (perfil(); as p) {
-  <div class="tablero ft-page">
-    <header class="hero ft-card">
-      <div class="hero__texto">
-        <p class="ft-eyebrow">{{ etiquetasRol[p.rol] }}</p>
-        <h1>{{ saludo() }}</h1>
-        <p class="hero__descripcion">{{ descripcionRol() }}</p>
-      </div>
-      <div class="hero__cuenta">
-        <span class="hero__estado">
-          <mat-icon aria-hidden="true">check_circle</mat-icon>
-          Cuenta activa
-        </span>
-        <span class="hero__correo">{{ p.correo }}</span>
-      </div>
-    </header>
-
-    @if (esTecnico()) {
-      @if (estadoVerificacion() === 'APROBADO') {
-        <div class="ft-alert ft-alert--success" role="status">
-          <mat-icon aria-hidden="true">verified</mat-icon>
-          <div>
-            <strong>Tu perfil está aprobado.</strong>
-            Ya puedes recibir y enviar ofertas a solicitudes compatibles.
-          </div>
+  @if (esCliente()) {
+    <app-cliente-inicio />
+  } @else if (esAdmin()) {
+    <app-admin-inicio />
+  } @else {
+    <div class="tablero ft-page">
+      <header class="hero ft-card">
+        <div class="hero__texto">
+          <p class="ft-eyebrow">{{ etiquetasRol[p.rol] }}</p>
+          <h1>{{ saludo() }}</h1>
+          <p class="hero__descripcion">{{ descripcionRol() }}</p>
         </div>
-      } @else {
-        <div
-          class="ft-alert"
-          [class.ft-alert--warning]="estadoVerificacion() === 'PENDIENTE'"
-          [class.ft-alert--error]="estadoVerificacion() !== 'PENDIENTE'"
-          role="status"
-        >
-          <mat-icon aria-hidden="true">
-            {{ estadoVerificacion() === 'PENDIENTE' ? 'hourglass_top' : 'report_problem' }}
-          </mat-icon>
-          <div>
-            <strong>
-              @switch (estadoVerificacion()) {
-                @case ('PENDIENTE') {
-                  Tu verificación está en revisión.
-                }
-                @case ('OBSERVADO') {
-                  Tu verificación requiere correcciones.
-                }
-                @case ('RECHAZADO') {
-                  Tu verificación fue rechazada.
-                }
-                @default {
-                  Completa tu perfil para enviar ofertas.
-                }
-              }
-            </strong>
-            @if (motivoVerificacion(); as motivo) {
-              <p>Motivo: {{ motivo }}</p>
-            } @else {
-              <p>Un administrador revisará tu información antes de habilitar las ofertas.</p>
-            }
-          </div>
-        </div>
-      }
-
-      @if (bloqueado()) {
-        <div class="ft-alert ft-alert--warning" role="alert">
-          <mat-icon aria-hidden="true">account_balance_wallet</mat-icon>
-          <div>
-            <strong>Tienes un bloqueo temporal por deuda de comisiones.</strong>
-            <p>
-              Saldo pendiente:
-              {{ saldoPendiente() | currency: 'PEN' : 'symbol-narrow' : '1.2-2' }}. Regulariza el
-              pago para volver a ofertar.
-            </p>
-            <a mat-stroked-button class="bloqueo__accion" routerLink="/app/tecnico/comisiones">
-              <mat-icon aria-hidden="true">payments</mat-icon>
-              Regularizar comisiones
-            </a>
-          </div>
-        </div>
-      }
-
-      <section class="metricas" aria-label="Resumen de tu actividad">
-        <article class="metrica ft-card">
-          <mat-icon aria-hidden="true">star</mat-icon>
-          <strong>{{ tecnico()?.calificacionPromedio ?? 0 | number: '1.1-2' }}</strong>
-          <span>Calificación promedio</span>
-        </article>
-        <article class="metrica ft-card">
-          <mat-icon aria-hidden="true">reviews</mat-icon>
-          <strong>{{ tecnico()?.totalResenas ?? 0 }}</strong>
-          <span>Reseñas recibidas</span>
-        </article>
-        <article class="metrica ft-card">
-          <mat-icon aria-hidden="true">task_alt</mat-icon>
-          <strong>{{ tecnico()?.serviciosCompletados ?? 0 }}</strong>
-          <span>Servicios completados</span>
-        </article>
-      </section>
-
-      <section class="panel ft-card" aria-labelledby="titulo-perfil-tecnico">
-        <div class="panel__cabecera">
-          <div>
-            <h2 id="titulo-perfil-tecnico">Perfil profesional</h2>
-            <p class="ft-muted">Así te verán los clientes cuando estés aprobado.</p>
-          </div>
-          <span
-            class="estado"
-            [class.estado--ok]="estadoVerificacion() === 'APROBADO'"
-            [class.estado--alerta]="estadoVerificacion() !== 'APROBADO'"
-          >
-            {{ etiquetasVerificacion[estadoVerificacion() ?? 'PENDIENTE'] }}
+        <div class="hero__cuenta">
+          <span class="hero__estado">
+            <mat-icon aria-hidden="true">check_circle</mat-icon>
+            Cuenta activa
           </span>
+          <span class="hero__correo">{{ p.correo }}</span>
         </div>
+      </header>
 
-        <dl class="detalle">
-          <div>
-            <dt>Experiencia</dt>
-            <dd>{{ tecnico()?.aniosExperiencia ?? 0 }} años</dd>
+      @if (esTecnico()) {
+        @if (estadoVerificacion() === 'APROBADO') {
+          <div class="ft-alert ft-alert--success" role="status">
+            <mat-icon aria-hidden="true">verified</mat-icon>
+            <div>
+              <strong>Tu perfil está aprobado.</strong>
+              Ya puedes recibir y enviar ofertas a solicitudes compatibles.
+            </div>
           </div>
-          <div>
-            <dt>Modalidades</dt>
-            <dd class="detalle__modalidades">
-              @if (modalidades().length === 0) {
-                <span class="ft-muted">Sin modalidades configuradas</span>
-              }
-              <mat-chip-set aria-label="Modalidades de atención">
-                @for (modalidad of modalidades(); track modalidad) {
-                  <mat-chip>{{ etiquetasModalidad[modalidad] }}</mat-chip>
+        } @else {
+          <div
+            class="ft-alert"
+            [class.ft-alert--warning]="estadoVerificacion() === 'PENDIENTE'"
+            [class.ft-alert--error]="estadoVerificacion() !== 'PENDIENTE'"
+            role="status"
+          >
+            <mat-icon aria-hidden="true">
+              {{ estadoVerificacion() === 'PENDIENTE' ? 'hourglass_top' : 'report_problem' }}
+            </mat-icon>
+            <div>
+              <strong>
+                @switch (estadoVerificacion()) {
+                  @case ('PENDIENTE') {
+                    Tu verificación está en revisión.
+                  }
+                  @case ('OBSERVADO') {
+                    Tu verificación requiere correcciones.
+                  }
+                  @case ('RECHAZADO') {
+                    Tu verificación fue rechazada.
+                  }
+                  @default {
+                    Completa tu perfil para enviar ofertas.
+                  }
                 }
-              </mat-chip-set>
-            </dd>
+              </strong>
+              @if (motivoVerificacion(); as motivo) {
+                <p>Motivo: {{ motivo }}</p>
+              } @else {
+                <p>Un administrador revisará tu información antes de habilitar las ofertas.</p>
+              }
+            </div>
           </div>
-          <div>
-            <dt>Descripción</dt>
-            <dd>{{ tecnico()?.descripcion ?? 'Aún no has agregado una descripción.' }}</dd>
-          </div>
-        </dl>
-      </section>
-    }
+        }
 
-    @if (esCliente()) {
-      <section class="panel ft-card" aria-labelledby="titulo-cliente">
-        <div class="panel__cabecera">
-          <div>
-            <h2 id="titulo-cliente">Publica y sigue tus solicitudes</h2>
-            <p class="ft-muted">
-              Describe lo que necesitas, adjunta fotos y recibe ofertas de técnicos verificados.
-            </p>
-          </div>
-          <span class="estado estado--ok">Cliente</span>
-        </div>
-        <ol class="pasos">
-          <li>
-            <span class="pasos__numero">1</span>
-            <div>
-              <strong>Describe el problema</strong>
-              <p class="ft-muted">Indica el tipo de equipo, la falla y la modalidad de atención.</p>
-            </div>
-          </li>
-          <li>
-            <span class="pasos__numero">2</span>
-            <div>
-              <strong>Compara ofertas</strong>
-              <p class="ft-muted">Revisa precio, tiempo estimado y garantía de cada técnico.</p>
-            </div>
-          </li>
-          <li>
-            <span class="pasos__numero">3</span>
-            <div>
-              <strong>Confirma el servicio</strong>
-              <p class="ft-muted">Coordina, revisa los avances y confirma tu conformidad.</p>
-            </div>
-          </li>
-        </ol>
-        <div class="cliente__acciones">
-          <a mat-flat-button routerLink="/app/cliente/solicitudes/nueva">
-            <mat-icon aria-hidden="true">add</mat-icon>
-            Nueva solicitud
-          </a>
-          <a mat-stroked-button routerLink="/app/cliente/solicitudes">
-            <mat-icon aria-hidden="true">assignment</mat-icon>
-            Mis solicitudes
-          </a>
-          <a mat-stroked-button routerLink="/app/cliente/servicios">
-            <mat-icon aria-hidden="true">build_circle</mat-icon>
-            Mis servicios
-          </a>
-        </div>
-      </section>
-    }
-
-    @if (esAdmin()) {
-      <section class="panel ft-card" aria-labelledby="titulo-admin">
-        <div class="panel__cabecera">
-          <div>
-            <h2 id="titulo-admin">Panel administrativo</h2>
-            <p class="ft-muted">
-              Consulta indicadores, administra catálogos, parámetros y revisa la auditoría desde un
-              solo lugar.
-            </p>
-          </div>
-          <span class="estado estado--ok">Administrador</span>
-        </div>
-        <div class="admin__resumen">
-          <a class="admin__acceso" routerLink="/app/admin/tecnicos">
-            <mat-icon aria-hidden="true">verified_user</mat-icon>
-            <strong>Verificación de técnicos</strong>
-            <span class="ft-muted">Consulta perfiles y registra la decisión.</span>
-            <mat-icon class="admin__flecha" aria-hidden="true">arrow_forward</mat-icon>
-          </a>
-          <a class="admin__acceso" routerLink="/app/admin/usuarios">
-            <mat-icon aria-hidden="true">group</mat-icon>
-            <strong>Usuarios y accesos</strong>
-            <span class="ft-muted">Suspende o reactiva cuentas.</span>
-            <mat-icon class="admin__flecha" aria-hidden="true">arrow_forward</mat-icon>
-          </a>
-          <a class="admin__acceso" routerLink="/app/admin/resenas">
-            <mat-icon aria-hidden="true">reviews</mat-icon>
-            <strong>Reseñas</strong>
-            <span class="ft-muted">Modera las reseñas reportadas por los técnicos.</span>
-            <mat-icon class="admin__flecha" aria-hidden="true">arrow_forward</mat-icon>
-          </a>
-          <a class="admin__acceso" routerLink="/app/admin/reclamos">
-            <mat-icon aria-hidden="true">support_agent</mat-icon>
-            <strong>Reclamos</strong>
-            <span class="ft-muted">Da seguimiento y registra la resolución.</span>
-            <mat-icon class="admin__flecha" aria-hidden="true">arrow_forward</mat-icon>
-          </a>
-          <a class="admin__acceso" routerLink="/app/admin/comisiones">
+        @if (bloqueado()) {
+          <div class="ft-alert ft-alert--warning" role="alert">
             <mat-icon aria-hidden="true">account_balance_wallet</mat-icon>
-            <strong>Pagos y deudores</strong>
-            <span class="ft-muted">Valida comprobantes y revisa la deuda de comisiones.</span>
-            <mat-icon class="admin__flecha" aria-hidden="true">arrow_forward</mat-icon>
-          </a>
-          <a class="admin__acceso" routerLink="/app/admin/reportes">
-            <mat-icon aria-hidden="true">monitoring</mat-icon>
-            <strong>Reportes e indicadores</strong>
-            <span class="ft-muted">Consulta indicadores y exporta información a Excel.</span>
-            <mat-icon class="admin__flecha" aria-hidden="true">arrow_forward</mat-icon>
-          </a>
-          <a class="admin__acceso" routerLink="/app/admin/catalogos">
-            <mat-icon aria-hidden="true">category</mat-icon>
-            <strong>Catálogos</strong>
-            <span class="ft-muted">Gestiona equipos, servicios, especialidades y distritos.</span>
-            <mat-icon class="admin__flecha" aria-hidden="true">arrow_forward</mat-icon>
-          </a>
-          <a class="admin__acceso" routerLink="/app/admin/parametros">
-            <mat-icon aria-hidden="true">tune</mat-icon>
-            <strong>Parámetros</strong>
-            <span class="ft-muted">Ajusta comisiones, plazos, movilidad y topes.</span>
-            <mat-icon class="admin__flecha" aria-hidden="true">arrow_forward</mat-icon>
-          </a>
-          <a class="admin__acceso" routerLink="/app/admin/auditoria">
-            <mat-icon aria-hidden="true">history</mat-icon>
-            <strong>Auditoría</strong>
-            <span class="ft-muted">Revisa las acciones administrativas registradas.</span>
-            <mat-icon class="admin__flecha" aria-hidden="true">arrow_forward</mat-icon>
-          </a>
-        </div>
-      </section>
-    }
-
-    @if (!esAdmin()) {
-      <section aria-labelledby="titulo-modulos">
-        <div class="seccion__cabecera">
-          <div>
-            <p class="ft-eyebrow">Hoja de ruta</p>
-            <h2 id="titulo-modulos">Próximos módulos</h2>
+            <div>
+              <strong>Tienes un bloqueo temporal por deuda de comisiones.</strong>
+              <p>
+                Saldo pendiente:
+                {{ saldoPendiente() | currency: 'PEN' : 'symbol-narrow' : '1.2-2' }}. Regulariza el
+                pago para volver a ofertar.
+              </p>
+              <a mat-stroked-button class="bloqueo__accion" routerLink="/app/tecnico/comisiones">
+                <mat-icon aria-hidden="true">payments</mat-icon>
+                Regularizar comisiones
+              </a>
+            </div>
           </div>
-        </div>
-        <div class="modulos">
-          @if (esCliente()) {
-            <a class="modulo ft-card modulo--enlace" routerLink="/app/cliente/solicitudes/nueva">
-              <mat-icon aria-hidden="true">add_circle</mat-icon>
-              <h3>Nueva solicitud</h3>
-              <p class="ft-muted">Publica una solicitud con fotos y recibe ofertas.</p>
-              <span class="modulo__estado">Disponible</span>
-            </a>
-            <a class="modulo ft-card modulo--enlace" routerLink="/app/cliente/solicitudes">
-              <mat-icon aria-hidden="true">assignment</mat-icon>
-              <h3>Mis solicitudes</h3>
-              <p class="ft-muted">Sigue el estado de tus publicaciones activas.</p>
-              <span class="modulo__estado">Disponible</span>
-            </a>
-            <a class="modulo ft-card modulo--enlace" routerLink="/app/cliente/servicios">
-              <mat-icon aria-hidden="true">build_circle</mat-icon>
-              <h3>Mis servicios</h3>
-              <p class="ft-muted">Consulta avances, mensajes y confirma la conformidad.</p>
-              <span class="modulo__estado">Disponible</span>
-            </a>
-          } @else {
+        }
+
+        <section class="metricas" aria-label="Resumen de tu actividad">
+          <article class="metrica ft-card">
+            <mat-icon aria-hidden="true">star</mat-icon>
+            <strong>{{ tecnico()?.calificacionPromedio ?? 0 | number: '1.1-2' }}</strong>
+            <span>Calificación promedio</span>
+          </article>
+          <article class="metrica ft-card">
+            <mat-icon aria-hidden="true">reviews</mat-icon>
+            <strong>{{ tecnico()?.totalResenas ?? 0 }}</strong>
+            <span>Reseñas recibidas</span>
+          </article>
+          <article class="metrica ft-card">
+            <mat-icon aria-hidden="true">task_alt</mat-icon>
+            <strong>{{ tecnico()?.serviciosCompletados ?? 0 }}</strong>
+            <span>Servicios completados</span>
+          </article>
+        </section>
+
+        <section class="panel ft-card" aria-labelledby="titulo-perfil-tecnico">
+          <div class="panel__cabecera">
+            <div>
+              <h2 id="titulo-perfil-tecnico">Perfil profesional</h2>
+              <p class="ft-muted">Así te verán los clientes cuando estés aprobado.</p>
+            </div>
+            <span
+              class="estado"
+              [class.estado--ok]="estadoVerificacion() === 'APROBADO'"
+              [class.estado--alerta]="estadoVerificacion() !== 'APROBADO'"
+            >
+              {{ etiquetasVerificacion[estadoVerificacion() ?? 'PENDIENTE'] }}
+            </span>
+          </div>
+
+          <dl class="detalle">
+            <div>
+              <dt>Experiencia</dt>
+              <dd>{{ tecnico()?.aniosExperiencia ?? 0 }} años</dd>
+            </div>
+            <div>
+              <dt>Modalidades</dt>
+              <dd class="detalle__modalidades">
+                @if (modalidades().length === 0) {
+                  <span class="ft-muted">Sin modalidades configuradas</span>
+                }
+                <mat-chip-set aria-label="Modalidades de atención">
+                  @for (modalidad of modalidades(); track modalidad) {
+                    <mat-chip>{{ etiquetasModalidad[modalidad] }}</mat-chip>
+                  }
+                </mat-chip-set>
+              </dd>
+            </div>
+            <div>
+              <dt>Descripción</dt>
+              <dd>{{ tecnico()?.descripcion ?? 'Aún no has agregado una descripción.' }}</dd>
+            </div>
+          </dl>
+        </section>
+      }
+
+      @if (esTecnico()) {
+        <section aria-labelledby="titulo-modulos">
+          <div class="seccion__cabecera">
+            <div>
+              <p class="ft-eyebrow">Hoja de ruta</p>
+              <h2 id="titulo-modulos">Próximos módulos</h2>
+            </div>
+          </div>
+          <div class="modulos">
             @if (aprobado() && !bloqueado()) {
               <a class="modulo ft-card modulo--enlace" routerLink="/app/tecnico/solicitudes">
                 <mat-icon aria-hidden="true">work_outline</mat-icon>
@@ -331,11 +194,11 @@
               <p class="ft-muted">Consulta tu saldo, registra pagos y revisa tus comprobantes.</p>
               <span class="modulo__estado">Disponible</span>
             </a>
-          }
-        </div>
-      </section>
-    }
-  </div>
+          </div>
+        </section>
+      }
+    </div>
+  }
 } @else {
   <div class="tablero tablero--cargando">
     <mat-spinner diameter="36" aria-label="Cargando tu perfil" />

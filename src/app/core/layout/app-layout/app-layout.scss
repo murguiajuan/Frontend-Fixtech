@@ -32,6 +32,13 @@
   background: var(--ft-surface-raised);
 }
 
+.sidenav__estructura {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
 .sidenav__marca {
   display: flex;
   align-items: center;
@@ -40,10 +47,22 @@
   border-bottom: 1px solid var(--ft-border);
 }
 
+.sidenav__contexto {
+  padding: 1.25rem 1.5rem 0.25rem;
+  color: var(--ft-on-surface-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
 .sidenav__nav {
   display: grid;
+  align-content: start;
   gap: 0.25rem;
-  padding: 1rem 0.75rem;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.75rem 0.75rem 1.25rem;
+  scrollbar-color: var(--ft-border) transparent;
 }
 
 .nav__enlace {
@@ -58,8 +77,12 @@
   font-weight: 500;
   text-decoration: none;
   transition:
-    background-color 160ms ease,
-    color 160ms ease;
+    background-color var(--ft-motion-fast) ease,
+    color var(--ft-motion-fast) ease;
+}
+
+.nav__enlace:focus-visible {
+  outline-offset: -3px;
 }
 
 .nav__enlace mat-icon {
@@ -76,6 +99,10 @@
   background: var(--ft-primary-100);
   color: var(--ft-primary-900);
   font-weight: 700;
+}
+
+.nav__enlace--activo mat-icon {
+  color: var(--ft-primary-700);
 }
 
 .nav__enlace--bloqueado {
@@ -115,7 +142,7 @@
   display: grid;
   gap: 0.5rem;
   margin-top: auto;
-  padding: 1rem 1.25rem 1.5rem;
+  padding: 1rem 1.25rem max(1rem, env(safe-area-inset-bottom));
   border-top: 1px solid var(--ft-border);
 }
 
@@ -267,6 +294,7 @@
 .menu__cabecera small {
   color: var(--ft-on-surface-muted);
   font-size: 0.78rem;
+  overflow-wrap: anywhere;
 }
 
 .menu__rol {

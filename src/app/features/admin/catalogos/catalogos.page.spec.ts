@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { NotificacionService } from '../../../shared/ui/notificacion.service';
 import { CatalogoAdmin } from './catalogos-admin.models';
 import { CatalogoFormDialog } from './catalogo-form-dialog';
@@ -52,6 +52,25 @@ describe('AdminCatalogosPage', () => {
     expect(contenido(fixture)).toContain('Tipos de equipo');
     expect(contenido(fixture)).toContain('Laptop');
     expect(contenido(fixture)).toContain('Activo');
+    expect(contenido(fixture)).toContain('1 registro · 1 activo');
+  });
+
+  it('prioriza los registros activos y resume el resultado cargado', async () => {
+    servicio.listar.mockReturnValue(
+      of([
+        { ...EQUIPO, id: 2, nombre: 'Impresora', activo: false },
+        EQUIPO,
+        { ...EQUIPO, id: 3, nombre: 'Monitor', activo: true },
+      ]),
+    );
+    const fixture = await crear();
+
+    const nombres = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('.catalogo__identidad h3'),
+    ).map((elemento) => elemento.textContent?.trim());
+    expect(nombres).toEqual(['Laptop', 'Monitor', 'Impresora']);
+    expect(contenido(fixture)).toContain('3 registros · 2 activos');
+    expect(contenido(fixture)).toContain('Se conserva como historial');
   });
 
   it('cambia de catálogo y muestra el detalle propio de cada tipo', async () => {
@@ -156,7 +175,8 @@ describe('AdminCatalogosPage', () => {
     servicio.listar.mockReturnValue(of([]));
     const fixture = await crear();
 
-    expect(contenido(fixture)).toContain('No se encontraron registros');
+    expect(contenido(fixture)).toContain('Aún no hay tipos de equipo');
+    expect(contenido(fixture)).toContain('Usa «Nuevo tipo de equipo»');
 
     const casilla = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>(
       'input[type="checkbox"]',
@@ -166,8 +186,10 @@ describe('AdminCatalogosPage', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(contenido(fixture)).toContain('no tiene registros activos');
+    expect(contenido(fixture)).toContain('No hay registros activos');
+    expect(contenido(fixture)).toContain('no tiene registros disponibles');
     expect(contenido(fixture)).toContain('Mostrar inactivos');
+    expect(contenido(fixture)).toContain('0 registros activos');
   });
 
   it('muestra el error de carga y permite reintentar', async () => {
@@ -185,6 +207,7 @@ describe('AdminCatalogosPage', () => {
     expect(contenido(fixture)).toContain('No pudimos cargar el catálogo');
     expect(contenido(fixture)).toContain('No se pudieron obtener los catálogos.');
     expect(contenido(fixture)).toContain('Intente más tarde.');
+    expect(contenido(fixture)).not.toContain('registros ·');
 
     pulsarBoton(fixture.nativeElement, 'Reintentar');
     fixture.detectChanges();
@@ -193,6 +216,42 @@ describe('AdminCatalogosPage', () => {
 
     expect(servicio.listar).toHaveBeenCalledTimes(2);
     expect(contenido(fixture)).toContain('Laptop');
+  });
+
+  it('conserva el estado de procesamiento al volver a un catálogo', async () => {
+    const respuesta = new Subject<CatalogoAdmin>();
+    servicio.listar.mockImplementation((tipo: string) =>
+      of(tipo === 'distritos' ? [DISTRITO] : [EQUIPO]),
+    );
+    servicio.cambiarEstado.mockReturnValue(respuesta.asObservable());
+    dialogo.open.mockReturnValue({ afterClosed: () => of({ motivo: null }) });
+    const fixture = await crear();
+
+    pulsarBoton(fixture.nativeElement, 'Desactivar');
+    fixture.detectChanges();
+    expect(boton(fixture, 'Desactivar')?.disabled).toBe(true);
+
+    pulsarBoton(fixture.nativeElement, 'Distritos');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(contenido(fixture)).toContain('Castilla');
+
+    pulsarBoton(fixture.nativeElement, 'Tipos de equipo');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(boton(fixture, 'Desactivar')?.disabled).toBe(true);
+
+    respuesta.next({ ...EQUIPO, activo: false });
+    respuesta.complete();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(notificaciones.exito).toHaveBeenCalledWith('Se desactivó «Laptop».');
+    expect(servicio.listar).toHaveBeenLastCalledWith('tipos-equipo', true);
+    expect(boton(fixture, 'Desactivar')?.disabled).toBe(false);
   });
 
   it('informa el error al cambiar el estado', async () => {
@@ -229,12 +288,21 @@ function contenido(fixture: ComponentFixture<AdminCatalogosPage>): string {
   return (fixture.nativeElement as HTMLElement).textContent ?? '';
 }
 
+function boton(
+  fixture: ComponentFixture<AdminCatalogosPage>,
+  texto: string,
+): HTMLButtonElement | undefined {
+  return Array.from(
+    (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('button'),
+  ).find((elemento) => elemento.textContent?.includes(texto));
+}
+
 function pulsarBoton(contenedor: HTMLElement, texto: string): void {
-  const boton = Array.from(contenedor.querySelectorAll('button')).find((elemento) =>
+  const encontrado = Array.from(contenedor.querySelectorAll('button')).find((elemento) =>
     elemento.textContent?.includes(texto),
   );
-  if (boton === undefined) {
+  if (encontrado === undefined) {
     throw new Error(`No se encontró el botón ${texto}`);
   }
-  boton.click();
+  encontrado.click();
 }

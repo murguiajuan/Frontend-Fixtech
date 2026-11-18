@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { AuthPresentacion } from '../auth-presentacion';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -16,6 +17,7 @@ import { NotificacionService } from '../../../shared/ui/notificacion.service';
 @Component({
   selector: 'app-login-page',
   imports: [
+    AuthPresentacion,
     ReactiveFormsModule,
     RouterLink,
     MatButtonModule,

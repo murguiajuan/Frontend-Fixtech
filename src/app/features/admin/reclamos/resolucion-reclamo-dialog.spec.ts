@@ -47,6 +47,16 @@ describe('ResolucionReclamoDialog', () => {
     expect(contenido(fixture)).toContain('La resolución es obligatoria.');
   });
 
+  it('no admite una resolución compuesta solo por espacios', async () => {
+    await configurar('RESUELTO');
+    const fixture = crear();
+    escribir(fixture.nativeElement, 'textarea[formcontrolname="resolucion"]', '   ');
+    pulsarBoton(fixture.nativeElement, 'Resolver reclamo');
+    fixture.detectChanges();
+    expect(referencia.close).not.toHaveBeenCalled();
+    expect(contenido(fixture)).toContain('La resolución es obligatoria.');
+  });
+
   it('cierra con la resolución normalizada', async () => {
     await configurar('RESUELTO');
     const fixture = crear();

@@ -1,4 +1,5 @@
 import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
+import { AuthPresentacion } from '../auth-presentacion';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
@@ -33,6 +34,7 @@ const SEGUNDOS_REENVIO = 60;
 @Component({
   selector: 'app-recuperar-password-page',
   imports: [
+    AuthPresentacion,
     ReactiveFormsModule,
     RouterLink,
     MatButtonModule,

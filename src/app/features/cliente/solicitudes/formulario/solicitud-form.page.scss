@@ -19,6 +19,46 @@
 .solicitud-form__cabecera {
   display: grid;
   gap: 0.35rem;
+  position: relative;
+  overflow: hidden;
+  padding: 1.5rem;
+  border-radius: var(--ft-radius-lg);
+  background: linear-gradient(110deg, #062657, #0e4789);
+  color: #fff;
+}
+
+.solicitud-form__cabecera::after {
+  content: '';
+  position: absolute;
+  width: 12rem;
+  height: 12rem;
+  border: 1px solid #ffffff40;
+  border-radius: 50%;
+  right: -3rem;
+  top: -6rem;
+  pointer-events: none;
+}
+
+.solicitud-form__cabecera > * {
+  position: relative;
+  z-index: 1;
+}
+.solicitud-form__cabecera h1 {
+  color: #fff;
+  font-weight: 800;
+}
+.solicitud-form__cabecera .ft-eyebrow {
+  color: #a8d7ff;
+}
+.solicitud-form__cabecera .ft-muted {
+  color: #e0ebf8;
+}
+.solicitud-form__volver {
+  color: #fff;
+}
+.solicitud-form__panel {
+  border-color: #d7e4f2;
+  box-shadow: 0 7px 24px #0626570c;
 }
 
 .solicitud-form__cabecera h1 {
